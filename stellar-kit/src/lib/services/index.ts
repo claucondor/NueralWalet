@@ -1,5 +1,11 @@
-// Este archivo exportará todos los servicios
-// En una implementación completa, aquí se exportarían servicios desde otros archivos
+// Este archivo exporta todos los servicios
+// Se exportan servicios desde sus respectivos archivos
+
+// Exportar StellarWalletKit
+export { StellarWalletKit } from './StellarWalletKit';
+
+// Exportar otros servicios
+export { StellarNetworkService } from './network.service';
 
 // Servicio para interactuar con la red Stellar
 export class NetworkService {
