@@ -1,0 +1,52 @@
+{
+  "name": "guard-wallet",
+  "version": "1.0.0",
+  "description": "A Stellar wallet with support for Soroban smart contracts",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "module": "dist/lib/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/lib/index.js",
+      "import": "./dist/lib/index.js",
+      "types": "./dist/lib/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:token": "jest testToken.ts",
+    "test:wallet": "jest testWallet.ts",
+    "token:info": "node dist/tests/testToken.js",
+    "token:deploy": "cd soroban_contract/js && node dist/deploy.js",
+    "build:all": "tsc && cd soroban_contract/js && npm run build"
+  },
+  "keywords": [
+    "stellar",
+    "wallet",
+    "soroban",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@stellar/stellar-sdk": "^11.1.0",
+    "@types/node-fetch": "^2.6.12",
+    "bignumber.js": "^9.1.1",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.10.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.0",
+    "typescript": "^5.3.3"
+  }
+}

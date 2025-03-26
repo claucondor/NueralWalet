@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1c4ed8" />
+    <title>GoPay - Your Decentralized Wallet</title>
+    <meta name="description" content="Manage your crypto assets easily with GoPay - a secure and user-friendly Web3 wallet" />
+    <meta name="author" content="GoPay" />
+
+    <meta property="og:title" content="GoPay - Your Decentralized Wallet" />
+    <meta property="og:description" content="Manage your crypto assets easily with GoPay - a secure and user-friendly Web3 wallet" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://github.com/RuyRiver/wallet-ui-lovable/blob/main/public/logo/logo@HD.png?raw=true" />
+    <meta property="og:url" content="https://gopay.app" />
+    <meta property="og:site_name" content="GoPay" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@gopay_app" />
+    <meta name="twitter:title" content="GoPay - Your Decentralized Wallet" />
+    <meta name="twitter:description" content="Manage your crypto assets easily with GoPay - a secure and user-friendly Web3 wallet" />
+    <meta name="twitter:image" content="https://github.com/RuyRiver/wallet-ui-lovable/blob/main/public/logo/logo@HD.png?raw=true" />
+    
+    <!-- Polyfills para Web3Auth - IMPORTANTE: Debe cargarse antes de cualquier otro script -->
+    <script>
+      // Buffer y Process deben estar disponibles globalmente
+      window.global = window;
+      window.process = { env: {} };
+      window.Buffer = [];
+      window.exports = {};
+      window.module = { exports: {} };
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

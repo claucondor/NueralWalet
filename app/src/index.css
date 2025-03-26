@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Safe area insets for mobile browsers */
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --mobile-browser-bar-height: 80px; /* Fallback for browsers without env() support */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Ensure content is safe from browser UI elements */
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height));
+  }
+}
+
+/* Real viewport height utilities */
+.h-screen-real {
+  height: 100vh; /* Fallback */
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+.min-h-screen-real {
+  min-height: 100vh; /* Fallback */
+  min-height: calc(var(--vh, 1vh) * 100);
+}
+
+.max-h-screen-real {
+  max-height: 100vh; /* Fallback */
+  max-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* For specific percentage-based heights */
+.h-90vh-real {
+  height: 90vh; /* Fallback */
+  height: calc(var(--vh, 1vh) * 90);
+}
+
+.h-85vh-real {
+  height: 85vh; /* Fallback */
+  height: calc(var(--vh, 1vh) * 85);
+}
+
+/* Safe area inset utilities */
+.pb-safe {
+  padding-bottom: var(--safe-area-inset-bottom, 0px);
+  padding-bottom: max(var(--safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height));
+}
+
+.mb-safe {
+  margin-bottom: var(--safe-area-inset-bottom, 0px);
+  margin-bottom: max(var(--safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height));
+}
+
+/* Compensate with negative margin if needed */
+.negative-mb-safe {
+  margin-bottom: calc(var(--safe-area-inset-bottom, 0px) * -1);
+  margin-bottom: calc(max(var(--safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height)) * -1);
+}
+
+/* Bottom padding for mobile browsers to ensure content isn't covered by navigation bars */
+.pb-mobile-browser {
+  padding-bottom: var(--mobile-browser-bar-height);
+}
+
+/* Content container that adjusts height for mobile browser UI */
+.mobile-safe-content {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height));
+  min-height: calc(100vh - max(env(safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height)));
+  min-height: calc((var(--vh, 1vh) * 100) - max(env(safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height)));
+}
+
+/* Sticky elements that need to stay above the browser UI */
+.sticky-safe-bottom {
+  position: sticky;
+  bottom: max(env(safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height));
+  z-index: 40;
+  background-color: white;
+}
+
+/* Fix for mobile browsers with UI elements */
+html, body {
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+}
+
+/* Fix for iOS Safari specifically */
+@supports (-webkit-touch-callout: none) {
+  .h-screen, .min-h-screen, .max-h-screen {
+    height: -webkit-fill-available;
+  }
+  
+  /* Add padding at the bottom to account for the browser's toolbar */
+  body {
+    padding-bottom: env(safe-area-inset-bottom, var(--mobile-browser-bar-height));
+  }
+}
+
+/* Fix for Chrome/Safari on iOS */
+@supports (padding: max(0px)) {
+  body {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--mobile-browser-bar-height));
+  }
+}

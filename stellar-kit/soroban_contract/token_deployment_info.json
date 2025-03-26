@@ -1,0 +1,25 @@
+{
+  "deploymentDate": "2025-03-26T16:30:34.948Z",
+  "network": "testnet",
+  "contractId": "CDZQ6THMRD7DVNGZKUSKCNIOJOHCHKZFI6PT4BNFUJCXJUGTAF3XZXSX",
+  "admin": {
+    "publicKey": "GA26FVRGPALUTNUL4A3LPO2KVDITDXMZAORZOPRXKOV7O6XOYISIXGXA",
+    "secretKey": "SD5D5H44OCMVS7SLTGGWQBLPBJ6I3Q45DKFGHQP6L3FWAJYCNTODIXON",
+    "name": "Claudio1"
+  },
+  "token": {
+    "name": "Token1",
+    "symbol": "TK1",
+    "decimals": 8,
+    "initialSupply": "1000000000"
+  },
+  "initialHolders": [],
+  "transactions": [
+    {
+      "type": "mint",
+      "hash": "desconocido",
+      "date": "2025-03-26T16:31:25.582Z",
+      "description": "Acuñación de 100000 tokens al administrador"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "contractId": "CDZQ6THMRD7DVNGZKUSKCNIOJOHCHKZFI6PT4BNFUJCXJUGTAF3XZXSX",
+  "network": "testnet",
+  "metadata": {
+    "name": "Token1",
+    "symbol": "TK1",
+    "decimals": 8,
+    "admin": "GA26FVRGPALUTNUL4A3LPO2KVDITDXMZAORZOPRXKOV7O6XOYISIXGXA"
+  },
+  "deploymentInfo": {
+    "deploymentDate": "2025-03-26T16:30:34.948Z",
+    "admin": {
+      "publicKey": "GA26FVRGPALUTNUL4A3LPO2KVDITDXMZAORZOPRXKOV7O6XOYISIXGXA",
+      "name": "Claudio1"
+    },
+    "initialSupply": "1000000000"
+  }
+}
