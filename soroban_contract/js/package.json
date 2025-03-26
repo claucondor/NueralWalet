@@ -1,0 +1,21 @@
+{
+  "name": "stellar-token-deployer",
+  "version": "0.1.0",
+  "description": "Script to deploy a SEP-20 Soroban contract to Stellar",
+  "main": "deploy.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "node dist/deploy.js",
+    "start": "npm run build && npm run deploy"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^11.2.2",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/node-fetch": "^2.6.11",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  }
+} 
