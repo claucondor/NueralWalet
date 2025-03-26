@@ -47,3 +47,4 @@ Cargo.lock
 **/.cargo-ok 
 soroban_contract/js/.stellar/identity/admin-1743005082553.toml
 src/tests/contracts_info/token_contract_CDZQ6THMRD7DVNGZKUSKCNIOJOHCHKZFI6PT4BNFUJCXJUGTAF3XZXSX.json
+soroban_contract/js/accounts.json
