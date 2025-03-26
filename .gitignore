@@ -1,0 +1,49 @@
+# Dependencias
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Construcción y distribución
+dist/
+build/
+*.tsbuildinfo
+
+# Archivos de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de configuración
+*.pem
+config.js
+config.json
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Archivos de testnet/claves (para evitar subir datos sensibles)
+soroban_contract/token_deployment_info.json
+src/tests/test-accounts.json
+
+# Archivos de Rust y Soroban
+soroban_contract/target/
+**/target/
+*.rs.bk
+Cargo.lock
+**/.cargo-ok 
+soroban_contract/js/.stellar/identity/admin-1743005082553.toml
+src/tests/contracts_info/token_contract_CDZQ6THMRD7DVNGZKUSKCNIOJOHCHKZFI6PT4BNFUJCXJUGTAF3XZXSX.json
