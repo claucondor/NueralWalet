@@ -93,7 +93,7 @@ const BotMessage: React.FC<{ content: string }> = ({ content }) => {
         {transactionHash && (
           <div className="mt-2 text-xs overflow-hidden text-ellipsis">
             <a 
-              href={`https://explorer.aptoslabs.com/txn/${transactionHash}?network=devnet`}
+              href={`https://stellar.expert/explorer/testnet/tx/${transactionHash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -347,7 +347,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
               <ChatSuggestion 
                 title="Information" 
                 description="Learn about cryptocurrencies"
-                onClick={() => handleSuggestionClick("What is Aptos?")}
+                onClick={() => handleSuggestionClick("What is Stellar?")}
               />
             </ScrollArea>
           </div>

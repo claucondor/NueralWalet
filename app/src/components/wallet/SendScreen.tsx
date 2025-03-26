@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useWeb3Auth } from "@/context/Web3AuthContext";
-import { sendTransaction, sendTransactionByEmail } from "@/utils/aptos";
+import { sendTransaction, sendTransactionByEmail } from "@/utils/stellar";
 
 interface SendScreenProps {
   onClose: () => void;
@@ -10,6 +10,7 @@ interface SendScreenProps {
 const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null }) => {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
+  const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -18,7 +19,7 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   
-  const { aptosAccount, getBalance, aptosBalance } = useWeb3Auth();
+  const { stellarAccount, getBalance, stellarBalance, stellarAddress } = useWeb3Auth();
 
   useEffect(() => {
     if (initialAddress) {
@@ -66,14 +67,13 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
   }, [recipient]);
 
   const handleSend = async () => {
-    if (!recipient || !amount || !aptosAccount) {
+    if (!recipient || !amount || !stellarAccount) {
       setError("Please enter a valid address or email and amount");
       return;
     }
 
     // Check if amount is more than balance
-    const balanceInApt = aptosBalance / 100000000;
-    if (parseFloat(amount) > balanceInApt) {
+    if (parseFloat(amount) > stellarBalance) {
       setError("Insufficient balance");
       return;
     }
@@ -82,10 +82,7 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
       setIsLoading(true);
       setError("");
       
-      // Convert amount to octas (APT * 10^8)
-      const amountInOctas = Math.floor(parseFloat(amount) * 100000000).toString();
-      
-      let txHash;
+      let result;
       
       // If it's an email, use sendTransactionByEmail, otherwise use sendTransaction
       if (isEmail(recipient)) {
@@ -95,12 +92,26 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
           return;
         }
         
-        txHash = await sendTransactionByEmail(aptosAccount, recipient, amountInOctas);
+        result = await sendTransactionByEmail(
+          stellarAccount.secretKey,
+          recipient,
+          amount,
+          { memo }
+        );
       } else {
-        txHash = await sendTransaction(aptosAccount, recipient, amountInOctas);
+        result = await sendTransaction(
+          stellarAccount.secretKey,
+          recipient,
+          amount,
+          { memo }
+        );
       }
       
-      console.log("Transaction hash:", txHash);
+      if (!result.success) {
+        throw new Error(result.error || "Transaction failed");
+      }
+      
+      console.log("Transaction hash:", result.hash);
       
       setSuccess(true);
       getBalance(); // Update balance after transaction
@@ -114,13 +125,13 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
   };
 
   const formatMaxBalance = () => {
-    const balanceInApt = aptosBalance / 100000000;
-    return balanceInApt.toFixed(4);
+    return stellarBalance.toFixed(4);
   };
 
   const handleSetMax = () => {
-    const balanceInApt = aptosBalance / 100000000;
-    setAmount(balanceInApt.toString());
+    // Leave a small amount for transaction fees
+    const maxSendable = Math.max(0, stellarBalance - 0.5);
+    setAmount(maxSendable.toFixed(7));
   };
 
   return (
@@ -167,7 +178,7 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
                         ? "border-green-300 focus:ring-green-500" 
                         : "border-gray-300 focus:ring-blue-500"
                   } rounded-xl focus:outline-none focus:ring-2`}
-                  placeholder={isEmailMode ? "johndoe@example.com" : "Email or 0x address"}
+                  placeholder={isEmailMode ? "johndoe@example.com" : "Email or G... address"}
                 />
                 
                 {emailCheckLoading && (
@@ -204,7 +215,7 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
               
               {isEmailMode && emailExists === true && (
                 <p className="text-xs text-green-500 mt-1">
-                  User found. APT will be sent to their associated address.
+                  User found. XLM will be sent to their associated address.
                 </p>
               )}
             </div>
@@ -227,8 +238,25 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.0"
-                step="0.1"
+                step="0.0000001"
               />
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-600">Memo (Optional)</label>
+              <input
+                type="text"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Add a memo to your transaction"
+                maxLength={28}
+              />
+              <p className="text-xs text-gray-500">
+                {memo.length}/28 characters
+              </p>
             </div>
           </div>
 
@@ -240,7 +268,7 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
 
           {success && (
             <div className="p-3 bg-green-50 text-green-600 rounded-lg text-sm">
-              Transaction sent successfully! It may take a moment to confirm on the blockchain.
+              Transaction sent successfully! It may take a moment to confirm on the Stellar network.
             </div>
           )}
         </div>
@@ -250,25 +278,24 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
       <div className="p-4 border-t border-gray-200 bg-white">
         <button
           onClick={handleSend}
-          disabled={isLoading || success || (emailExists === false && isEmailMode)}
-          className={`w-full p-4 rounded-xl text-white font-medium ${
-            isLoading || success || (emailExists === false && isEmailMode)
-              ? "bg-gray-400"
-              : "bg-blue-500 hover:bg-blue-600 active:bg-blue-700"
-          } transition-colors`}
+          disabled={isLoading || !recipient || !amount || (isEmailMode && emailExists === false)}
+          className={`w-full py-3 px-4 flex justify-center items-center text-white font-semibold rounded-xl 
+            ${
+              isLoading || !recipient || !amount || (isEmailMode && emailExists === false)
+                ? "bg-blue-300"
+                : "bg-blue-500 hover:bg-blue-600"
+            } transition-colors`}
         >
           {isLoading ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               Processing...
-            </span>
-          ) : success ? (
-            "Transaction Complete"
+            </>
           ) : (
-            "Send"
+            "Send XLM"
           )}
         </button>
       </div>

@@ -1,23 +1,33 @@
 // Token configuration file for GoPay wallet
 
 export interface Token {
-  symbol: string;         // Token symbol (e.g., APT)
-  name: string;           // Full token name (e.g., Aptos Coin)
+  symbol: string;         // Token symbol (e.g., XLM)
+  name: string;           // Full token name (e.g., Stellar Lumens)
   decimals: number;       // Number of decimals for display
   icon?: string;          // Path to token icon
-  contractAddress: string; // Token contract address
+  contractAddress: string; // Token identifier
   isNative?: boolean;     // Whether this is the native token
+  issuer?: string;        // Stellar token issuer (null for native XLM)
 }
 
 // List of tokens supported by the wallet
 export const tokens: Token[] = [
   {
-    symbol: 'APT',
-    name: 'Aptos Coin',
-    decimals: 8,
-    contractAddress: '0x1::aptos_coin::AptosCoin',
+    symbol: 'XLM',
+    name: 'Stellar Lumens',
+    decimals: 7,
+    contractAddress: 'native',
     isNative: true,
-    icon: '/tokens/aptos.svg' // Will be added later
+    icon: '/tokens/stellar.svg' // Will be added later
+  },
+  // Example of a custom token on Stellar - adjust as needed
+  {
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 7, 
+    contractAddress: 'USDC',
+    issuer: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5', // Testnet USDC issuer (example)
+    icon: '/tokens/usdc.svg'
   }
 ];
 
@@ -32,4 +42,17 @@ export const getTokenBySymbol = (symbol: string): Token | undefined => {
 // Get token by contract address
 export const getTokenByAddress = (address: string): Token | undefined => {
   return tokens.find(token => token.contractAddress === address);
+};
+
+// Get token by both address and issuer (for Stellar custom assets)
+export const getTokenByAddressAndIssuer = (address: string, issuer?: string): Token | undefined => {
+  if (!issuer) {
+    // For native XLM
+    return tokens.find(token => token.contractAddress === address && token.isNative);
+  }
+  // For custom assets
+  return tokens.find(token => 
+    token.contractAddress === address && 
+    token.issuer === issuer
+  );
 };

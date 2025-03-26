@@ -12,9 +12,13 @@ interface Transaction {
   id: string;
   from_address: string;
   to_address: string;
-  amount: number;
-  token_type: string;
+  amount: string;
+  asset_type: string; // 'native', 'asset', 'soroban_token'
+  asset_code?: string;
+  asset_issuer?: string;
+  contract_id?: string;
   tx_hash: string;
+  memo?: string;
   status: string;
   created_at: string;
 }
@@ -54,11 +58,15 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ address }) => {
   };
 
   // Format amount to maximum 4 decimal places
-  const formatAmount = (amount: number) => {
-    if (amount === 0) return "0";
+  const formatAmount = (amount: string) => {
+    if (!amount) return "0";
+    
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) return "0";
+    if (parsedAmount === 0) return "0";
     
     // Convert to string and check if it needs rounding
-    const amountStr = amount.toString();
+    const amountStr = parsedAmount.toString();
     if (!amountStr.includes('.')) return amountStr;
     
     const [whole, decimal] = amountStr.split('.');
@@ -67,9 +75,15 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ address }) => {
     return `${whole}.${decimal.substring(0, 4)}`;
   };
 
-  // Get token name from token_type
-  const getTokenName = (tokenType: string) => {
-    return tokenType.split("::").pop() || tokenType;
+  // Get asset name from transaction
+  const getAssetName = (tx: Transaction) => {
+    if (tx.asset_type === 'native') return 'XLM';
+    if (tx.asset_type === 'asset' && tx.asset_code) return tx.asset_code;
+    if (tx.asset_type === 'soroban_token' && tx.contract_id) {
+      // Simplified - ideally would look up token name from contract_id
+      return 'Token';
+    }
+    return 'Unknown';
   };
 
   // Determina si el usuario es el remitente
@@ -131,7 +145,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ address }) => {
                   isSender(tx) ? "text-rose-500" : "text-emerald-500"
                 }`}
               >
-                {isSender(tx) ? "-" : "+"}{formatAmount(tx.amount)} {getTokenName(tx.token_type)}
+                {isSender(tx) ? "-" : "+"}{formatAmount(tx.amount)} {getAssetName(tx)}
               </span>
             </div>
 
@@ -145,6 +159,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ address }) => {
                 {formatTime(tx.created_at)}
               </span>
             </div>
+            
+            {tx.memo && (
+              <div className="mt-1">
+                <span className="text-xs text-gray-500 truncate italic">
+                  Memo: {tx.memo.length > 20 ? `${tx.memo.substring(0, 20)}...` : tx.memo}
+                </span>
+              </div>
+            )}
           </div>
           
           <div className="ml-2">

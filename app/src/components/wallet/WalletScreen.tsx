@@ -12,7 +12,7 @@ import SwapScreen from "./SwapScreen";
 import SettingsScreen from "./SettingsScreen";
 import AnimatedView from "@/components/ui/AnimatedView";
 import { useWeb3Auth } from "@/context/Web3AuthContext";
-import { requestAirdrop } from "@/utils/aptos"; //esto es aptos
+import { requestTestnetXLM } from "@/utils/stellar"; // Actualizado a Stellar
 import TransactionHistory from "./TransactionHistory";
 
 const WalletScreen: React.FC = () => {
@@ -20,19 +20,17 @@ const WalletScreen: React.FC = () => {
   const [currentView, setCurrentView] = useState<"main" | "send" | "receive" | "deposit" | "swap" | "settings" | "chat">("main");
   const [exitingView, setExitingView] = useState("");
   const [mainViewVisible, setMainViewVisible] = useState(true);
-  const { aptosBalance, aptosAddress, userInfo, getBalance, aptosAccount, logout } = useWeb3Auth(); //esto es aptos
+  const { stellarBalance, stellarAddress, userInfo, getBalance, stellarAccount, logout } = useWeb3Auth(); // Actualizado a Stellar
 
   // Format the balance to a human-readable format
   const formatBalance = (balance: number) => {
-    // APT has 8 decimals
-    const balanceInApt = balance / 100000000; //esto es aptos - decimales específicos de APT
-    return balanceInApt.toFixed(4);
+    // XLM tiene 7 decimales
+    return balance.toFixed(4);
   };
 
-  // Format USD value (mock exchange rate: 1 APT = $6.34)
+  // Format USD value (tasa de cambio actual: 1 XLM = $0.11)
   const getUsdValue = (balance: number) => {
-    const aptBalance = balance / 100000000; //esto es aptos - decimales específicos de APT
-    const usdValue = aptBalance * 6.34; //esto es aptos - precio de APT
+    const usdValue = balance * 0.11; // Precio actual de XLM
     return usdValue.toFixed(2);
   };
 
@@ -54,20 +52,20 @@ const WalletScreen: React.FC = () => {
     setMainViewVisible(true);
   }, []);
 
-  // Tokens data with real APT balance
+  // Tokens data with real XLM balance
   const tokens = [{
     id: "1",
-    icon: "https://cdn.builder.io/api/v1/image/assets/20e65f047558427aa511c5569cf902c1/334029914a8c29600c1f322abbafa179fc0f317b?placeholderIfAbsent=true",
-    name: "APTOS", //esto es aptos
-    price: "$6.34", //esto es aptos - precio de APT
-    priceChange: "2.5%",
-    amount: formatBalance(aptosBalance),
-    symbol: "APT", //esto es aptos
-    value: `$${getUsdValue(aptosBalance)}`,
+    icon: "https://cdn.builder.io/api/v1/image/assets/TEMP/84bc74eff06fa4ead69a0e81fcd1e2eda6ceeaed5b45d341c85a8e2e4461166b?apiKey=5faba938dc26447b89ef48cb80e41f0e&",
+    name: "STELLAR LUMENS",
+    price: "$0.11", 
+    priceChange: "1.2%",
+    amount: formatBalance(stellarBalance),
+    symbol: "XLM",
+    value: `$${getUsdValue(stellarBalance)}`,
     isPositive: true
   }];
 
-  const totalUsdBalance = getUsdValue(aptosBalance); //esto es aptos
+  const totalUsdBalance = getUsdValue(stellarBalance);
 
   // Enhanced view transition management
   const handleShowView = (view: "main" | "send" | "receive" | "deposit" | "swap" | "settings" | "chat") => {
@@ -184,7 +182,7 @@ const WalletScreen: React.FC = () => {
               </div>
             ) : (
               <div className="self-stretch flex-1 w-full overflow-auto">
-                <TransactionHistory address={aptosAddress} />
+                <TransactionHistory address={stellarAddress} />
               </div>
             )}
           </div>
@@ -218,7 +216,7 @@ const WalletScreen: React.FC = () => {
       </AnimatedView>
       
       <AnimatedView show={isViewActive("chat")} direction="right">
-        <ChatScreen onClose={() => handleShowView("main")} walletAddress={aptosAddress} />
+        <ChatScreen onClose={() => handleShowView("main")} walletAddress={stellarAddress} />
       </AnimatedView>
     </div>
   );

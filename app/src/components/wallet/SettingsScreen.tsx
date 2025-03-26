@@ -352,7 +352,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
 };
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) => {
-  const { userInfo, aptosAddress } = useWeb3Auth();
+  const { userInfo, stellarAddress } = useWeb3Auth();
   const [language, setLanguage] = useState("English");
   const [showPersonalInfo, setShowPersonalInfo] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
@@ -468,7 +468,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
       ),
       title: "Privacy Policy",
       rightContent: null,
-      onClick: () => window.open("https://aptos.dev/privacy", "_blank")
+      onClick: () => window.open("https://stellar.org/privacy-policy", "_blank")
     },
     {
       id: "help",
@@ -481,7 +481,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
       ),
       title: "Help center",
       rightContent: null,
-      onClick: () => window.open("https://aptos.dev/guides/getting-started", "_blank")
+      onClick: () => window.open("https://stellar.org/developers/docs", "_blank")
     },
     {
       id: "setting",
@@ -606,7 +606,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
         <PersonalInfo 
           onBack={() => handleCloseView("personal")} 
           userInfo={userInfo} 
-          walletAddress={aptosAddress}
+          walletAddress={stellarAddress}
         />
       </AnimatedView>
       

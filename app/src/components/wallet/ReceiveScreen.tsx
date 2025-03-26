@@ -6,28 +6,28 @@ interface ReceiveScreenProps {
 }
 
 const ReceiveScreen: React.FC<ReceiveScreenProps> = ({ onClose }) => {
-  const { aptosAddress } = useWeb3Auth();
+  const { stellarAddress } = useWeb3Auth();
   const [isCopied, setIsCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   useEffect(() => {
-    if (aptosAddress) {
+    if (stellarAddress) {
       // Crear una URL que dirija a la página de envío en la aplicación
       // Usamos window.location para obtener el dominio actual (funciona en localhost y producción)
       const baseUrl = window.location.origin;
       // Creamos un objeto URL con parámetros para la dirección
       const sendUrl = new URL("/send", baseUrl);
-      sendUrl.searchParams.append("address", aptosAddress);
+      sendUrl.searchParams.append("address", stellarAddress);
       
       // Generar QR code usando una API gratuita
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sendUrl.toString())}`;
       setQrCodeUrl(qrUrl);
     }
-  }, [aptosAddress]);
+  }, [stellarAddress]);
 
   const handleCopy = () => {
-    if (aptosAddress) {
-      navigator.clipboard.writeText(aptosAddress);
+    if (stellarAddress) {
+      navigator.clipboard.writeText(stellarAddress);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     }
@@ -66,7 +66,7 @@ const ReceiveScreen: React.FC<ReceiveScreenProps> = ({ onClose }) => {
       {/* Content */}
       <div className="flex-1 overflow-y-auto bg-gray-100 p-5">
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-6">
+          <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-6">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -101,9 +101,9 @@ const ReceiveScreen: React.FC<ReceiveScreenProps> = ({ onClose }) => {
           )}
 
           <div className="w-full text-center mb-4">
-            <p className="text-sm text-gray-500 mb-1">Your wallet address</p>
+            <p className="text-sm text-gray-500 mb-1">Your Stellar address</p>
             <p className="text-black font-medium">
-              {formatAddress(aptosAddress)}
+              {formatAddress(stellarAddress)}
             </p>
           </div>
         </div>
@@ -133,7 +133,7 @@ const ReceiveScreen: React.FC<ReceiveScreenProps> = ({ onClose }) => {
         </button>
         
         <p className="text-center text-xs text-gray-500 mt-4">
-          Share your QR code or address to receive APT tokens
+          Share your QR code or address to receive XLM or Stellar tokens
         </p>
       </div>
     </div>

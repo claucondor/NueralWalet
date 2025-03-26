@@ -6,14 +6,14 @@ interface SwapScreenProps {
 }
 
 const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
-  const { aptosBalance } = useWeb3Auth();
+  const { stellarBalance } = useWeb3Auth();
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   
-  // Mock exchange rate: 1 APT = 10 GoPay Token
+  // Mock exchange rate: 1 XLM = 10 GoPay Token
   const exchangeRate = 10;
   
   const handleFromAmountChange = (value: string) => {
@@ -41,8 +41,7 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
     }
     
     // Check if user has enough balance
-    const balanceInApt = aptosBalance / 100000000;
-    if (parseFloat(fromAmount) > balanceInApt) {
+    if (parseFloat(fromAmount) > stellarBalance) {
       setError("Insufficient balance");
       return;
     }
@@ -65,13 +64,13 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
   };
   
   const formatMaxBalance = () => {
-    const balanceInApt = aptosBalance / 100000000;
-    return balanceInApt.toFixed(4);
+    return stellarBalance.toFixed(4);
   };
   
   const handleSetMax = () => {
-    const balanceInApt = aptosBalance / 100000000;
-    handleFromAmountChange(balanceInApt.toString());
+    // Leave a small amount for transaction fees
+    const maxAmount = Math.max(0, stellarBalance - 0.5);
+    handleFromAmountChange(maxAmount.toFixed(4));
   };
 
   return (
@@ -120,7 +119,7 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
           </div>
           <div className="text-center">
             <h3 className="font-medium text-lg">Swap Tokens</h3>
-            <p className="text-gray-500 text-sm">1 APT = 10 GPT</p>
+            <p className="text-gray-500 text-sm">1 XLM = 10 GPT</p>
           </div>
         </div>
 
@@ -129,7 +128,7 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
           <div className="flex justify-between mb-2">
             <label className="text-sm text-gray-600">From</label>
             <div className="text-xs text-gray-500">
-              Balance: {formatMaxBalance()} APT
+              Balance: {formatMaxBalance()} XLM
               <button 
                 onClick={handleSetMax}
                 className="ml-2 text-blue-500"
@@ -146,16 +145,17 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
                 onChange={(e) => handleFromAmountChange(e.target.value)}
                 placeholder="0.0"
                 className="w-full bg-transparent focus:outline-none"
+                step="0.0000001"
               />
             </div>
             <div className="flex items-center">
               <div className="flex items-center gap-2 bg-gray-100 py-1 px-3 rounded-lg">
                 <img
-                  src="https://cdn.builder.io/api/v1/image/assets/20e65f047558427aa511c5569cf902c1/334029914a8c29600c1f322abbafa179fc0f317b?placeholderIfAbsent=true"
-                  alt="APT"
+                  src="/tokens/xlm.svg"
+                  alt="XLM"
                   className="w-5 h-5"
                 />
-                <span className="font-medium">APT</span>
+                <span className="font-medium">XLM</span>
               </div>
             </div>
           </div>
@@ -186,7 +186,7 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
           <div className="flex justify-between mb-2">
             <label className="text-sm text-gray-600">To (estimated)</label>
             <div className="text-xs text-gray-500">
-              Rate: 1 APT = 10 GPT
+              Rate: 1 XLM = 10 GPT
             </div>
           </div>
           <div className="flex p-3 border border-gray-200 rounded-lg bg-white">
@@ -201,7 +201,7 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
             </div>
             <div className="flex items-center">
               <div className="flex items-center gap-2 bg-gray-100 py-1 px-3 rounded-lg">
-                <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-xs text-white">G</div>
+                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white">G</div>
                 <span className="font-medium">GPT</span>
               </div>
             </div>
@@ -248,7 +248,7 @@ const SwapScreen: React.FC<SwapScreenProps> = ({ onClose }) => {
         </button>
         
         <p className="text-center text-xs text-gray-500 mt-2">
-          This is a simulated swap feature
+          Swapping currently uses simulated data and is for demonstration purposes only.
         </p>
       </div>
     </div>
