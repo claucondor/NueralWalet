@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Web3Auth } from '@web3auth/modal';
 import { clientId, privateKeyProvider, web3AuthNetwork } from '../config/web3auth';
 import { CHAIN_NAMESPACES } from '@web3auth/base';
-// Importar StellarWalletKit con ruta relativa correcta
-import { StellarWalletKit } from '../../../stellar-kit';
+// Importar StellarWalletKit desde la nueva ubicación
+import { StellarWalletKit } from '@/lib/stellar-kit';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
 // Definir la interfaz KeyPair localmente
@@ -111,7 +111,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
           privateKeyProvider,
           chainConfig: {
             chainNamespace: CHAIN_NAMESPACES.OTHER,
-            chainId: "0x1", // Usamos un valor genérico
+            chainId: "stellar:testnet", // Usamos un valor más específico para Stellar testnet
             // Configuración para acceder desde Web3Auth
             rpcTarget: "https://horizon-testnet.stellar.org",
             displayName: "Stellar Testnet",

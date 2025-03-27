@@ -1,5 +1,5 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
-import { StellarWalletKit } from '../../../stellar-kit';
+import { StellarWalletKit } from '@/lib/stellar-kit';
 import { stellarConfig } from '../config/stellar';
 
 // Inicializar StellarWalletKit con configuración para testnet o mainnet según configuración

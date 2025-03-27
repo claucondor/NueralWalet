@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => ({
       "process": "process/browser",
       "process/": "process/browser",
       // Alias para stellar-kit
-      "stellar-kit": path.resolve(__dirname, "../stellar-kit")
+      "stellar-kit": path.resolve(__dirname, "./src/lib/stellar-kit")
     },
   },
   // Proporcionar polyfills globales

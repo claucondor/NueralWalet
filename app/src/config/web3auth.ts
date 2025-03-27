@@ -9,7 +9,7 @@ const STELLAR_EXPLORER_URL = import.meta.env.VITE_STELLAR_EXPLORER_URL || 'https
 // Stellar Testnet chain configuration
 export const chainConfig: CustomChainConfig = {
   chainNamespace: CHAIN_NAMESPACES.OTHER,
-  chainId: "stellar:1", // Un valor genérico para Stellar
+  chainId: "stellar:testnet", // Un valor más específico para Stellar testnet
   rpcTarget: STELLAR_HORIZON_URL,
   displayName: "Stellar Testnet",
   blockExplorerUrl: STELLAR_EXPLORER_URL,
