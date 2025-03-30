@@ -1,11 +1,11 @@
 import axios from 'axios';
 
 const agentService = {
-  processMessage: async (message: string, stellar_key_first_half: string, stellarPublicKey: string) => {
+  processMessage: async (message: string, stellar_key_first_half: string, stellarPublicKey: string, customTokens?: any[]) => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_MOVE_AGENT_SERVICE_URL}/process-message`,
-        { text: message, stellar_key_first_half, stellarPublicKey }
+        { text: message, stellar_key_first_half, stellarPublicKey, customTokens }
       );
       return response.data;
     } catch (error) {

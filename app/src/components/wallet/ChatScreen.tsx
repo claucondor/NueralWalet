@@ -191,6 +191,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return;
     
+    // Obtener tokens personalizados del localStorage
+    const customTokens = JSON.parse(localStorage.getItem('customTokens') || '[]');
+    
     // Check if the service is available
     if (serviceStatus === 'offline') {
       const errorMessage: Message = {
@@ -234,7 +237,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       const response = await agentService.processMessage(
         userMessage.content,
         clientHalf,
-        walletAddress || ''
+        walletAddress || '',
+        customTokens
       );
       
       // Agregar respuesta del bot
