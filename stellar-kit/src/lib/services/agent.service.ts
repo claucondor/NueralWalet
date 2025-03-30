@@ -330,9 +330,73 @@ export class AgentService {
     customTokens?: any[]
   ) {
     // Verificar si es un token Soroban
-    const isSorobanToken = params.tokenType && params.tokenType.startsWith('SOROBAN:');
+    const isSorobanToken = params.tokenAddress && !params.isNativeToken;
     
     if (isSorobanToken) {
+      try {
+        // Verificar que tenemos los parámetros necesarios
+        const { recipient, amount, tokenAddress, isNativeToken } = params;
+        
+        if (!recipient || !amount || !tokenAddress || isNativeToken === undefined) {
+          const llm = LLMService.getLLM();
+          const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            Eres un asistente financiero amigable. El usuario intentó enviar un pago pero faltan parámetros requeridos.
+            
+            Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+            Explica que es necesario especificar destinatario, cantidad y dirección del token para completar la operación.
+          `);
+          
+          const chain = promptTemplate.pipe(llm);
+          const result = await chain.invoke({});
+          
+          return {
+            success: false,
+            message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+          };
+        }
+        
+        // Realizar transferencia de token Soroban
+        const result = await stellarKit.sendToken(
+          tokenAddress,
+          privateKey,
+          recipient,
+          amount
+        );
+        
+        if (result.success) {
+          const llm = LLMService.getLLM();
+          const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            Eres un asistente financiero amigable. El usuario ha enviado con éxito ${amount} tokens.
+            
+            Genera un mensaje de confirmación en el siguiente idioma: ${language}.
+            Incluye el hash de la transacción: ${result.hash}.
+          `);
+          
+          const chain = promptTemplate.pipe(llm);
+          const resultMsg = await chain.invoke({});
+          
+          return {
+            success: true,
+            message: typeof resultMsg.content === 'string' ? resultMsg.content : JSON.stringify(resultMsg.content),
+            data: { hash: result.hash }
+          };
+        } else {
+          return {
+            success: false,
+            message: result.error || 'Error desconocido al enviar tokens'
+          };
+        }
+      } catch (error: any) {
+        return {
+          success: false,
+          message: error.message || 'Error al procesar pago con token Soroban'
+        };
+      }
+    }
+    // Verificar si es un token Soroban (versión alternativa)
+    const isSorobanTokenByType = params.tokenType && params.tokenType.startsWith('SOROBAN:');
+    
+    if (isSorobanTokenByType) {
       // Lógica específica para tokens Soroban
       const contractId = params.tokenType.split(':')[1];
       // Implementar lógica de pago con contrato Soroban
