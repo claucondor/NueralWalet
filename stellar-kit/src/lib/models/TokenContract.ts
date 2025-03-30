@@ -70,7 +70,7 @@ export class TokenContract {
       const config = this.networkProvider.getNetworkConfig();
       const command = `stellar contract invoke \
         --id ${this._contractId} \
-        --source-account ${this._sourceAccount} \
+        --source ${this._sourceAccount} \
         --rpc-url ${config.rpcUrl} \
         --network-passphrase "${config.networkPassphrase}" \
         -- \
@@ -129,21 +129,29 @@ export class TokenContract {
   async getTokenMetadata(): Promise<TokenMetadata> {
     try {
       const config = this.networkProvider.getNetworkConfig();
+      
       // Obtener el nombre del token
       let name = '';
       try {
         const nameCommand = `stellar contract invoke \
           --id ${this._contractId} \
-          --source-account ${this._sourceAccount} \
+          --source ${this._sourceAccount} \
           --rpc-url ${config.rpcUrl} \
           --network-passphrase "${config.networkPassphrase}" \
           -- \
           name`;
         
+        console.log(`Ejecutando comando para obtener nombre: ${nameCommand}`);
         name = await this.networkProvider.executeContractCommand(nameCommand);
+        console.log(`Nombre del token obtenido: ${name}`);
+        
+        // Limpiar las comillas si existen
+        name = this.cleanQuotedString(name);
       } catch (error) {
         console.error('Error al obtener el nombre del token:', error);
-        name = 'Unknown Token';
+        // Usar un nombre más descriptivo basado en el ID del contrato
+        const shortId = this._contractId.substring(0, 6);
+        name = `Token ${shortId}`;
       }
       
       // Obtener el símbolo del token
@@ -151,54 +159,64 @@ export class TokenContract {
       try {
         const symbolCommand = `stellar contract invoke \
           --id ${this._contractId} \
-          --source-account ${this._sourceAccount} \
+          --source ${this._sourceAccount} \
           --rpc-url ${config.rpcUrl} \
           --network-passphrase "${config.networkPassphrase}" \
           -- \
           symbol`;
         
+        console.log(`Ejecutando comando para obtener símbolo: ${symbolCommand}`);
         symbol = await this.networkProvider.executeContractCommand(symbolCommand);
+        console.log(`Símbolo del token obtenido: ${symbol}`);
+        
+        // Limpiar las comillas si existen
+        symbol = this.cleanQuotedString(symbol);
       } catch (error) {
         console.error('Error al obtener el símbolo del token:', error);
-        symbol = 'UNK';
+        // Usar un símbolo basado en el ID del contrato
+        symbol = this._contractId.substring(0, 3).toUpperCase();
       }
       
       // Obtener los decimales del token
-      let decimals = 7; // Valor por defecto
+      let decimals = 7; // Valor por defecto para tokens Stellar
       try {
         const decimalsCommand = `stellar contract invoke \
           --id ${this._contractId} \
-          --source-account ${this._sourceAccount} \
+          --source ${this._sourceAccount} \
           --rpc-url ${config.rpcUrl} \
           --network-passphrase "${config.networkPassphrase}" \
           -- \
           decimals`;
         
+        console.log(`Ejecutando comando para obtener decimales: ${decimalsCommand}`);
         const decimalsStr = await this.networkProvider.executeContractCommand(decimalsCommand);
+        console.log(`Decimales del token obtenidos: ${decimalsStr}`);
         decimals = parseInt(decimalsStr);
       } catch (error) {
         console.error('Error al obtener los decimales del token:', error);
       }
       
-      // Obtener el administrador del token
-      let admin = '';
-      try {
-        admin = await this.getAdmin();
-      } catch (error) {
-        console.error('Error al obtener el administrador del token:', error);
-        admin = 'Unknown';
-      }
-      
       return {
         name,
         symbol,
-        decimals,
-        admin
+        decimals
       };
     } catch (error) {
       console.error('Error al obtener metadatos del token:', error);
       throw error;
     }
+  }
+
+  /**
+   * Limpia un string que puede contener comillas
+   * @param value Valor que puede tener comillas
+   * @returns Valor sin comillas
+   */
+  private cleanQuotedString(value: string): string {
+    if (!value) return '';
+    
+    // Eliminar comillas al principio y al final
+    return value.replace(/^"(.+)"$/, '$1');
   }
 
   /**
@@ -211,7 +229,7 @@ export class TokenContract {
       const config = this.networkProvider.getNetworkConfig();
       const command = `stellar contract invoke \
         --id ${this._contractId} \
-        --source-account ${this._sourceAccount} \
+        --source ${this._sourceAccount} \
         --rpc-url ${config.rpcUrl} \
         --network-passphrase "${config.networkPassphrase}" \
         -- \
@@ -277,42 +295,6 @@ export class TokenContract {
     } catch (error) {
       console.error('Error al formatear balance:', error);
       return balance; // Devolver el balance original en caso de error
-    }
-  }
-
-  /**
-   * Obtiene el administrador del contrato
-   * @returns La dirección del administrador
-   */
-  async getAdmin(): Promise<string> {
-    try {
-      const config = this.networkProvider.getNetworkConfig();
-      const command = `stellar contract invoke \
-        --id ${this._contractId} \
-        --source-account ${this._sourceAccount} \
-        --rpc-url ${config.rpcUrl} \
-        --network-passphrase "${config.networkPassphrase}" \
-        -- \
-        admin`;
-      
-      return await this.networkProvider.executeContractCommand(command);
-    } catch (error) {
-      // Intentar con método alternativo (set_admin)
-      try {
-        const config = this.networkProvider.getNetworkConfig();
-        const command = `stellar contract invoke \
-          --id ${this._contractId} \
-          --source-account ${this._sourceAccount} \
-          --rpc-url ${config.rpcUrl} \
-          --network-passphrase "${config.networkPassphrase}" \
-          -- \
-          get_admin`;
-        
-        return await this.networkProvider.executeContractCommand(command);
-      } catch (innerError) {
-        console.error('Error al obtener administrador del token:', innerError);
-        throw error; // Devolver el error original
-      }
     }
   }
 
@@ -447,7 +429,7 @@ export class TokenContract {
     const config = this.networkProvider.getNetworkConfig();
     const command = `stellar contract invoke \
       --id ${this._contractId} \
-      --source-account ${this._sourceAccount} \
+      --source ${this._sourceAccount} \
       --rpc-url ${config.rpcUrl} \
       --network-passphrase "${config.networkPassphrase}" \
       -- \

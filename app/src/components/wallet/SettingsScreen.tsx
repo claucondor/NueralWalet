@@ -173,7 +173,7 @@ const PersonalInfo: React.FC<PersonalInfoProps> = ({ onBack, userInfo, walletAdd
 };
 
 const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
-  const { getPrivateKey } = useWeb3Auth();
+  const { getPrivateKey, stellarAccount } = useWeb3Auth();
   const [privateKey, setPrivateKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -186,8 +186,14 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
     
     setIsLoading(true);
     try {
-      const key = await getPrivateKey();
-      setPrivateKey(key);
+      // Use the Stellar account's secret key directly instead of fetching the EVM private key
+      if (stellarAccount && stellarAccount.secretKey) {
+        setPrivateKey(stellarAccount.secretKey);
+      } else {
+        // Fallback to the original method if stellarAccount is not available
+        const key = await getPrivateKey();
+        setPrivateKey(key);
+      }
     } catch (error) {
       console.error("Error fetching private key:", error);
     } finally {
@@ -261,13 +267,13 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
               <div>
                 <h3 className="font-medium mb-1">Security Warning</h3>
                 <p className="text-sm">
-                  Your private key provides full access to your wallet and funds. Never share it with anyone, and store it securely.
+                  Your Stellar secret key provides full access to your wallet and funds. Never share it with anyone, and store it securely.
                 </p>
               </div>
             </div>
             
             <p className="mb-4 text-sm text-gray-700 animate-fadeIn" style={{animationDelay: "0.2s"}}>
-              Viewing your private key can be risky. Only do this in a secure environment where no one can see your screen.
+              Viewing your Stellar secret key can be risky. Only do this in a secure environment where no one can see your screen.
             </p>
             
             <div className="flex flex-col space-y-3 animate-slideUp" style={{animationDelay: "0.3s"}}>
@@ -275,7 +281,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
                 onClick={() => setConfirmed(true)}
                 className="p-3 rounded-lg bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                I understand, show my private key
+                I understand, show my Stellar secret key
               </button>
               <button
                 onClick={onBack}
@@ -291,7 +297,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
               <LoadingSpinner />
             ) : (
               <div className="bg-white rounded-xl p-5 shadow-sm animate-fadeIn">
-                <h3 className="font-medium text-gray-800 mb-2">Your Private Key</h3>
+                <h3 className="font-medium text-gray-800 mb-2">Your Stellar Secret Key</h3>
                 <div className="bg-gray-100 p-4 rounded-lg mb-3 animate-slideUp" style={{animationDelay: "0.1s"}}>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-gray-500">For recovery purposes only</p>

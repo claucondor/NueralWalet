@@ -9,7 +9,6 @@ export interface TokenMetadata {
   name: string;
   symbol: string;
   decimals: number;
-  admin: string;
   totalSupply?: string;
 }
 
@@ -50,7 +49,6 @@ export interface TokenInfo {
   name: string;
   symbol: string;
   decimals: number;
-  admin: string;
   balance?: string;
   formattedBalance?: string;
 } 

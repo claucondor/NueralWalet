@@ -25,21 +25,25 @@ const WalletScreen: React.FC = () => {
   // Format the balance to a human-readable format
   const formatBalance = (balance: number) => {
     // XLM tiene 7 decimales
+    if (isNaN(balance) || balance === undefined || balance === null) return '0.0000';
     return balance.toFixed(4);
   };
 
   // Format USD value (tasa de cambio actual: 1 XLM = $0.11)
   const getUsdValue = (balance: number) => {
+    if (isNaN(balance) || balance === undefined || balance === null) return '0.00';
     const usdValue = balance * 0.11; // Precio actual de XLM
     return usdValue.toFixed(2);
   };
 
   useEffect(() => {
     // Refresh balance when component mounts
+    console.log('WalletScreen montado, obteniendo balance inicial');
     getBalance();
     
     // Set up interval to refresh balance every 30 seconds
     const intervalId = setInterval(() => {
+      console.log('Actualizando balance por intervalo');
       getBalance();
     }, 30000);
     
@@ -52,20 +56,16 @@ const WalletScreen: React.FC = () => {
     setMainViewVisible(true);
   }, []);
 
-  // Tokens data with real XLM balance
-  const tokens = [{
-    id: "1",
-    icon: "https://cdn.builder.io/api/v1/image/assets/TEMP/84bc74eff06fa4ead69a0e81fcd1e2eda6ceeaed5b45d341c85a8e2e4461166b?apiKey=5faba938dc26447b89ef48cb80e41f0e&",
-    name: "STELLAR LUMENS",
-    price: "$0.11", 
-    priceChange: "1.2%",
-    amount: formatBalance(stellarBalance),
-    symbol: "XLM",
-    value: `$${getUsdValue(stellarBalance)}`,
-    isPositive: true
-  }];
+  // Para depuración
+  useEffect(() => {
+    console.log('Stellar Balance actualizado:', stellarBalance);
+  }, [stellarBalance]);
 
+  // Calculamos el valor total en USD (solo se utilizará para el encabezado)
   const totalUsdBalance = getUsdValue(stellarBalance);
+  
+  // Para depuración
+  console.log('Header mostrado con balance USD:', totalUsdBalance);
 
   // Enhanced view transition management
   const handleShowView = (view: "main" | "send" | "receive" | "deposit" | "swap" | "settings" | "chat") => {
@@ -172,7 +172,7 @@ const WalletScreen: React.FC = () => {
 
             {activeTab === "tokens" ? (
               <div className="w-full flex-1 flex flex-col">
-                <TokensList tokens={tokens} />
+                <TokensList />
                 <ActionButtons 
                   onSend={() => handleActionButton("Send")} 
                   onReceive={() => handleActionButton("Receive")} 

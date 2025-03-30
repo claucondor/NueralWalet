@@ -1,20 +1,17 @@
 import { CHAIN_NAMESPACES, CustomChainConfig } from '@web3auth/base';
 import { CommonPrivateKeyProvider } from '@web3auth/base-provider';
 
-// Importar configuración de Stellar
-const STELLAR_HORIZON_URL = import.meta.env.VITE_STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org';
-const STELLAR_NETWORK = import.meta.env.VITE_STELLAR_NETWORK || 'TESTNET';
-const STELLAR_EXPLORER_URL = import.meta.env.VITE_STELLAR_EXPLORER_URL || 'https://stellar.expert/explorer/testnet';
-
-// Stellar Testnet chain configuration
-export const chainConfig: CustomChainConfig = {
+// Configuración de red EVM para Web3Auth
+// Web3Auth solo soporta redes EVM, usaremos esta configuración para obtener la clave privada
+// que luego se usará para derivar la cuenta Stellar
+export const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.OTHER,
-  chainId: "stellar:testnet", // Un valor más específico para Stellar testnet
-  rpcTarget: STELLAR_HORIZON_URL,
-  displayName: "Stellar Testnet",
-  blockExplorerUrl: STELLAR_EXPLORER_URL,
-  ticker: "XLM",
-  tickerName: "Stellar Lumens",
+  chainId: "0x2", // Testnet chain ID
+  rpcTarget: "https://fullnode.testnet.aptoslabs.com/v1",
+  displayName: "Aptos Testnet",
+  blockExplorerUrl: "https://explorer.aptoslabs.com/?network=testnet",
+  ticker: "APT",
+  tickerName: "Aptos",
 };
 
 // Configuración de Web3Auth

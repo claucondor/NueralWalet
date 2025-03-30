@@ -9,6 +9,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Evitar archivos JS/JS.map en la carpeta src (resultado de compilación accidental)
+src/**/*.js
+src/**/*.js.map
+
 # Archivos de entorno
 .env
 .env.local

@@ -73,16 +73,20 @@ async function testTokenWallet() {
         console.log(`   📝 Contract ID: ${tokenInfo.contractId}`);
         console.log(`   🏷️ Nombre: ${tokenInfo.name} (${tokenInfo.symbol})`);
         console.log(`   🔢 Decimales: ${tokenInfo.decimals}`);
-        console.log(`   👤 Administrador: ${tokenInfo.admin}`);
         
         // 2. Obtener el balance del token para una dirección
         console.log('\n2️⃣ Consultar balance del token');
-        const address = await question('Ingresa la dirección para consultar el balance (deja vacío para el administrador): ');
+        const address = await question('Ingresa la dirección para consultar el balance: ');
         
-        const addressToCheck = address.trim() || tokenInfo.admin;
-        const addressBalance = await walletKit.getTokenBalance(tokenInfo.contractId, addressToCheck);
+        if (!address.trim()) {
+            console.log('❌ Se requiere una dirección válida para consultar el balance');
+            rl.close();
+            return;
+        }
         
-        console.log(`✅ Balance de ${addressToCheck}: ${addressBalance.formattedBalance} ${tokenInfo.symbol}`);
+        const addressBalance = await walletKit.getTokenBalance(tokenInfo.contractId, address);
+        
+        console.log(`✅ Balance de ${address}: ${addressBalance.formattedBalance} ${tokenInfo.symbol}`);
         
         // 3. Interfaz interactiva para probar operaciones con tokens
         const performOperations = await question('\n¿Deseas realizar operaciones con este token? (S/N): ');

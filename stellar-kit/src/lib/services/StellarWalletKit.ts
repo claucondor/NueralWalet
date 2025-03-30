@@ -216,8 +216,7 @@ export class StellarWalletKit {
                     contractId,
                     name: metadata.name,
                     symbol: metadata.symbol,
-                    decimals: metadata.decimals,
-                    admin: metadata.admin
+                    decimals: metadata.decimals
                 });
             } catch (error) {
                 console.error(`Error al obtener información del token ${contractId}:`, error);
@@ -250,8 +249,7 @@ export class StellarWalletKit {
             contractId,
             name: metadata.name,
             symbol: metadata.symbol,
-            decimals: metadata.decimals,
-            admin: metadata.admin
+            decimals: metadata.decimals
         };
     }
 
@@ -274,8 +272,7 @@ export class StellarWalletKit {
             contractId: tokenContract.contractId,
             name: metadata.name,
             symbol: metadata.symbol,
-            decimals: metadata.decimals,
-            admin: metadata.admin
+            decimals: metadata.decimals
         };
     }
 

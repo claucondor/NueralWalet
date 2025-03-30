@@ -103,7 +103,13 @@ export const saveUserWithKey = async (
 ): Promise<boolean> => {
   try {
     // Preparar los datos para la upsert
-    let userData: any = { 
+    const userData: {
+      email: string;
+      address: string;
+      updated_at: string;
+      private_key_half?: string;
+      stellar_key_half?: string;
+    } = { 
       email, 
       address,
       updated_at: new Date().toISOString()
@@ -132,6 +138,14 @@ export const saveUserWithKey = async (
     }
 
     console.log('User data with key saved successfully to Supabase');
+    
+    // Después de guardar el usuario, crear los límites de agente si no existen
+    const limitsCreated = await createDefaultAgentLimits(address);
+    if (!limitsCreated) {
+      console.warn('No se pudieron crear los límites de agente para el usuario');
+      // Continuamos aunque falle la creación de límites, ya que el usuario se guardó correctamente
+    }
+    
     return true;
   } catch (error) {
     console.error('Exception when saving user data with key to Supabase:', error);
@@ -159,6 +173,12 @@ export const createDefaultAgentLimits = async (address: string): Promise<boolean
       return true;
     }
 
+    // Si hay un error diferente de "no se encontró registro", es un error real
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Error al verificar límites existentes:', checkError);
+      return false;
+    }
+    
     // Si no existen, creamos los límites por defecto
     const { error } = await supabase
       .from('agent_limits')

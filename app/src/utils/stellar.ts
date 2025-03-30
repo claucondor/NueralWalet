@@ -1,10 +1,6 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
-import { StellarWalletKit } from '@/lib/stellar-kit';
 import { stellarConfig } from '../config/stellar';
-
-// Inicializar StellarWalletKit con configuración para testnet o mainnet según configuración
-const isTestnet = stellarConfig.network === 'TESTNET';
-const stellarKit = new StellarWalletKit(isTestnet);
+import { accountService, tokenService, transactionService } from '../services/stellarKitApi';
 
 // Definir interfaz KeyPair
 interface KeyPair {
@@ -55,14 +51,8 @@ export const getStellarAccount = (privateKey: string): { stellarAccount: KeyPair
  */
 export const getStellarBalance = async (accountAddress: string): Promise<number> => {
   try {
-    // Usar directamente el método getAccountInfo del kit
-    const accountInfo = await stellarKit.getAccountInfo(accountAddress);
-    
-    if (!accountInfo) {
-      return 0;
-    }
-    
-    return parseFloat(accountInfo.balance || '0');
+    const accountInfo = await accountService.getAccountInfo(accountAddress);
+    return accountInfo ? parseFloat(accountInfo.balance || '0') : 0;
   } catch (error) {
     console.error("Error obteniendo balance de Stellar:", error);
     return 0;
@@ -76,21 +66,13 @@ export const getStellarBalance = async (accountAddress: string): Promise<number>
  */
 export const requestTestnetXLM = async (accountAddress: string): Promise<boolean> => {
   try {
-    if (!isTestnet) {
+    if (stellarConfig.network !== 'TESTNET') {
       console.error('No se puede solicitar XLM en mainnet');
       return false;
     }
     
-    // Usar el método fundAccountWithFriendbot del kit
-    const result = await stellarKit.fundAccountWithFriendbot(accountAddress);
-    
-    if (result.success) {
-      console.log('Cuenta fondeada exitosamente:', result.hash);
-      return true;
-    } else {
-      console.error('Error al fondear la cuenta:', result.error);
-      return false;
-    }
+    const result = await accountService.fundAccount(accountAddress);
+    return result.success;
   } catch (error) {
     console.error("Error solicitando XLM de testnet:", error);
     return false;
@@ -115,23 +97,12 @@ export const sendTransaction = async (
     assetIssuer?: string;
   }
 ): Promise<{ success: boolean; hash?: string; error?: string }> => {
-  try {
-    // Usar directamente el método sendPayment del kit
-    const result = await stellarKit.sendPayment(
-      secretKey,
-      recipientAddress,
-      amount,
-      options
-    );
-    
-    return result;
-  } catch (error) {
-    console.error("Error enviando transacción:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : String(error)
-    };
-  }
+  return transactionService.sendPayment(
+    secretKey,
+    recipientAddress,
+    amount,
+    options?.memo
+  );
 };
 
 /**
@@ -145,11 +116,14 @@ export const createAccount = async (
   startingBalance: string = "2"
 ): Promise<{ success: boolean; publicKey?: string; secretKey?: string; error?: string }> => {
   try {
-    // Generar un nuevo keypair para la cuenta a crear
-    const newAccount = stellarKit.generateKeypair();
+    // Generar un nuevo keypair localmente
+    const newKeypair = StellarSdk.Keypair.random();
+    const newAccount = {
+      publicKey: newKeypair.publicKey(), 
+      secretKey: newKeypair.secret()
+    };
     
-    // Usar el método createAccount del kit para financiar la nueva cuenta
-    const result = await stellarKit.createAccount(
+    const result = await accountService.createAccount(
       sourceSecretKey,
       newAccount.publicKey,
       startingBalance
@@ -200,12 +174,10 @@ export const simulatePurchaseXLM = async (
     // Simular retraso en procesamiento de pago
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Simular pago exitoso
-    
-    // Usar friendbot para agregar tokens a la cuenta (para demo)
+    // Simular pago exitoso en testnet o mainnet
     let result = false;
     
-    if (isTestnet) {
+    if (stellarConfig.network === 'TESTNET') {
       result = await requestTestnetXLM(accountAddress);
     } else {
       // En mainnet, simular transferencia exitosa
@@ -249,49 +221,16 @@ export const sendTransactionByEmail = async (
   }
 ) => {
   try {
-    // Primero verificar si el email existe en el sistema
-    const response = await fetch(
-      `${import.meta.env.VITE_MOVE_AGENT_SERVICE_URL || 'http://localhost:3001'}/api/user/check-email/${encodeURIComponent(recipientEmail)}`
-    );
+    // Simular la resolución para la demo - simular un retraso
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const data = await response.json();
+    // Generar una dirección Stellar ficticia basada en el correo para fines de demostración
+    const mockAddress = generateMockAddressFromEmail(recipientEmail);
     
-    if (!data.success || !data.data.exists) {
-      throw new Error("El correo electrónico no está registrado en el sistema");
-    }
-    
-    // Hacer una solicitud POST al servicio de Move Agent
-    const sendResponse = await fetch(
-      `${import.meta.env.VITE_MOVE_AGENT_SERVICE_URL || 'http://localhost:3001'}/api/wallet/send-by-email`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fromSecretKey: secretKey,
-          toEmail: recipientEmail,
-          amount: parseFloat(amount),
-          assetCode: options?.assetCode || "native",
-          assetIssuer: options?.assetIssuer,
-          memo: options?.memo || "Envío por email"
-        }),
-      }
-    );
-    
-    if (!sendResponse.ok) {
-      const errorData = await sendResponse.json();
-      throw new Error(errorData.message || "Error al enviar transacción por email");
-    }
-    
-    const responseData = await sendResponse.json();
-    
-    return {
-      success: true,
-      hash: responseData.data.hash
-    };
+    // Enviar la transacción a la dirección resuelta
+    return await sendTransaction(secretKey, mockAddress, amount, options);
   } catch (error) {
-    console.error("Error enviando transacción por email:", error);
+    console.error("Error enviando por email:", error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : String(error)
@@ -300,81 +239,33 @@ export const sendTransactionByEmail = async (
 };
 
 /**
- * Carga información de un token
- * @param assetCode Código del token
- * @param assetIssuer Emisor del token
- * @param accountAddress Dirección de la cuenta
- * @returns Información del token
+ * Función auxiliar para generar una dirección Stellar ficticia a partir de un correo
+ * SOLO PARA DEMOSTRACIÓN - en una implementación real, se usaría un servicio de federación
  */
-export const loadToken = async (assetCode: string, assetIssuer: string, accountAddress: string) => {
-  try {
-    // Para tokens en Stellar, necesitamos agregar una trustline primero
-    // Esto tendrá que implementarse usando las operaciones básicas de StellarSdk
-    // ya que parece que stellarKit no tiene un método específico para esto
-    
-    // Obtenemos la cuenta
-    const server = stellarKit.getServer();
-    const account = await server.loadAccount(accountAddress);
-    
-    // Verificamos si ya existe la trustline
-    const assetBalances = account.balances.filter(balance => 
-      balance.asset_type !== 'native' && balance.asset_type !== 'liquidity_pool_shares'
-    ) as StellarAssetBalance[];
-    
-    const hasAsset = assetBalances.some(balance => 
-      balance.asset_code === assetCode && 
-      balance.asset_issuer === assetIssuer
-    );
-    
-    if (!hasAsset) {
-      console.log(`Trustline para ${assetCode} no encontrada, deberá ser creada primero`);
-    }
-    
-    // Obtenemos el balance
-    const balance = await getTokenBalance(assetCode, assetIssuer, accountAddress);
-    
-    return {
-      code: assetCode,
-      issuer: assetIssuer,
-      balance
-    };
-  } catch (error) {
-    console.error('Error cargando token:', error);
-    return null;
-  }
-};
+function generateMockAddressFromEmail(email: string): string {
+  // Generar una dirección basada en el hash del correo
+  const emailData = Buffer.from(email);
+  const randomPart = Array.from(emailData)
+                          .map(byte => byte.toString(16).padStart(2, '0'))
+                          .join('')
+                          .substring(0, 32);
+  
+  // Crear una dirección de demostración que parece una dirección Stellar real
+  // G es el prefijo estándar para claves públicas Stellar
+  return `G${randomPart}`;
+}
 
 /**
- * Obtiene el balance de un token
- * @param assetCode Código del token
- * @param assetIssuer Emisor del token
- * @param accountAddress Dirección de la cuenta
- * @returns Balance del token
+ * Obtiene información de un token
+ * @param contractId - ID del contrato del token
+ * @returns Información del token o null si no se pudo obtener
  */
-export const getTokenBalance = async (assetCode: string, assetIssuer: string, accountAddress: string): Promise<string | null> => {
+export const getTokenInfo = async (contractId: string) => {
   try {
-    // Obtener todas las posiciones de activos del usuario
-    const server = stellarKit.getServer();
-    const accountInfo = await server.loadAccount(accountAddress);
-    
-    // Filtrar por no-nativas para tener solo balances de assets
-    const assetBalances = accountInfo.balances.filter(balance => 
-      balance.asset_type !== 'native' && balance.asset_type !== 'liquidity_pool_shares'
-    ) as StellarAssetBalance[];
-    
-    // Buscar el balance del token especificado
-    const assetBalance = assetBalances.find(balance => 
-      balance.asset_code === assetCode && 
-      balance.asset_issuer === assetIssuer
-    );
-    
-    if (assetBalance) {
-      return assetBalance.balance;
-    }
-    
-    return '0';
+    // Usar el servicio API para obtener información del token
+    return await tokenService.getTokenInfo(contractId);
   } catch (error) {
-    console.error('Error obteniendo balance del token:', error);
+    console.error('Error obteniendo información del token:', error);
     return null;
   }
 }; 

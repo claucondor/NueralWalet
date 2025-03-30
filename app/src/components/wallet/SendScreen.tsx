@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useWeb3Auth } from "@/context/Web3AuthContext";
 import { sendTransaction, sendTransactionByEmail } from "@/utils/stellar";
+import { useCustomTokens, CustomToken } from "@/hooks/useCustomTokens";
+import { tokenService } from "@/services/stellarKitApi";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SendScreenProps {
   onClose: () => void;
@@ -18,14 +22,42 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
   const [isEmailMode, setIsEmailMode] = useState(false);
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [selectedToken, setSelectedToken] = useState<"XLM" | CustomToken>("XLM");
+  const [selectedTokenBalance, setSelectedTokenBalance] = useState<number | string>(0);
   
   const { stellarAccount, getBalance, stellarBalance, stellarAddress } = useWeb3Auth();
+  const { customTokens } = useCustomTokens();
 
   useEffect(() => {
     if (initialAddress) {
       setRecipient(initialAddress);
     }
   }, [initialAddress]);
+
+  // Actualizar el balance del token seleccionado cuando cambia la selección
+  useEffect(() => {
+    const updateSelectedTokenBalance = async () => {
+      if (selectedToken === "XLM") {
+        setSelectedTokenBalance(stellarBalance);
+      } else if (selectedToken && typeof selectedToken !== "string" && stellarAccount) {
+        try {
+          const balance = await tokenService.getTokenBalance(selectedToken.contractId, stellarAccount.publicKey);
+          if (balance && balance.formattedBalance) {
+            setSelectedTokenBalance(balance.formattedBalance);
+          } else if (balance && balance.balance) {
+            setSelectedTokenBalance(balance.balance);
+          } else {
+            setSelectedTokenBalance("0");
+          }
+        } catch (error) {
+          console.error(`Error al obtener balance del token ${selectedToken.contractId}:`, error);
+          setSelectedTokenBalance("0");
+        }
+      }
+    };
+
+    updateSelectedTokenBalance();
+  }, [selectedToken, stellarBalance, stellarAccount]);
 
   // Check if the input is an email address
   const isEmail = (input: string) => {
@@ -68,13 +100,17 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
 
   const handleSend = async () => {
     if (!recipient || !amount || !stellarAccount) {
-      setError("Please enter a valid address or email and amount");
+      setError("Por favor ingresa una dirección o email válido y un monto");
       return;
     }
 
-    // Check if amount is more than balance
-    if (parseFloat(amount) > stellarBalance) {
-      setError("Insufficient balance");
+    // Verificar si el monto es mayor que el balance disponible
+    const amountNum = parseFloat(amount);
+    const balanceNum = typeof selectedTokenBalance === 'string' ? 
+      parseFloat(selectedTokenBalance) : selectedTokenBalance;
+    
+    if (amountNum > balanceNum) {
+      setError("Balance insuficiente");
       return;
     }
 
@@ -84,54 +120,114 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
       
       let result;
       
-      // If it's an email, use sendTransactionByEmail, otherwise use sendTransaction
-      if (isEmail(recipient)) {
-        if (!emailExists) {
-          setError("The email is not registered in the system");
+      // Si es XLM
+      if (selectedToken === "XLM") {
+        // Si es un email, usar sendTransactionByEmail, de lo contrario usar sendTransaction
+        if (isEmail(recipient)) {
+          if (!emailExists) {
+            setError("El email no está registrado en el sistema");
+            setIsLoading(false);
+            return;
+          }
+          
+          result = await sendTransactionByEmail(
+            stellarAccount.secretKey,
+            recipient,
+            amount,
+            { memo }
+          );
+        } else {
+          result = await sendTransaction(
+            stellarAccount.secretKey,
+            recipient,
+            amount,
+            { memo }
+          );
+        }
+      } 
+      // Si es un token personalizado
+      else if (typeof selectedToken !== "string") {
+        // Para tokens personalizados, solo se pueden enviar a direcciones Stellar, no a emails
+        if (isEmail(recipient)) {
+          setError("Los tokens personalizados solo pueden enviarse a direcciones Stellar, no a emails");
           setIsLoading(false);
           return;
         }
         
-        result = await sendTransactionByEmail(
+        // Usar el servicio de tokens para enviar tokens personalizados
+        result = await tokenService.sendToken(
+          selectedToken.contractId,
           stellarAccount.secretKey,
           recipient,
-          amount,
-          { memo }
-        );
-      } else {
-        result = await sendTransaction(
-          stellarAccount.secretKey,
-          recipient,
-          amount,
-          { memo }
+          amount
         );
       }
       
-      if (!result.success) {
-        throw new Error(result.error || "Transaction failed");
+      if (!result || !result.success) {
+        throw new Error(result?.error || "La transacción falló");
       }
       
-      console.log("Transaction hash:", result.hash);
+      console.log("Hash de transacción:", result.hash);
       
       setSuccess(true);
-      getBalance(); // Update balance after transaction
+      
+      // Actualizar el balance después de la transacción
+      if (selectedToken === "XLM") {
+        getBalance();
+      } else {
+        // Actualizar el balance del token seleccionado
+        const tokenBalance = await tokenService.getTokenBalance(
+          (selectedToken as CustomToken).contractId, 
+          stellarAccount.publicKey
+        );
+        if (tokenBalance && tokenBalance.formattedBalance) {
+          setSelectedTokenBalance(tokenBalance.formattedBalance);
+        } else if (tokenBalance && tokenBalance.balance) {
+          setSelectedTokenBalance(tokenBalance.balance);
+        }
+      }
       
     } catch (error) {
-      console.error("Error sending transaction:", error);
-      setError(error instanceof Error ? error.message : "Error sending transaction");
+      console.error("Error al enviar la transacción:", error);
+      setError(error instanceof Error ? error.message : "Error al enviar la transacción");
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatMaxBalance = () => {
-    return stellarBalance.toFixed(4);
+    if (selectedToken === "XLM") {
+      return stellarBalance.toFixed(4);
+    } else if (typeof selectedToken !== "string") {
+      // Para tokens personalizados, mostrar el balance con los decimales correctos
+      const balance = typeof selectedTokenBalance === 'string' ? 
+        parseFloat(selectedTokenBalance) : selectedTokenBalance;
+      return balance.toFixed(selectedToken.decimals);
+    }
+    return "0";
   };
 
   const handleSetMax = () => {
-    // Leave a small amount for transaction fees
-    const maxSendable = Math.max(0, stellarBalance - 0.5);
-    setAmount(maxSendable.toFixed(7));
+    if (selectedToken === "XLM") {
+      // Dejar una pequeña cantidad para las tarifas de transacción
+      const maxSendable = Math.max(0, stellarBalance - 0.5);
+      setAmount(maxSendable.toFixed(7));
+    } else if (typeof selectedToken !== "string") {
+      // Para tokens personalizados, usar todo el balance disponible
+      const balance = typeof selectedTokenBalance === 'string' ? 
+        parseFloat(selectedTokenBalance) : selectedTokenBalance;
+      setAmount(balance.toString());
+    }
+  };
+  
+  // Obtener el símbolo del token seleccionado
+  const getSelectedTokenSymbol = () => {
+    if (selectedToken === "XLM") {
+      return "XLM";
+    } else if (typeof selectedToken !== "string") {
+      return selectedToken.symbol;
+    }
+    return "";
   };
 
   return (
@@ -222,24 +318,73 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow-sm">
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-600">Amount</label>
-                <button
-                  onClick={handleSetMax}
-                  className="text-sm text-blue-500 font-medium"
+            <div className="flex flex-col space-y-4">
+              {/* Selector de token */}
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-gray-600">Token a enviar</label>
+                <Select 
+                  value={selectedToken === "XLM" ? "XLM" : selectedToken.contractId}
+                  onValueChange={(value) => {
+                    if (value === "XLM") {
+                      setSelectedToken("XLM");
+                    } else {
+                      const token = customTokens.find(t => t.contractId === value);
+                      if (token) {
+                        setSelectedToken(token);
+                      }
+                    }
+                  }}
                 >
-                  Max: {formatMaxBalance()}
-                </button>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona un token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="XLM">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src="https://assets.coingecko.com/coins/images/100/small/Stellar_symbol_black_RGB.png" alt="XLM" />
+                          <AvatarFallback>XLM</AvatarFallback>
+                        </Avatar>
+                        <span>XLM (Stellar Lumens)</span>
+                      </div>
+                    </SelectItem>
+                    {customTokens.map((token) => (
+                      <SelectItem key={token.contractId} value={token.contractId}>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            {token.logoUrl ? (
+                              <AvatarImage src={token.logoUrl} alt={token.symbol} />
+                            ) : null}
+                            <AvatarFallback>{token.symbol.slice(0, 3)}</AvatarFallback>
+                          </Avatar>
+                          <span>{token.symbol} ({token.name})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0.0"
-                step="0.0000001"
-              />
+              
+              {/* Campo de monto */}
+              <div className="flex flex-col space-y-2">
+                <div className="flex justify-between">
+                  <label className="text-sm font-medium text-gray-600">Monto</label>
+                  <button
+                    onClick={handleSetMax}
+                    className="text-sm text-blue-500 font-medium"
+                  >
+                    Max: {formatMaxBalance()} {getSelectedTokenSymbol()}
+                  </button>
+                </div>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.0"
+                  step={selectedToken === "XLM" ? "0.0000001" : "0.000001"}
+                />
+              </div>
             </div>
           </div>
 
@@ -292,10 +437,10 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Processing...
+              Procesando...
             </>
           ) : (
-            "Send XLM"
+            `Enviar ${getSelectedTokenSymbol()}`
           )}
         </button>
       </div>
