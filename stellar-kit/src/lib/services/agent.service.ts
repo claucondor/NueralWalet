@@ -164,7 +164,8 @@ export class AgentService {
     intent: string,
     params: Record<string, any>,
     fullPrivateKey: string,
-    stellarPublicKey: string
+    stellarPublicKey: string,
+    originalMessage?: string
   ): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       // Obtener instancia del kit de Stellar
@@ -185,7 +186,7 @@ export class AgentService {
           return await this.processTokenInfo(stellarKit, stellarPublicKey, params);
           
         case 'transaction_history':
-          return await this.processTransactionHistory(stellarKit, stellarPublicKey);
+          return await this.processTransactionHistory(stellarKit, stellarPublicKey, originalMessage || params.originalMessage);
           
         default:
           return {
@@ -436,31 +437,18 @@ export class AgentService {
   
   /**
    * Procesa la intención de consulta de historial de transacciones
+   * @param stellarKit Instancia del kit de Stellar
+   * @param publicKey Clave pública de la cuenta
+   * @param originalMessage Mensaje original del usuario (opcional)
    */
   private static async processTransactionHistory(
     stellarKit: typeof StellarWalletKit,
-    publicKey: string
+    publicKey: string,
+    originalMessage?: string
   ) {
     try {
-      // Por ahora, solo devolvemos un mensaje informativo
-      // En una implementación completa, aquí se consultaría el historial real de transacciones
-      
-      // Obtener información de la cuenta
+      // Obtener información de la cuenta para verificar que existe
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
-      
-      // Generar mensaje amigable con el LLM
-      const llm = LLMService.getLLM();
-      const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        Eres un asistente financiero amigable. El usuario ha solicitado su historial de transacciones en Stellar.
-        
-        Genera una respuesta amigable y profesional informando al usuario que esta funcionalidad
-        está en desarrollo y estará disponible próximamente.
-        Sugiere que mientras tanto puede consultar su historial en un explorador de Stellar usando su dirección pública.
-        Usa un tono conversacional y servicial.
-      `);
-      
-      const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({});
       
       if (!accountInfo) {
         return {
@@ -469,10 +457,72 @@ export class AgentService {
         };
       }
       
+      // Obtener el historial de transacciones (limitado a 10 para el MVP)
+      const transactionResult = await stellarKit.getTransactionHistory(publicKey, { limit: 10 });
+      const transactions = transactionResult.transactions;
+      
+      // Si no hay transacciones, devolver un mensaje informativo
+      if (!transactions || transactions.length === 0) {
+        return {
+          success: true,
+          message: 'No se encontraron transacciones en tu historial. Cuando realices operaciones en la red Stellar, aparecerán aquí.',
+          data: { transactions: [] }
+        };
+      }
+      
+      // Preparar un resumen de las transacciones para el LLM
+      const transactionsSummary = transactions.map((tx, index) => {
+        // Extraer información relevante de cada transacción
+        const date = new Date(tx.createdAt).toLocaleDateString();
+        let type = 'desconocido';
+        let amount = 'desconocido';
+        let asset = 'XLM';
+        let from = tx.sourceAccount;
+        let to = 'desconocido';
+        
+        // Si hay operaciones, extraer información de la primera operación
+        if (tx.operations && tx.operations.length > 0) {
+          const op = tx.operations[0];
+          type = op.type;
+          amount = op.amount || 'desconocido';
+          from = op.from || tx.sourceAccount;
+          to = op.to || 'desconocido';
+          
+          if (op.assetCode) {
+            asset = op.assetCode;
+          }
+        }
+        
+        return `Transacción ${index + 1}:\n- Fecha: ${date}\n- Tipo: ${type}\n- Cantidad: ${amount} ${asset}\n- De: ${from}\n- Para: ${to}${tx.memo ? `\n- Memo: ${tx.memo}` : ''}`;
+      }).join('\n\n');
+      
+      // Generar mensaje amigable con el LLM
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. El usuario ha solicitado su historial de transacciones en Stellar.
+        
+        Mensaje original del usuario: ${originalMessage || "Ver mi historial de transacciones"}
+        
+        Aquí está el historial de las últimas transacciones de la cuenta:
+        
+        ${transactionsSummary}
+        
+        Genera una respuesta amigable y profesional resumiendo el historial de transacciones del usuario.
+        Menciona cuántas transacciones hay, los tipos más comunes, y cualquier patrón interesante que notes.
+        Si hay pocas transacciones, puedes describirlas brevemente.
+        Usa un tono conversacional y servicial.
+        
+        Importante: Analiza el mensaje original del usuario para entender si está buscando algo específico en su historial
+        (como transacciones recientes, pagos a cierta persona, etc.) y personaliza tu respuesta en función de eso.
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({});
+      
       return {
         success: true,
         message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
-        data: { balance: accountInfo.balance }
+        data: { transactions: transactions }
       };
     } catch (error: any) {
       console.error('Error al consultar historial de transacciones:', error);
