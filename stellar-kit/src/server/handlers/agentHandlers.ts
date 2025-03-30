@@ -11,9 +11,9 @@ import { supabase } from '../../lib/utils/supabase';
  */
 export const processMessage = async (req: Request, res: Response) => {
   try {
-    const { text, privateKeyHalf, stellarPublicKey } = req.body;
+    const { text, stellar_key_first_half, stellarPublicKey } = req.body;
     
-    if (!text || !privateKeyHalf || !stellarPublicKey) {
+    if (!text || !stellar_key_first_half || !stellarPublicKey) {
       return res.status(400).json({
         success: false,
         error: 'Se requiere texto del mensaje, mitad de clave privada y clave pública de Stellar'
@@ -23,11 +23,11 @@ export const processMessage = async (req: Request, res: Response) => {
     // Buscar la otra mitad de la clave en Supabase
     const { data, error } = await supabase
       .from('users')
-      .select('private_key_half')
+      .select('stellar_key_half')
       .eq('address', stellarPublicKey)
       .single();
     
-    if (error || !data?.private_key_half) {
+    if (error || !data?.stellar_key_half) {
       console.error('Error obteniendo la otra mitad de la clave:', error);
       return res.status(500).json({
         success: false,
@@ -36,22 +36,45 @@ export const processMessage = async (req: Request, res: Response) => {
     }
     
     // Reconstruir la clave completa
-    const fullPrivateKey = privateKeyHalf + data.private_key_half;
-    console.log('Clave privada completa reconstruida:', fullPrivateKey);
+    const fullPrivateKey = stellar_key_first_half + data.stellar_key_half;
+    //console.log('Clave privada completa reconstruida:', fullPrivateKey);
     
     // Analizar la intención del usuario utilizando el servicio de agente
     const userIntent = await AgentService.analyzeUserIntent(text);
     
-    // Devolver la intención detectada y los parámetros
-    res.json({
-      success: true,
-      data: {
-        intent: userIntent.intentType,
-        confidence: userIntent.confidence,
-        params: userIntent.params,
-        suggestedResponse: userIntent.suggestedResponse
-      }
-    });
+    // Procesar la intención del usuario si tiene suficiente confianza
+    if (AgentService.hasConfidence(userIntent)) {
+      // Procesar la intención utilizando la clave privada reconstruida
+      const processResult = await AgentService.processIntent(
+        userIntent.intentType,
+        userIntent.params,
+        fullPrivateKey,
+        stellarPublicKey
+      );
+      
+      // Devolver el resultado del procesamiento
+      return res.json({
+        success: processResult.success,
+        data: {
+          intent: userIntent.intentType,
+          confidence: userIntent.confidence,
+          params: userIntent.params,
+          suggestedResponse: processResult.message,
+          ...processResult.data && { transactionData: processResult.data }
+        }
+      });
+    } else {
+      // Si no hay suficiente confianza, devolver solo la intención detectada
+      return res.json({
+        success: true,
+        data: {
+          intent: userIntent.intentType,
+          confidence: userIntent.confidence,
+          params: userIntent.params,
+          suggestedResponse: userIntent.suggestedResponse || 'No estoy seguro de entender tu solicitud. ¿Podrías ser más específico?'
+        }
+      });
+    }
   } catch (error: any) {
     res.status(500).json({
       success: false,

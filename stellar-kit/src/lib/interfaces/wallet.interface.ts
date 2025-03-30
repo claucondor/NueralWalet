@@ -64,4 +64,49 @@ export interface StoredAccount {
   name?: string;
   dateCreated: string;
   network: 'testnet' | 'public';
-} 
+}
+
+/**
+ * Opciones para consultar el historial de transacciones
+ */
+export interface TransactionHistoryOptions {
+  limit?: number;
+  order?: 'asc' | 'desc';
+  cursor?: string;
+  includeFailedTransactions?: boolean;
+}
+
+/**
+ * Información de una transacción en el historial
+ */
+export interface TransactionInfo {
+  id: string;
+  hash: string;
+  createdAt: string;
+  sourceAccount: string;
+  fee: string;
+  memoType?: string;
+  memo?: string;
+  operationCount: number;
+  operations?: OperationInfo[];
+  successful: boolean;
+  pagingToken: string;
+}
+
+/**
+ * Información de una operación en una transacción
+ */
+export interface OperationInfo {
+  id: string;
+  type: string;
+  sourceAccount?: string;
+  createdAt: string;
+  transactionHash: string;
+  assetType?: string;
+  assetCode?: string;
+  assetIssuer?: string;
+  amount?: string;
+  from?: string;
+  to?: string;
+  pagingToken: string;
+}

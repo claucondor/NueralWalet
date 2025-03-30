@@ -6,7 +6,7 @@ import * as path from 'path';
 import { TokenContract } from '../models/TokenContract';
 import { StellarNetworkService } from './network.service';
 import { TokenInfo, TokenBalance } from '../interfaces/token.interface';
-import { KeyPair, AccountInfo, TransactionOptions, TransactionResult, PaymentResult, FriendbotResponse } from '../interfaces/wallet.interface';
+import { KeyPair, AccountInfo, TransactionOptions, TransactionResult, PaymentResult, FriendbotResponse, TransactionHistoryOptions, TransactionInfo, OperationInfo } from '../interfaces/wallet.interface';
 import { NetworkProvider, NetworkType } from '../interfaces/network.interface';
 
 /**
@@ -586,4 +586,132 @@ export class StellarWalletKit {
             };
         }
     }
-} 
+
+    /**
+     * Obtiene el historial de transacciones de una cuenta
+     * @param publicKey Clave pública de la cuenta
+     * @param options Opciones para la consulta
+     * @returns Lista de transacciones
+     */
+    async getTransactionHistory(
+        publicKey: string,
+        options: TransactionHistoryOptions = {}
+    ): Promise<{ transactions: TransactionInfo[], nextCursor?: string }> {
+        try {
+            // Configurar la consulta
+            let query = this.server.transactions().forAccount(publicKey);
+            
+            // Aplicar opciones
+            if (options.limit) {
+                query = query.limit(options.limit);
+            } else {
+                query = query.limit(10); // Valor predeterminado
+            }
+            
+            if (options.order) {
+                query = query.order(options.order);
+            } else {
+                query = query.order('desc'); // Más recientes primero por defecto
+            }
+            
+            if (options.cursor) {
+                query = query.cursor(options.cursor);
+            }
+            
+            if (options.includeFailedTransactions === false) {
+                query = query.includeFailed(false);
+            } else {
+                query = query.includeFailed(true); // Incluir fallidas por defecto
+            }
+            
+            // Ejecutar la consulta
+            const transactionsResponse = await query.call();
+            const transactions: TransactionInfo[] = [];
+            
+            // Procesar los resultados
+            for (const record of transactionsResponse.records) {
+                // Obtener operaciones de la transacción
+                const operations: OperationInfo[] = [];
+                
+                try {
+                    // Solo cargar operaciones si hay menos de 10 para evitar muchas llamadas
+                    if (record.operation_count < 10) {
+                        const opsResponse = await this.server
+                            .operations()
+                            .forTransaction(record.hash)
+                            .call();
+                        
+                        for (const op of opsResponse.records) {
+                            const operation: OperationInfo = {
+                                id: op.id,
+                                type: op.type,
+                                sourceAccount: op.source_account,
+                                createdAt: op.created_at,
+                                transactionHash: op.transaction_hash,
+                                pagingToken: op.paging_token
+                            };
+                            
+                            // Añadir campos específicos según el tipo de operación
+                            if (op.type === 'payment' || op.type === 'create_account') {
+                                operation.from = op.source_account;
+                                operation.to = op.type === 'payment' ? op.to : op.account;
+                                operation.amount = op.type === 'payment' ? op.amount : op.starting_balance;
+                                
+                                if (op.type === 'payment' && op.asset_type !== 'native') {
+                                    operation.assetType = op.asset_type;
+                                    operation.assetCode = op.asset_code;
+                                    operation.assetIssuer = op.asset_issuer;
+                                } else {
+                                    operation.assetType = 'native';
+                                }
+                            }
+                            
+                            operations.push(operation);
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`No se pudieron cargar las operaciones para la transacción ${record.hash}:`, error);
+                }
+                
+                // Crear objeto de transacción
+                const transaction: TransactionInfo = {
+                    id: record.id,
+                    hash: record.hash,
+                    createdAt: record.created_at,
+                    sourceAccount: record.source_account,
+                    fee: String(record.fee_charged),
+                    operationCount: record.operation_count,
+                    successful: record.successful,
+                    pagingToken: record.paging_token
+                };
+                
+                // Añadir memo si existe
+                if (record.memo) {
+                    transaction.memo = record.memo;
+                    transaction.memoType = record.memo_type;
+                }
+                
+                // Añadir operaciones si se cargaron
+                if (operations.length > 0) {
+                    transaction.operations = operations;
+                }
+                
+                transactions.push(transaction);
+            }
+            
+            // Determinar el cursor para la siguiente página
+            let nextCursor: string | undefined;
+            if (transactions.length > 0 && transactionsResponse.records.length === (options.limit || 10)) {
+                nextCursor = transactions[transactions.length - 1].pagingToken;
+            }
+            
+            return {
+                transactions,
+                nextCursor
+            };
+        } catch (error: any) {
+            console.error('Error al obtener historial de transacciones:', error);
+            throw new Error(`Error al obtener historial de transacciones: ${error.message || 'Error desconocido'}`);
+        }
+    }
+}

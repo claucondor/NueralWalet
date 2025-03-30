@@ -2,6 +2,8 @@ import { LLMService } from './llm.service';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { JsonOutputParser } from '@langchain/core/output_parsers';
 import { getAddressByEmail } from '../utils/supabase';
+import StellarWalletKit from '..';
+import { PaymentResult } from '../interfaces/wallet.interface';
 
 /**
  * Interfaz para la intención detectada del usuario
@@ -149,5 +151,419 @@ export class AgentService {
     // Umbral de confianza mínimo para considerar válida una intención
     const CONFIDENCE_THRESHOLD = 0.7;
     return intent.confidence >= CONFIDENCE_THRESHOLD;
+  }
+  
+  /**
+   * Procesa la intención del usuario y ejecuta la acción correspondiente
+   * @param intent Intención detectada
+   * @param params Parámetros para la acción
+   * @param fullPrivateKey Clave privada completa de Stellar
+   * @returns Resultado de la operación con mensaje amigable para el usuario
+   */
+  static async processIntent(
+    intent: string,
+    params: Record<string, any>,
+    fullPrivateKey: string,
+    stellarPublicKey: string
+  ): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      // Obtener instancia del kit de Stellar
+      const stellarKit = StellarWalletKit;
+      
+      // Procesar según la intención detectada
+      switch (intent) {
+        case 'balance_check':
+          return await this.processBalanceCheck(stellarKit, stellarPublicKey);
+          
+        case 'send_payment':
+          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params);
+          
+        case 'create_account':
+          return await this.processCreateAccount(stellarKit, fullPrivateKey, params);
+          
+        case 'token_info':
+          return await this.processTokenInfo(stellarKit, stellarPublicKey, params);
+          
+        case 'transaction_history':
+          return await this.processTransactionHistory(stellarKit, stellarPublicKey);
+          
+        default:
+          return {
+            success: false,
+            message: 'No se pudo procesar la intención. Por favor, intenta con una solicitud diferente.'
+          };
+      }
+    } catch (error: any) {
+      console.error('Error procesando la intención:', error);
+      
+      // Generar mensaje de error amigable para el usuario
+      return await this.generateUserFriendlyErrorMessage(error, intent);
+    }
+  }
+  
+  /**
+   * Procesa la intención de consulta de saldo
+   */
+  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string) {
+    try {
+      // Obtener información de la cuenta
+      const accountInfo = await stellarKit.getAccountInfo(publicKey);
+      
+      if (!accountInfo) {
+        return {
+          success: false,
+          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+        };
+      }
+      
+      // Generar mensaje amigable con el LLM
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. El usuario ha solicitado su saldo en su wallet de Stellar.
+        La cuenta tiene un saldo de ${accountInfo.balance} XLM.
+        
+        Genera una respuesta amigable y profesional informando al usuario sobre su saldo actual.
+        Incluye el saldo exacto pero también usa un tono conversacional.
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({});
+      
+      if (!accountInfo) {
+        return {
+          success: false,
+          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+        };
+      }
+      
+      return {
+        success: true,
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
+        data: { balance: accountInfo.balance }
+      };
+    } catch (error: any) {
+      console.error('Error al consultar saldo:', error);
+      return {
+        success: false,
+        message: 'Lo siento, no pude consultar tu saldo en este momento. Por favor, intenta más tarde.'
+      };
+    }
+  }
+  
+  /**
+   * Procesa la intención de envío de pago
+   */
+  private static async processSendPayment(
+    stellarKit: typeof StellarWalletKit,
+    privateKey: string,
+    publicKey: string,
+    params: Record<string, any>
+  ) {
+    try {
+      // Verificar que tenemos los parámetros necesarios
+      const { recipient, amount } = params;
+      
+      if (!recipient) {
+        return {
+          success: false,
+          message: 'No se especificó un destinatario para el pago.'
+        };
+      }
+      
+      if (!amount) {
+        return {
+          success: false,
+          message: 'No se especificó una cantidad para el pago.'
+        };
+      }
+      
+      // Verificar que la cuenta tiene saldo suficiente
+      const accountInfo = await stellarKit.getAccountInfo(publicKey);
+      
+      if (!accountInfo) {
+        return {
+          success: false,
+          message: 'No se pudo encontrar tu cuenta. Es posible que no esté activada en la red Stellar.'
+        };
+      }
+      
+      const balance = parseFloat(accountInfo.balance || '0');
+      const amountToSend = parseFloat(amount);
+      
+      // Verificar que hay saldo suficiente (considerando la reserva mínima de 1 XLM)
+      if (balance - amountToSend < 1) {
+        return {
+          success: false,
+          message: `No tienes saldo suficiente para realizar este pago. Tu saldo actual es de ${balance} XLM y necesitas mantener al menos 1 XLM como reserva.`
+        };
+      }
+      
+      // Realizar el pago
+      const paymentResult = await stellarKit.sendPayment(
+        privateKey,
+        recipient,
+        amount.toString(),
+        { memo: 'Pago desde GuardWallet' }
+      );
+      
+      // Generar mensaje según el resultado
+      return await this.generatePaymentResponseMessage(paymentResult, amount, recipient);
+    } catch (error: any) {
+      console.error('Error al enviar pago:', error);
+      return {
+        success: false,
+        message: 'Lo siento, no pude procesar el pago en este momento. Por favor, intenta más tarde.'
+      };
+    }
+  }
+  
+  /**
+   * Procesa la intención de creación de cuenta
+   */
+  private static async processCreateAccount(
+    stellarKit: typeof StellarWalletKit,
+    privateKey: string,
+    params: Record<string, any>
+  ) {
+    try {
+      // Verificar que tenemos los parámetros necesarios
+      const { recipient, amount } = params;
+      const startingBalance = amount || '1'; // Si no se especifica, usar 1 XLM como balance inicial
+      
+      if (!recipient) {
+        return {
+          success: false,
+          message: 'No se especificó una dirección para la nueva cuenta.'
+        };
+      }
+      
+      // Crear la cuenta
+      const result = await stellarKit.createAccount(
+        privateKey,
+        recipient,
+        startingBalance,
+        { memo: 'Creación de cuenta desde GuardWallet' }
+      );
+      
+      if (result.success) {
+        // Generar mensaje amigable con el LLM
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario ha creado una nueva cuenta en la red Stellar.
+          La cuenta se ha creado exitosamente con un balance inicial de ${startingBalance} XLM.
+          La dirección de la nueva cuenta es ${recipient}.
+          
+          Genera una respuesta amigable y profesional informando al usuario sobre la creación exitosa de la cuenta.
+          Incluye la dirección y el balance inicial, pero usa un tono conversacional.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const response = await chain.invoke({});
+        
+        return {
+          success: true,
+          message: typeof response.content === 'string' ? response.content : JSON.stringify(response.content),
+          data: { hash: result.hash }
+        };
+      } else {
+        return {
+          success: false,
+          message: 'No se pudo crear la cuenta. Por favor, verifica la dirección e intenta nuevamente.'
+        };
+      }
+    } catch (error: any) {
+      console.error('Error al crear cuenta:', error);
+      return {
+        success: false,
+        message: 'Lo siento, no pude crear la cuenta en este momento. Por favor, intenta más tarde.'
+      };
+    }
+  }
+  
+  /**
+   * Procesa la intención de consulta de información de token
+   */
+  private static async processTokenInfo(
+    stellarKit: typeof StellarWalletKit,
+    publicKey: string,
+    params: Record<string, any>
+  ) {
+    try {
+      // Por ahora, solo devolvemos información sobre XLM
+      const accountInfo = await stellarKit.getAccountInfo(publicKey);
+      
+      if (!accountInfo) {
+        return {
+          success: false,
+          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+        };
+      }
+      
+      // Generar mensaje amigable con el LLM
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. El usuario ha solicitado información sobre tokens en su wallet de Stellar.
+        La cuenta tiene un saldo de ${accountInfo.balance} XLM (Lumen), que es el token nativo de la red Stellar.
+        
+        Genera una respuesta amigable y profesional informando al usuario sobre su token XLM.
+        Incluye información básica sobre XLM como que es el token nativo de Stellar y se usa para pagar comisiones de transacción.
+        Usa un tono conversacional y educativo.
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({});
+      
+      if (!accountInfo) {
+        return {
+          success: false,
+          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+        };
+      }
+      
+      return {
+        success: true,
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
+        data: { balance: accountInfo.balance }
+      };
+    } catch (error: any) {
+      console.error('Error al consultar información de token:', error);
+      return {
+        success: false,
+        message: 'Lo siento, no pude obtener información sobre tus tokens en este momento. Por favor, intenta más tarde.'
+      };
+    }
+  }
+  
+  /**
+   * Procesa la intención de consulta de historial de transacciones
+   */
+  private static async processTransactionHistory(
+    stellarKit: typeof StellarWalletKit,
+    publicKey: string
+  ) {
+    try {
+      // Por ahora, solo devolvemos un mensaje informativo
+      // En una implementación completa, aquí se consultaría el historial real de transacciones
+      
+      // Obtener información de la cuenta
+      const accountInfo = await stellarKit.getAccountInfo(publicKey);
+      
+      // Generar mensaje amigable con el LLM
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. El usuario ha solicitado su historial de transacciones en Stellar.
+        
+        Genera una respuesta amigable y profesional informando al usuario que esta funcionalidad
+        está en desarrollo y estará disponible próximamente.
+        Sugiere que mientras tanto puede consultar su historial en un explorador de Stellar usando su dirección pública.
+        Usa un tono conversacional y servicial.
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({});
+      
+      if (!accountInfo) {
+        return {
+          success: false,
+          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+        };
+      }
+      
+      return {
+        success: true,
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
+        data: { balance: accountInfo.balance }
+      };
+    } catch (error: any) {
+      console.error('Error al consultar historial de transacciones:', error);
+      return {
+        success: false,
+        message: 'Lo siento, no pude obtener tu historial de transacciones en este momento. Por favor, intenta más tarde.'
+      };
+    }
+  }
+  
+  /**
+   * Genera un mensaje amigable para el usuario basado en el resultado del pago
+   */
+  private static async generatePaymentResponseMessage(
+    paymentResult: PaymentResult,
+    amount: string,
+    recipient: string
+  ) {
+    const llm = LLMService.getLLM();
+    
+    if (paymentResult.success) {
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. El usuario ha realizado un pago en Stellar.
+        
+        Detalles del pago:
+        - Cantidad: ${amount} XLM
+        - Destinatario: ${recipient}
+        - Hash de la transacción: ${paymentResult.hash}
+        
+        Genera una respuesta amigable y profesional confirmando que el pago se ha realizado con éxito.
+        Incluye los detalles del pago pero usa un tono conversacional.
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({});
+      
+      return {
+        success: true,
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
+        data: { hash: paymentResult.hash }
+      };
+    } else {
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. El usuario ha intentado realizar un pago en Stellar pero ha fallado.
+        
+        Detalles del intento de pago:
+        - Cantidad: ${amount} XLM
+        - Destinatario: ${recipient}
+        - Error: ${paymentResult.error}
+        
+        Genera una respuesta amigable y profesional explicando que el pago no se ha podido realizar.
+        Incluye una explicación del error en términos que un usuario no técnico pueda entender.
+        Sugiere posibles soluciones o alternativas.
+        Usa un tono conversacional y servicial.
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({});
+      
+      return {
+        success: false,
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+      };
+    }
+  }
+  
+  /**
+   * Genera un mensaje de error amigable para el usuario
+   */
+  private static async generateUserFriendlyErrorMessage(error: any, intent: string) {
+    const llm = LLMService.getLLM();
+    
+    const promptTemplate = ChatPromptTemplate.fromTemplate(`
+      Eres un asistente financiero amigable. El usuario ha intentado realizar una operación en Stellar pero ha ocurrido un error.
+      
+      Detalles del error:
+      - Tipo de operación: ${intent}
+      - Error técnico: ${error.message || 'Error desconocido'}
+      
+      Genera una respuesta amigable y profesional explicando que la operación no se ha podido realizar.
+      Traduce el error técnico a un lenguaje que un usuario no técnico pueda entender.
+      Sugiere posibles soluciones o alternativas.
+      Usa un tono conversacional y servicial.
+    `);
+    
+    const chain = promptTemplate.pipe(llm);
+    const result = await chain.invoke({});
+    
+    return {
+      success: false,
+      message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+    };
   }
 }
