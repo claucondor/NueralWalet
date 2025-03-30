@@ -10,9 +10,11 @@ import { PaymentResult } from '../interfaces/wallet.interface';
  */
 export interface UserIntent {
   /** Tipo de intención detectada */
-  intentType: 'balance_check' | 'send_payment' | 'create_account' | 'token_info' | 'transaction_history' | 'unknown';
+  intentType: 'balance_check' | 'send_payment' | 'token_info' | 'transaction_history' | 'unknown';
   /** Confianza en la detección (0-1) */
   confidence: number;
+  /** Idioma detectado en el mensaje del usuario */
+  language: string;
   /** Parámetros extraídos del mensaje */
   params: {
     /** Dirección de wallet (si se detectó) */
@@ -33,7 +35,6 @@ export interface UserIntent {
   /** Respuesta sugerida al usuario */
   suggestedResponse?: string;
 }
-
 /**
  * Servicio para analizar la intención del usuario mediante LLM
  */
@@ -54,12 +55,11 @@ export class AgentService {
       // Crear el prompt para el análisis de intención
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente especializado en analizar mensajes de usuarios para una wallet de Stellar.
-        Analiza el siguiente mensaje y extrae la intención del usuario y cualquier parámetro relevante.
+        Analiza el siguiente mensaje y extrae la intención del usuario, el idioma en que está escrito y cualquier parámetro relevante.
         
         Posibles intenciones:
         - balance_check: El usuario quiere consultar su saldo
         - send_payment: El usuario quiere enviar un pago
-        - create_account: El usuario quiere crear una cuenta
         - token_info: El usuario quiere información sobre un token
         - transaction_history: El usuario quiere ver su historial de transacciones
         - unknown: No se puede determinar la intención
@@ -70,6 +70,7 @@ export class AgentService {
         {
           "intentType": "tipo_de_intencion",
           "confidence": 0.95,
+          "language": "idioma_detectado_en_el_mensaje", // Por ejemplo: 'es' para español, 'en' para inglés, 'fr' para francés, etc.
           "params": {
             "walletAddress": "direccion_si_se_menciona",
             "amount": "cantidad_si_se_menciona",
@@ -99,6 +100,7 @@ export class AgentService {
       return {
         intentType: 'unknown',
         confidence: 0,
+        language: 'es', // Añadimos el idioma por defecto (español)
         params: {},
         originalMessage: message,
         suggestedResponse: 'Lo siento, no pude entender tu solicitud. ¿Podrías reformularla?'
@@ -165,7 +167,8 @@ export class AgentService {
     params: Record<string, any>,
     fullPrivateKey: string,
     stellarPublicKey: string,
-    originalMessage?: string
+    originalMessage?: string,
+    language: string = 'es' // Idioma por defecto: español
   ): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       // Obtener instancia del kit de Stellar
@@ -174,46 +177,83 @@ export class AgentService {
       // Procesar según la intención detectada
       switch (intent) {
         case 'balance_check':
-          return await this.processBalanceCheck(stellarKit, stellarPublicKey);
+          return await this.processBalanceCheck(stellarKit, stellarPublicKey, language);
           
         case 'send_payment':
-          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params);
+          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language);
           
         case 'create_account':
-          return await this.processCreateAccount(stellarKit, fullPrivateKey, params);
+          return await this.processCreateAccount(stellarKit, fullPrivateKey, params, language);
           
         case 'token_info':
-          return await this.processTokenInfo(stellarKit, stellarPublicKey, params);
+          return await this.processTokenInfo(stellarKit, stellarPublicKey, params, language);
           
         case 'transaction_history':
-          return await this.processTransactionHistory(stellarKit, stellarPublicKey, originalMessage || params.originalMessage);
+          return await this.processTransactionHistory(stellarKit, stellarPublicKey, originalMessage || params.originalMessage, language);
           
         default:
+          // Usar LLM para mensaje de error en el idioma correcto
+          const llm = LLMService.getLLM();
+          const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            Eres un asistente financiero amigable. El usuario envió una solicitud que no pudo ser procesada.
+            
+            Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+            Explica que no se pudo procesar la intención y sugiere intentar con una solicitud diferente.
+          `);
+          
+          const chain = promptTemplate.pipe(llm);
+          const result = await chain.invoke({});
+          
           return {
             success: false,
-            message: 'No se pudo procesar la intención. Por favor, intenta con una solicitud diferente.'
+            message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
           };
       }
     } catch (error: any) {
       console.error('Error procesando la intención:', error);
       
-      // Generar mensaje de error amigable para el usuario
-      return await this.generateUserFriendlyErrorMessage(error, intent);
+      // Usar LLM para mensaje de error en el idioma correcto
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
+        
+        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Explica que ocurrió un error y sugiere intentar más tarde.
+        
+        Detalles técnicos (solo para referencia): {error}
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({ error: error.message });
+      
+      return {
+        success: false,
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+      };
     }
   }
   
   /**
    * Procesa la intención de consulta de saldo
    */
-  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string) {
+  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'es') {
     try {
       // Obtener información de la cuenta
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
+        // Mensajes de error predefinidos según el idioma
+        const errorMessages: Record<string, string> = {
+          'es': 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.',
+          'en': 'The account could not be found. It may not be activated on the Stellar network.',
+          'fr': 'Le compte n\'a pas pu être trouvé. Il n\'est peut-être pas activé sur le réseau Stellar.',
+          'pt': 'A conta não pôde ser encontrada. Pode não estar ativada na rede Stellar.',
+          'de': 'Das Konto konnte nicht gefunden werden. Es ist möglicherweise nicht im Stellar-Netzwerk aktiviert.'
+        };
+        
         return {
           success: false,
-          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+          message: errorMessages[language] || errorMessages['en'] // Usar inglés como fallback
         };
       }
       
@@ -225,6 +265,14 @@ export class AgentService {
         
         Genera una respuesta amigable y profesional informando al usuario sobre su saldo actual.
         Incluye el saldo exacto pero también usa un tono conversacional.
+        
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        Si el idioma es 'es', responde en español.
+        Si el idioma es 'en', responde en inglés.
+        Si el idioma es 'fr', responde en francés.
+        Si el idioma es 'pt', responde en portugués.
+        Si el idioma es 'de', responde en alemán.
+        Para cualquier otro código de idioma, intenta responder en ese idioma.
       `);
       
       const chain = promptTemplate.pipe(llm);
@@ -258,23 +306,48 @@ export class AgentService {
     stellarKit: typeof StellarWalletKit,
     privateKey: string,
     publicKey: string,
-    params: Record<string, any>
+    params: Record<string, any>,
+    language: string = 'es'
   ) {
     try {
       // Verificar que tenemos los parámetros necesarios
       const { recipient, amount } = params;
       
       if (!recipient) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no especificó un destinatario.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que es necesario especificar un destinatario para completar la operación.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se especificó un destinatario para el pago.'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
       if (!amount) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no especificó una cantidad.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que es necesario especificar una cantidad para completar la operación.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se especificó una cantidad para el pago.'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -282,9 +355,21 @@ export class AgentService {
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó enviar un pago pero su cuenta no fue encontrada.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se pudo encontrar tu cuenta. Es posible que no esté activada en la red Stellar.'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -293,9 +378,21 @@ export class AgentService {
       
       // Verificar que hay saldo suficiente (considerando la reserva mínima de 1 XLM)
       if (balance - amountToSend < 1) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no tiene saldo suficiente.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Informa que el saldo actual es de ${balance} XLM y necesita mantener al menos 1 XLM como reserva.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: `No tienes saldo suficiente para realizar este pago. Tu saldo actual es de ${balance} XLM y necesitas mantener al menos 1 XLM como reserva.`
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -307,8 +404,8 @@ export class AgentService {
         { memo: 'Pago desde GuardWallet' }
       );
       
-      // Generar mensaje según el resultado
-      return await this.generatePaymentResponseMessage(paymentResult, amount, recipient);
+      // Generar mensaje según el resultado usando LLM
+      return await this.generatePaymentResponseMessage(paymentResult, amount, recipient, language);
     } catch (error: any) {
       console.error('Error al enviar pago:', error);
       return {
@@ -324,7 +421,8 @@ export class AgentService {
   private static async processCreateAccount(
     stellarKit: typeof StellarWalletKit,
     privateKey: string,
-    params: Record<string, any>
+    params: Record<string, any>,
+    language: string = 'es'
   ) {
     try {
       // Verificar que tenemos los parámetros necesarios
@@ -387,7 +485,8 @@ export class AgentService {
   private static async processTokenInfo(
     stellarKit: typeof StellarWalletKit,
     publicKey: string,
-    params: Record<string, any>
+    params: Record<string, any>,
+    language: string = 'es' // Idioma por defecto: español
   ) {
     try {
       // Por ahora, solo devolvemos información sobre XLM
@@ -409,6 +508,14 @@ export class AgentService {
         Genera una respuesta amigable y profesional informando al usuario sobre su token XLM.
         Incluye información básica sobre XLM como que es el token nativo de Stellar y se usa para pagar comisiones de transacción.
         Usa un tono conversacional y educativo.
+        
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        Si el idioma es 'es', responde en español.
+        Si el idioma es 'en', responde en inglés.
+        Si el idioma es 'fr', responde en francés.
+        Si el idioma es 'pt', responde en portugués.
+        Si el idioma es 'de', responde en alemán.
+        Para cualquier otro código de idioma, intenta responder en ese idioma.
       `);
       
       const chain = promptTemplate.pipe(llm);
@@ -444,7 +551,8 @@ export class AgentService {
   private static async processTransactionHistory(
     stellarKit: typeof StellarWalletKit,
     publicKey: string,
-    originalMessage?: string
+    originalMessage?: string,
+    language: string = 'es' // Idioma por defecto: español
   ) {
     try {
       // Obtener información de la cuenta para verificar que existe
@@ -514,6 +622,14 @@ export class AgentService {
         
         Importante: Analiza el mensaje original del usuario para entender si está buscando algo específico en su historial
         (como transacciones recientes, pagos a cierta persona, etc.) y personaliza tu respuesta en función de eso.
+        
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        Si el idioma es 'es', responde en español.
+        Si el idioma es 'en', responde en inglés.
+        Si el idioma es 'fr', responde en francés.
+        Si el idioma es 'pt', responde en portugués.
+        Si el idioma es 'de', responde en alemán.
+        Para cualquier otro código de idioma, intenta responder en ese idioma.
       `);
       
       const chain = promptTemplate.pipe(llm);
@@ -539,7 +655,8 @@ export class AgentService {
   private static async generatePaymentResponseMessage(
     paymentResult: PaymentResult,
     amount: string,
-    recipient: string
+    recipient: string,
+    language: string = 'es' // Idioma por defecto: español
   ) {
     const llm = LLMService.getLLM();
     
@@ -554,6 +671,14 @@ export class AgentService {
         
         Genera una respuesta amigable y profesional confirmando que el pago se ha realizado con éxito.
         Incluye los detalles del pago pero usa un tono conversacional.
+        
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        Si el idioma es 'es', responde en español.
+        Si el idioma es 'en', responde en inglés.
+        Si el idioma es 'fr', responde en francés.
+        Si el idioma es 'pt', responde en portugués.
+        Si el idioma es 'de', responde en alemán.
+        Para cualquier otro código de idioma, intenta responder en ese idioma.
       `);
       
       const chain = promptTemplate.pipe(llm);
@@ -577,6 +702,14 @@ export class AgentService {
         Incluye una explicación del error en términos que un usuario no técnico pueda entender.
         Sugiere posibles soluciones o alternativas.
         Usa un tono conversacional y servicial.
+        
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        Si el idioma es 'es', responde en español.
+        Si el idioma es 'en', responde en inglés.
+        Si el idioma es 'fr', responde en francés.
+        Si el idioma es 'pt', responde en portugués.
+        Si el idioma es 'de', responde en alemán.
+        Para cualquier otro código de idioma, intenta responder en ese idioma.
       `);
       
       const chain = promptTemplate.pipe(llm);

@@ -57,7 +57,7 @@ export const useWeb3Auth = () => useContext(Web3AuthContext);
 /**
  * Función para generar una cuenta Stellar a partir de una clave privada
  */
-const getAccountFromPrivateKey = (privateKey: string) => {
+export const getAccountFromPrivateKey = (privateKey: string) => {
   return getStellarAccount(privateKey);
 };
 

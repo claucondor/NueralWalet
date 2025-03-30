@@ -3,8 +3,8 @@ import { ChevronLeft, ThumbsUp, ThumbsDown, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
-import moveAgentService from "@/services/moveAgentService";
-import { useWeb3Auth } from "@/context/Web3AuthContext";
+import agentService from "@/services/agentService";
+import { getAccountFromPrivateKey, useWeb3Auth } from "@/context/Web3AuthContext";
 import { createDefaultAgentLimits } from "@/utils/supabase";
 import { createClient } from '@supabase/supabase-js';
 import ChatInput from "./ChatInput";
@@ -134,7 +134,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     const initChat = async () => {
       try {
         // Verificar estado del servicio
-        const status = await moveAgentService.checkStatus();
+        const status = await agentService.getStatus();
         setServiceStatus(status.status === 'ok' ? 'online' : 'offline');
         
         // Si hay una dirección de wallet, verificar si existen límites de agente
@@ -216,21 +216,25 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     setIsLoading(true);
     
     try {
-      // Obtener la clave privada y dividirla
+      // Obtener la clave privada de Stellar y dividirla
       let clientHalf = '';
       if (walletAddress) {
         const privateKey = await getPrivateKey();
-        if (privateKey && privateKey.length >= 2) {
-          const halfLength = Math.floor(privateKey.length / 2);
-          clientHalf = privateKey.substring(halfLength); // Solo usamos la segunda mitad
+        if (privateKey) {
+          // Generar cuenta Stellar a partir de la clave EVM
+          const { stellarAccount } = getAccountFromPrivateKey(privateKey);
+          if (stellarAccount && stellarAccount.secretKey.length >= 2) {
+            const halfLength = Math.floor(stellarAccount.secretKey.length / 2);
+            clientHalf = stellarAccount.secretKey.substring(halfLength); // Solo usamos la segunda mitad
+          }
         }
       }
       
       // Llamar al servicio de Move Agent con la mitad de la clave
-      const response = await moveAgentService.processMessage(
-        userMessage.content, 
-        walletAddress,
-        clientHalf // Enviar la mitad de la clave del cliente
+      const response = await agentService.processMessage(
+        userMessage.content,
+        clientHalf,
+        walletAddress || ''
       );
       
       // Agregar respuesta del bot
@@ -398,3 +402,5 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
 };
 
 export default ChatScreen;
+
+

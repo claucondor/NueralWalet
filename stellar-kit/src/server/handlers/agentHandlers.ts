@@ -49,7 +49,9 @@ export const processMessage = async (req: Request, res: Response) => {
         userIntent.intentType,
         userIntent.params,
         fullPrivateKey,
-        stellarPublicKey
+        stellarPublicKey,
+        userIntent.originalMessage,
+        userIntent.language // Pasar el idioma detectado al método processIntent
       );
       
       // Devolver el resultado del procesamiento
