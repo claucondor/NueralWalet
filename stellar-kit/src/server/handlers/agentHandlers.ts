@@ -9,15 +9,44 @@ import { supabase } from '../../lib/utils/supabase';
 /**
  * Procesa un mensaje enviado al agente
  */
+export interface CustomToken {
+  symbol: string;
+  name: string;
+  address: string;
+  decimals: number;
+}
+
 export const processMessage = async (req: Request, res: Response) => {
   try {
-    const { text, stellar_key_first_half, stellarPublicKey } = req.body;
+    const { text, stellar_key_first_half, stellarPublicKey, customTokens } = req.body;
     
     if (!text || !stellar_key_first_half || !stellarPublicKey) {
       return res.status(400).json({
         success: false,
         error: 'Se requiere texto del mensaje, mitad de clave privada y clave pública de Stellar'
       });
+    }
+    
+    if (customTokens && !Array.isArray(customTokens)) {
+      return res.status(400).json({
+        success: false,
+        error: 'customTokens debe ser un array de objetos'
+      });
+    }
+    
+    // Validar estructura de cada token si existen
+    if (customTokens && customTokens.length > 0) {
+      const invalidTokens = customTokens.filter((token: CustomToken) => 
+        !token.symbol || !token.name || !token.address || token.decimals === undefined
+      );
+      
+      if (invalidTokens.length > 0) {
+        console.log('Tokens inválidos recibidos:', invalidTokens);
+        return res.status(400).json({
+          success: false,
+          error: 'Los custom tokens deben tener symbol, name, address y decimals'
+        });
+      }
     }
     
     // Buscar la otra mitad de la clave en Supabase

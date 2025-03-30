@@ -4,6 +4,7 @@ import { JsonOutputParser } from '@langchain/core/output_parsers';
 import { getAddressByEmail } from '../utils/supabase';
 import StellarWalletKit from '..';
 import { PaymentResult } from '../interfaces/wallet.interface';
+import { CustomToken } from '../../server/handlers/agentHandlers';
 
 /**
  * Interfaz para la intención detectada del usuario
@@ -21,8 +22,10 @@ export interface UserIntent {
     walletAddress?: string;
     /** Cantidad (si se detectó) */
     amount?: string;
-    /** Tipo de token (si se detectó) */
-    tokenType?: string;
+    /** Indica si el token es nativo (XLM) */
+    isNativeToken?: boolean;
+    /** Dirección del contrato del token (para tokens no nativos) */
+    tokenAddress?: string;
     /** Destinatario (si se detectó) */
     recipient?: string;
     /** Email del destinatario (si se detectó) */
@@ -44,7 +47,7 @@ export class AgentService {
    * @param message Mensaje del usuario
    * @returns Intención detectada con parámetros
    */
-  static async analyzeUserIntent(message: string): Promise<UserIntent> {
+  static async analyzeUserIntent(message: string, customTokens?: CustomToken[]): Promise<UserIntent> {
     try {
       // Obtener el modelo LLM
       const llm = LLMService.getLLM();
@@ -57,6 +60,8 @@ export class AgentService {
         Eres un asistente especializado en analizar mensajes de usuarios para una wallet de Stellar.
         Analiza el siguiente mensaje y extrae la intención del usuario, el idioma en que está escrito y cualquier parámetro relevante.
         
+        Tokens personalizados disponibles: {customTokens}
+        
         Posibles intenciones:
         - balance_check: El usuario quiere consultar su saldo
         - send_payment: El usuario quiere enviar un pago
@@ -64,7 +69,18 @@ export class AgentService {
         - transaction_history: El usuario quiere ver su historial de transacciones
         - unknown: No se puede determinar la intención
         
+        IMPORTANTE: Esta wallet solo soporta XLM (token nativo) y tokens Soroban. Debes especificar claramente en la respuesta:
+        - Para XLM (nativo): siempre incluir "isNativeToken": true y "tokenAddress": "XLM" en los parámetros
+        - Para tokens Soroban (no nativos): siempre incluir "isNativeToken": false y "tokenAddress": "<contrato_completo>" donde <contrato_completo> es el ID completo del contrato
+        
+        Si el usuario menciona cualquier otro tipo de token que no sea XLM o Soroban, marca la intención como 'unknown' y sugiere al usuario que solo podemos manejar tokens nativos (XLM) y tokens Soroban con su contrato correspondiente.
+        
+        NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
+        Asegúrate de que los parámetros devueltos coincidan exactamente con la interfaz UserIntent.
+        
         Mensaje del usuario: {message}
+        
+        Si el usuario menciona un token personalizado (por símbolo o nombre), asócialo con su address correspondiente en los tokens personalizados.
         
         Responde ÚNICAMENTE con un objeto JSON con la siguiente estructura:
         {
@@ -74,7 +90,8 @@ export class AgentService {
           "params": {
             "walletAddress": "direccion_si_se_menciona",
             "amount": "cantidad_si_se_menciona",
-            "tokenType": "tipo_de_token_si_se_menciona",
+            "isNativeToken": "booleano_indicando_si_es_token_nativo",
+            "tokenAddress": "direccion_del_token_si_se_menciona",
             "recipient": "destinatario_si_se_menciona",
             "recipientEmail": "email_si_se_menciona"
           },
@@ -88,7 +105,8 @@ export class AgentService {
 
       // Ejecutar la cadena con el mensaje del usuario
       const result = await chain.invoke({
-        message: message
+        message: message,
+        customTokens: customTokens ? JSON.stringify(customTokens) : '[]'
       });
       
       // Procesar el resultado para verificar si hay un email como destinatario
@@ -168,7 +186,8 @@ export class AgentService {
     fullPrivateKey: string,
     stellarPublicKey: string,
     originalMessage?: string,
-    language: string = 'es' // Idioma por defecto: español
+    language: string = 'es', // Idioma por defecto: español
+    customTokens?: any[] // Tokens personalizados incluyendo Soroban
   ): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       // Obtener instancia del kit de Stellar
@@ -180,7 +199,7 @@ export class AgentService {
           return await this.processBalanceCheck(stellarKit, stellarPublicKey, language);
           
         case 'send_payment':
-          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language);
+          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language, customTokens);
           
         case 'create_account':
           return await this.processCreateAccount(stellarKit, fullPrivateKey, params, language);
@@ -236,7 +255,7 @@ export class AgentService {
   /**
    * Procesa la intención de consulta de saldo
    */
-  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'es') {
+  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'es', customTokens?: any[]) {
     try {
       // Obtener información de la cuenta
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
@@ -307,8 +326,17 @@ export class AgentService {
     privateKey: string,
     publicKey: string,
     params: Record<string, any>,
-    language: string = 'es'
+    language: string = 'es',
+    customTokens?: any[]
   ) {
+    // Verificar si es un token Soroban
+    const isSorobanToken = params.tokenType && params.tokenType.startsWith('SOROBAN:');
+    
+    if (isSorobanToken) {
+      // Lógica específica para tokens Soroban
+      const contractId = params.tokenType.split(':')[1];
+      // Implementar lógica de pago con contrato Soroban
+    }
     try {
       // Verificar que tenemos los parámetros necesarios
       const { recipient, amount } = params;
