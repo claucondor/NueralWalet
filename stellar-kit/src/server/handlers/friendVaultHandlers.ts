@@ -8,7 +8,7 @@ export interface FriendVault {
   id: string;
   name: string;
   description: string;
-  publicKey: string;
+  public_key: string;
   secretKey: string; // Almacenado encriptado
   createdBy: string;
   members: string[]; // Emails de los miembros
@@ -113,7 +113,7 @@ export async function createFriendVault(req: Request, res: Response) {
       id: vaultId,
       name,
       description: description || '',
-      publicKey: newAccount.publicKey,
+      public_key: newAccount.publicKey,
       secretKey: newAccount.secretKey, // En producción, esto debe cifrarse
       createdBy: creatorEmail,
       members: memberValidation.validMembers,
@@ -143,7 +143,7 @@ export async function createFriendVault(req: Request, res: Response) {
       data: {
         vaultId: vaultId,
         name: name,
-        publicKey: newAccount.publicKey,
+        public_key: newAccount.publicKey,
         members: memberValidation.validMembers
       }
     });
@@ -185,7 +185,7 @@ export async function getFriendVaultsByUser(req: Request, res: Response) {
     // Buscar vaults donde el usuario es miembro
     const { data, error } = await supabase
       .from('friend_vaults')
-      .select('id, name, description, publicKey, createdBy, members, createdAt, updatedAt, balance')
+      .select('id, name, description, public_key, createdBy, members, createdAt, updatedAt, balance')
       .contains('members', [email]);
 
     if (error) {
@@ -200,7 +200,7 @@ export async function getFriendVaultsByUser(req: Request, res: Response) {
     // Obtener el balance actual de cada vault
     const vaultsWithBalance = await Promise.all(data.map(async (vault) => {
       try {
-        const accountInfo = await StellarWalletKit.getAccountInfo(vault.publicKey);
+        const accountInfo = await StellarWalletKit.getAccountInfo(vault.public_key);
         return {
           ...vault,
           balance: accountInfo ? accountInfo.balance : '0',
@@ -282,7 +282,7 @@ export async function getFriendVaultDetails(req: Request, res: Response) {
 
     // Obtener el balance actual del vault
     try {
-      const accountInfo = await StellarWalletKit.getAccountInfo(vault.publicKey);
+      const accountInfo = await StellarWalletKit.getAccountInfo(vault.public_key);
       vault.balance = accountInfo ? accountInfo.balance : '0';
       
       // Obtener balances de tokens personalizados (se implementaría aquí)
@@ -345,7 +345,7 @@ export async function depositToFriendVault(req: Request, res: Response) {
     // Obtener información del vault
     const { data: vault, error } = await supabase
       .from('friend_vaults')
-      .select('publicKey, members')
+      .select('public_key, members')
       .eq('id', vaultId)
       .single();
 
@@ -374,7 +374,7 @@ export async function depositToFriendVault(req: Request, res: Response) {
     if (!tokenAddress || tokenAddress === 'XLM') {
       depositResult = await StellarWalletKit.sendPayment(
         senderPrivateKey,
-        vault.publicKey,
+        vault.public_key,
         amount,
         { memo: `Depósito en Friend Vault: ${vaultId}` }
       );
@@ -384,7 +384,7 @@ export async function depositToFriendVault(req: Request, res: Response) {
       depositResult = await StellarWalletKit.sendToken(
         tokenAddress,
         senderPrivateKey, 
-        vault.publicKey,
+        vault.public_key,
         amount
       );
     }
@@ -405,7 +405,7 @@ export async function depositToFriendVault(req: Request, res: Response) {
       amount,
       tokenAddress: tokenAddress || 'XLM',
       sender: senderEmail,
-      recipient: vault.publicKey,
+      recipient: vault.public_key,
       transactionHash: depositResult.hash,
       timestamp: new Date().toISOString()
     };
@@ -457,7 +457,7 @@ export async function requestWithdrawal(req: Request, res: Response) {
     // Obtener información del vault
     const { data: vault, error } = await supabase
       .from('friend_vaults')
-      .select('members, balance, publicKey')
+      .select('members, balance, public_key')
       .eq('id', vaultId)
       .single();
 
@@ -481,7 +481,7 @@ export async function requestWithdrawal(req: Request, res: Response) {
 
     // Verificar saldo disponible
     try {
-      const accountInfo = await StellarWalletKit.getAccountInfo(vault.publicKey);
+      const accountInfo = await StellarWalletKit.getAccountInfo(vault.public_key);
       const balance = parseFloat(accountInfo ? accountInfo.balance || '0' : '0');
       const withdrawalAmount = parseFloat(amount);
       
@@ -698,7 +698,7 @@ export async function executeWithdrawal(req: Request, res: Response) {
       .select(`
         *,
         friend_vaults:vaultId (
-          publicKey,
+          public_key,
           secretKey,
           members
         )
@@ -786,7 +786,7 @@ export async function executeWithdrawal(req: Request, res: Response) {
       type: 'withdrawal',
       amount: request.amount,
       tokenAddress: request.tokenAddress || 'XLM',
-      sender: request.friend_vaults.publicKey,
+      sender: request.friend_vaults.public_key,
       recipient: request.recipient,
       requestId: request.id,
       transactionHash: withdrawalResult.hash,

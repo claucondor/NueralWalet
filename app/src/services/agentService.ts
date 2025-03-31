@@ -3,12 +3,60 @@ import axios from 'axios';
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 1000; // 1 segundo
 const TIMEOUT = 60000; // 60 segundos (aumentado de 30s)
+const MAX_HISTORY_MESSAGES = 10; // Máximo número de mensajes del historial a enviar
 
 // Función para esperar un tiempo determinado
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Interfaz para mensajes en el historial
+interface HistoryMessage {
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date | string;
+}
+
 const agentService = {
+  // Mantener un historial de mensajes en memoria
+  messageHistory: [] as HistoryMessage[],
+
+  // Añadir mensaje al historial
+  addToHistory: (message: string, sender: 'user' | 'bot') => {
+    const historyMessage: HistoryMessage = {
+      content: message,
+      sender,
+      timestamp: new Date()
+    };
+    
+    // Añadir al inicio para que los más recientes estén primero
+    agentService.messageHistory.unshift(historyMessage);
+    
+    // Mantener solo los últimos N mensajes
+    if (agentService.messageHistory.length > MAX_HISTORY_MESSAGES) {
+      agentService.messageHistory.pop();
+    }
+    
+    // Opcional: guardar en localStorage para persistencia entre sesiones
+    localStorage.setItem('chatMessageHistory', JSON.stringify(agentService.messageHistory));
+  },
+
+  // Cargar historial desde localStorage al iniciar
+  loadHistory: () => {
+    try {
+      const savedHistory = localStorage.getItem('chatMessageHistory');
+      if (savedHistory) {
+        agentService.messageHistory = JSON.parse(savedHistory);
+      }
+    } catch (error) {
+      console.error('Error al cargar historial de mensajes:', error);
+      // Si hay error, iniciar con historial vacío
+      agentService.messageHistory = [];
+    }
+  },
+
   processMessage: async (message: string, stellar_key_first_half: string, stellarPublicKey: string, customTokens?: any[]) => {
+    // Añadir mensaje del usuario al historial
+    agentService.addToHistory(message, 'user');
+    
     let retries = 0;
     
     while (retries <= MAX_RETRIES) {
@@ -27,16 +75,29 @@ const agentService = {
         const apiUrl = `${import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000'}/api/agent/process-message`;
         console.log(`Enviando solicitud a ${apiUrl}... (timeout: ${TIMEOUT}ms)`);
         console.log(`Tamaño del mensaje: ${message.length} caracteres`);
+        console.log(`Enviando ${agentService.messageHistory.length} mensajes de historial`);
         console.time('api_process_message');
         
         const response = await axios.post(
           apiUrl,
-          { text: message, stellar_key_first_half, stellarPublicKey, customTokens },
+          { 
+            text: message, 
+            stellar_key_first_half, 
+            stellarPublicKey, 
+            customTokens,
+            messageHistory: agentService.messageHistory 
+          },
           { timeout: TIMEOUT } // timeout aumentado a 60 segundos
         );
         
         console.timeEnd('api_process_message');
         console.log('Respuesta recibida:', response.status, 'Tamaño:', response.data ? JSON.stringify(response.data).length : 0, 'bytes');
+        
+        // Si la respuesta fue exitosa, añadirla al historial
+        if (response.data.success && response.data.data?.suggestedResponse) {
+          agentService.addToHistory(response.data.data.suggestedResponse, 'bot');
+        }
+        
         return response.data;
       } catch (error: any) {
         console.timeEnd('api_process_message'); // Asegurarse de finalizar el timer incluso en error
@@ -139,5 +200,8 @@ const agentService = {
     }
   }
 };
+
+// Cargar historial al iniciar
+agentService.loadHistory();
 
 export default agentService;

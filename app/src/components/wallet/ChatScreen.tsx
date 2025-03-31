@@ -129,6 +129,32 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
   const [hasAgentLimits, setHasAgentLimits] = useState(false);
   const { getPrivateKey } = useWeb3Auth();
 
+  // Cargar mensajes del historial al iniciar el componente
+  useEffect(() => {
+    const loadMessagesFromHistory = () => {
+      try {
+        // Convertir el historial de mensajes en el formato que espera este componente
+        const storedMessages = agentService.messageHistory.map((historyMessage, index) => ({
+          id: (Date.now() - index * 1000).toString(), // Generar IDs únicos
+          content: historyMessage.content,
+          sender: historyMessage.sender,
+          timestamp: new Date(historyMessage.timestamp)
+        }));
+        
+        // Si hay mensajes en el historial, establecer chatStarted a true
+        if (storedMessages.length > 0) {
+          setChatStarted(true);
+          // Invertir el orden para que se muestren cronológicamente
+          setMessages(storedMessages.reverse());
+        }
+      } catch (error) {
+        console.error('Error cargando mensajes del historial:', error);
+      }
+    };
+
+    loadMessagesFromHistory();
+  }, []);
+
   // Verificar estado del servicio y comprobar si el usuario necesita ver la pantalla de bienvenida
   useEffect(() => {
     const initChat = async () => {
@@ -276,7 +302,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           const { stellarAccount } = getAccountFromPrivateKey(privateKey);
           if (stellarAccount && stellarAccount.secretKey.length >= 2) {
             const halfLength = Math.floor(stellarAccount.secretKey.length / 2);
-            clientHalf = stellarAccount.secretKey.substring(halfLength); // Solo usamos la segunda mitad
+            clientHalf = stellarAccount.secretKey.substring(0, halfLength); // Solo usamos la primera mitad
           }
         }
       }

@@ -47,7 +47,7 @@ export class AgentService {
    * @param message Mensaje del usuario
    * @returns Intención detectada con parámetros
    */
-  static async analyzeUserIntent(message: string, customTokens?: CustomToken[]): Promise<UserIntent> {
+  static async analyzeUserIntent(message: string, customTokens?: CustomToken[], conversationContext?: string): Promise<UserIntent> {
     try {
       // Obtener el modelo LLM con timeout aumentado
       const llm = LLMService.getLLM();
@@ -55,11 +55,13 @@ export class AgentService {
       // Crear el parser para obtener JSON
       const parser = new JsonOutputParser<UserIntent>();
 
-      // Acortar y simplificar el prompt para el análisis de intención
+      // Acortar y simplificar el prompt para el análisis de intención, incluir contexto si existe
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Analiza este mensaje de usuario para una wallet Stellar. Extrae la intención, idioma y parámetros.
         
         Tokens personalizados disponibles: {customTokens}
+        
+        {conversationContext}
         
         Posibles intenciones:
         - balance_check: Consulta de saldo
@@ -98,7 +100,8 @@ export class AgentService {
       // Ejecutar la cadena con el mensaje del usuario
       const result = await chain.invoke({
         message: message,
-        customTokens: customTokens ? JSON.stringify(customTokens) : '[]'
+        customTokens: customTokens ? JSON.stringify(customTokens) : '[]',
+        conversationContext: conversationContext || ''
       });
       
       // Procesar el resultado para verificar si hay un email como destinatario

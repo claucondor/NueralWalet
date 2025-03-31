@@ -17,16 +17,23 @@ export interface CustomToken {
   decimals: number;
 }
 
+export interface HistoryMessage {
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date | string;
+}
+
 export const processMessage = async (req: Request, res: Response) => {
   console.log('⚡ [API] Iniciando processMessage con request:', {
     messageLength: req?.body?.text?.length || 0,
     hasKeys: !!req?.body?.stellar_key_first_half && !!req?.body?.stellarPublicKey,
     customTokensCount: req?.body?.customTokens?.length || 0,
+    messageHistoryCount: req?.body?.messageHistory?.length || 0,
     timestamp: new Date().toISOString()
   });
   
   try {
-    const { text, stellar_key_first_half, stellarPublicKey, customTokens } = req.body;
+    const { text, stellar_key_first_half, stellarPublicKey, customTokens, messageHistory } = req.body;
     
     if (!text || !stellar_key_first_half || !stellarPublicKey) {
       console.log('❌ [API] Error de validación: campos requeridos faltantes');
@@ -59,6 +66,15 @@ export const processMessage = async (req: Request, res: Response) => {
       }
     }
     
+    // Validar historial de mensajes si existe
+    let validMessageHistory: HistoryMessage[] = [];
+    if (messageHistory && Array.isArray(messageHistory)) {
+      console.log(`✅ [API] Historial de mensajes recibido: ${messageHistory.length} mensajes`);
+      validMessageHistory = messageHistory
+        .filter((msg: any) => msg && typeof msg.content === 'string' && ['user', 'bot'].includes(msg.sender))
+        .slice(0, 10); // Limitar a 10 mensajes máximo
+    }
+    
     console.log(`✅ [API] Validación completada para mensaje de ${text.length} caracteres`);
     
     // Buscar la otra mitad de la clave en Supabase
@@ -82,15 +98,75 @@ export const processMessage = async (req: Request, res: Response) => {
     // Reconstruir la clave completa
     const fullPrivateKey = stellar_key_first_half + data.stellar_key_half;
     
+    // Crear el contexto de conversación para el análisis de intención
+    let conversationContext = '';
+    if (validMessageHistory.length > 0) {
+      // Formateamos el historial para el LLM
+      conversationContext = 'Historial de la conversación:\n\n';
+      validMessageHistory.forEach((msg: HistoryMessage) => {
+        conversationContext += `${msg.sender === 'user' ? 'Usuario' : 'Asistente'}: ${msg.content}\n\n`;
+      });
+      
+      conversationContext += 'Mensaje actual del usuario: ' + text;
+      console.log(`🧠 [API] Contexto de conversación creado con ${validMessageHistory.length} mensajes anteriores`);
+    }
+    
     // Iniciar procesamiento en paralelo
     console.log('🔄 [API] Iniciando análisis de intención del usuario...');
     console.time('analyzeUserIntent');
-    const userIntentPromise = AgentService.analyzeUserIntent(text, customTokens);
+    const userIntentPromise = AgentService.analyzeUserIntent(
+      text, 
+      customTokens, 
+      conversationContext || undefined
+    );
     
     // Esperar a que se complete el análisis de intención
     const userIntent = await userIntentPromise;
     console.timeEnd('analyzeUserIntent');
     console.log(`✅ [API] Análisis completado. Intención detectada: ${userIntent.intentType} con confianza: ${userIntent.confidence}`);
+    
+    // Verificar si faltan parámetros necesarios para la intención
+    if (userIntent.intentType === 'send_payment') {
+      const missingParams = [];
+      
+      if (!userIntent.params.recipient && !userIntent.params.recipientEmail) {
+        missingParams.push('destinatario');
+      }
+      
+      if (!userIntent.params.amount) {
+        missingParams.push('cantidad');
+      }
+      
+      // Si faltan parámetros importantes, devolver una respuesta solicitando la información
+      if (missingParams.length > 0) {
+        console.log(`⚠️ [API] Faltan parámetros necesarios: ${missingParams.join(', ')}`);
+        
+        // Generar respuesta pidiendo la información faltante
+        let responseMessage = '';
+        
+        if (missingParams.length === 1) {
+          if (missingParams[0] === 'destinatario') {
+            responseMessage = '¿A quién deseas enviar el pago? Por favor, proporciona la dirección Stellar o el correo electrónico del destinatario.';
+          } else if (missingParams[0] === 'cantidad') {
+            responseMessage = '¿Qué cantidad deseas enviar? Por favor, indica el monto que quieres transferir.';
+          }
+        } else {
+          responseMessage = 'Para procesar tu solicitud de pago, necesito más información. Por favor, indica el destinatario y la cantidad que deseas enviar.';
+        }
+        
+        return res.json({
+          success: true,
+          data: {
+            intent: userIntent.intentType,
+            confidence: userIntent.confidence,
+            params: userIntent.params,
+            suggestedResponse: responseMessage,
+            needsMoreInfo: true,
+            missingParams
+          }
+        });
+      }
+    }
     
     // Procesar la intención del usuario si tiene suficiente confianza
     if (AgentService.hasConfidence(userIntent)) {
