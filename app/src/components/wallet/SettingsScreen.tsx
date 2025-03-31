@@ -523,7 +523,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
             <path d="M19 12H5M12 19l-7-7 7-7"></path>
           </svg>
         </button>
-        <h1 className="text-xl font-semibold text-center flex-grow">Configuración</h1>
+        <h1 className="text-xl font-semibold text-center flex-grow">Settings</h1>
         <div className="w-10"></div>
       </div>
 
@@ -534,11 +534,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
             {/* User info */}
             <div className="bg-white rounded-xl p-5 shadow-sm flex items-center space-x-4">
               <div className="h-14 w-14 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold text-xl">
-                {getInitials(userInfo?.name || "Usuario")}
+                {getInitials(userInfo?.name || "User")}
               </div>
               <div>
-                <h2 className="font-semibold text-lg">{userInfo?.name || "Usuario"}</h2>
-                <p className="text-sm text-gray-500">{userInfo?.email || "Sin correo"}</p>
+                <h2 className="font-semibold text-lg">{userInfo?.name || "User"}</h2>
+                <p className="text-sm text-gray-500">{userInfo?.email || "No email"}</p>
               </div>
             </div>
 
@@ -580,8 +580,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-medium">Información Personal</h3>
-                  <p className="text-xs text-gray-500">Ver y gestionar tu información</p>
+                  <h3 className="font-medium">Personal Information</h3>
+                  <p className="text-xs text-gray-500">View and manage your information</p>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -620,8 +620,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-medium">Seguridad</h3>
-                  <p className="text-xs text-gray-500">Gestionar claves privadas</p>
+                  <h3 className="font-medium">Security</h3>
+                  <p className="text-xs text-gray-500">Manage private keys</p>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -661,8 +661,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
                     </svg>
                   </div>
                   <div className="flex-1 text-left">
-                    <h3 className="font-medium">Score Crediticio</h3>
-                    <p className="text-xs text-gray-500">Ver tu reputación crediticia</p>
+                    <h3 className="font-medium">Credit Score</h3>
+                    <p className="text-xs text-gray-500">View your credit reputation</p>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -703,7 +703,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
                 <polyline points="16 17 21 12 16 7"></polyline>
                 <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
-              Cerrar Sesión
+              Log Out
             </button>
           </div>
         </div>
