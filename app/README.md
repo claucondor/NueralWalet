@@ -5,10 +5,11 @@ NeuralWallet is a decentralized finance application built on the Stellar blockch
 ## Core Features
 
 ### Decentralized Credit Score System
-NeuralWallet implements a revolutionary decentralized credit scoring system that allows users to:
+NeuralWallet implements a revolutionary decentralized credit scoring system inspired by Stellar's BLEND protocol:
 - Build a credit history on the blockchain
-- Access loans based on their on-chain reputation
+- Access loans based on on-chain reputation
 - Participate in peer-to-peer lending with reduced risk
+- Lending pools that are isolated, capital efficient, and permissionless
 
 ### Friend Vault
 Friend Vaults enable users to:
@@ -21,8 +22,9 @@ Friend Vaults enable users to:
 Unlike traditional lending platforms, NeuralWallet distributes loan risk across multiple lenders:
 - No single person bears the full risk of default
 - Loans are funded by multiple participants
-- Integration with Stellar's built-in liquidity pools (similar to BLEND protocol)
+- Integration with Stellar's liquidity pools (similar to BLEND protocol)
 - Automatic collateral management and liquidation mechanisms
+- General fee pool that helps cover defaults
 
 ### Smart Agent Assistant
 NeuralWallet features an AI-powered financial assistant that helps users:
@@ -46,6 +48,7 @@ NeuralWallet consists of two main components:
    - Smart contract management for credit score system
    - Transaction processing and verification
    - Pool management for collective lending
+   - Multisignature system for secure operations
 
 ## Local Development Setup
 
@@ -112,7 +115,7 @@ SIGNING_KEY=your_signing_key
 
 ## Decentralized Credit System Explained
 
-NeuralWallet's credit system is built on the concept of social trust and on-chain reputation:
+NeuralWallet's credit system is built on the concept of social trust and on-chain reputation, inspired by Stellar's BLEND protocol:
 
 1. **Credit Score Generation**
    - Based on transaction history
@@ -125,14 +128,21 @@ NeuralWallet's credit system is built on the concept of social trust and on-chai
    - Multiple lenders contribute to each loan
    - Risk is distributed proportionally
    - Interest rates are determined algorithmically based on credit scores
+   - Isolated pools to minimize systemic risk
 
-3. **Security Mechanisms**
+3. **Fee and Insurance Pool**
+   - General pool where all application fees are collected
+   - Anyone can provide liquidity to earn interest
+   - Functions as an insurance fund to cover defaults
+   - Managed by users themselves in a decentralized manner
+
+4. **Security Mechanisms**
    - Reserve pools to cover defaults
    - Gradual lending limits that increase with reputation
    - Multi-signature requirements for large transactions
    - Automated risk assessment
 
-4. **Privacy Considerations**
+5. **Privacy Considerations**
    - Credit scores are publicly verifiable but anonymized
    - Users control what information is shared
    - Zero-knowledge proofs for verification without data exposure
@@ -145,11 +155,13 @@ Friend Vaults are a unique feature that allows groups of friends or community me
    - Create shared wallets with customizable governance
    - Define contribution requirements and withdrawal rules
    - Establish collective spending policies
+   - Multisignature implementation for security and consensus
 
 2. **Build Social Trust**
    - Successful participation in Friend Vaults improves credit scores
    - Creates a network of trusted financial relationships
    - Enables access to better lending terms through group reputation
+   - Increases the collective solvency of the community
 
 3. **Use Cases**
    - Savings clubs and rotating credit associations

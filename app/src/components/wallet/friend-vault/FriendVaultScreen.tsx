@@ -25,11 +25,18 @@ const FriendVaultScreen: React.FC = () => {
   
   useEffect(() => {
     console.log('🔄 Cargando vaults...');
-    loadVaults().then(() => {
-      console.log('✅ Vaults cargados correctamente');
-    }).catch(err => {
-      console.error('❌ Error al cargar vaults en useEffect:', err);
-    });
+    
+    // Usando async/await en una función separada dentro del useEffect
+    const loadVaultsData = async () => {
+      try {
+        await loadVaults();
+        console.log('✅ Vaults cargados correctamente');
+      } catch (err) {
+        console.error('❌ Error al cargar vaults en useEffect:', err);
+      }
+    };
+    
+    loadVaultsData();
   }, [loadVaults]);
 
   const handleVaultClick = (vaultId: string) => {

@@ -55,24 +55,42 @@ export class AgentService {
       // Crear el parser para obtener JSON
       const parser = new JsonOutputParser<UserIntent>();
 
-      // Acortar y simplificar el prompt para el análisis de intención, incluir contexto si existe
+      // Extraer y formatear información de tokens personalizados para el prompt
+      let customTokensInfo = '';
+      if (customTokens && customTokens.length > 0) {
+        customTokensInfo = 'Tokens personalizados disponibles:\n';
+        customTokens.forEach(token => {
+          customTokensInfo += `- Símbolo: ${token.symbol}, Nombre: ${token.name}, Dirección: ${token.address}\n`;
+        });
+      } else {
+        customTokensInfo = 'No hay tokens personalizados registrados.';
+      }
+
+      // Prompt mejorado para el análisis de intención
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Analiza este mensaje de usuario para una wallet Stellar. Extrae la intención, idioma y parámetros.
         
-        Tokens personalizados disponibles: {customTokens}
+        ${customTokensInfo}
         
-        {conversationContext}
+        ${conversationContext || ''}
         
         Posibles intenciones:
-        - balance_check: Consulta de saldo
+        - balance_check: Consulta de saldo (general o de un token específico)
         - send_payment: Envío de pago
         - token_info: Información de token
         - transaction_history: Historial de transacciones
         - unknown: Intención desconocida
         
-        Esta wallet soporta XLM (nativo) y tokens Soroban. 
-        - Para XLM: "isNativeToken": true, "tokenAddress": "XLM"
-        - Para Soroban: "isNativeToken": false, "tokenAddress": "<contrato_completo>"
+        Instrucciones específicas:
+        1. Para consultas de saldo:
+           - Si el usuario pregunta por XLM: "isNativeToken": true, "tokenAddress": "XLM"
+           - Si pregunta por un token personalizado: "isNativeToken": false, "tokenAddress": "[símbolo o dirección del token]"
+           - Si sólo pregunta por "balance" o "saldo" sin especificar: "isNativeToken": true, "tokenAddress": "XLM"
+        
+        2. Cuando el usuario mencione un símbolo de token (como "TK1", "USDC", etc.):
+           - Busca coincidencias en la lista de tokens personalizados disponibles
+           - Si el símbolo coincide exactamente, usa la dirección completa del token en tokenAddress
+           - Si no hay coincidencia exacta pero parece un símbolo de token, usa el símbolo como está
         
         Mensaje: {message}
         
@@ -85,7 +103,7 @@ export class AgentService {
             "walletAddress": "direccion_si_se_menciona",
             "amount": "cantidad_si_se_menciona",
             "isNativeToken": true/false,
-            "tokenAddress": "XLM_o_direccion",
+            "tokenAddress": "XLM_o_direccion_o_simbolo",
             "recipient": "destinatario_si_se_menciona",
             "recipientEmail": "email_si_se_menciona"
           }},
@@ -104,8 +122,11 @@ export class AgentService {
         conversationContext: conversationContext || ''
       });
       
+      // Procesar el resultado para verificar si hay un token personalizado mencionado
+      const processedResult = await this.processTokenReference(result, customTokens || []);
+      
       // Procesar el resultado para verificar si hay un email como destinatario
-      return await this.processEmailRecipient(result);
+      return await this.processEmailRecipient(processedResult);
     } catch (error) {
       console.error('Error al analizar la intención del usuario:', error);
       
@@ -119,6 +140,40 @@ export class AgentService {
         suggestedResponse: 'Sorry, I could not understand your request. Could you rephrase it?'
       };
     }
+  }
+  
+  /**
+   * Procesa el resultado para verificar si hay un token personalizado mencionado
+   * @param intent Intención detectada por el LLM
+   * @param customTokens Lista de tokens personalizados disponibles
+   * @returns Intención procesada con la dirección del token si existe
+   */
+  private static processTokenReference(intent: UserIntent, customTokens: CustomToken[]): UserIntent {
+    // Si no hay tokens personalizados o no es una intención relacionada con tokens, devolver la intención sin cambios
+    if (customTokens.length === 0 || 
+       (intent.intentType !== 'balance_check' && intent.intentType !== 'token_info' && intent.intentType !== 'send_payment')) {
+      return intent;
+    }
+    
+    // Verificar si se mencionó un símbolo de token
+    const tokenSymbol = intent.params.tokenAddress;
+    if (!tokenSymbol || tokenSymbol === 'XLM') {
+      return intent; // No hay símbolo de token o es XLM
+    }
+    
+    // Buscar coincidencia exacta en la lista de tokens personalizados
+    const matchedToken = customTokens.find(token => 
+      token.symbol.toLowerCase() === tokenSymbol.toLowerCase()
+    );
+    
+    if (matchedToken) {
+      // Si hay coincidencia, actualizar la dirección del token
+      console.log(`Token personalizado encontrado: ${matchedToken.symbol} -> ${matchedToken.address}`);
+      intent.params.tokenAddress = matchedToken.address;
+      intent.params.isNativeToken = false;
+    }
+    
+    return intent;
   }
   
   /**
@@ -190,7 +245,7 @@ export class AgentService {
       // Procesar según la intención detectada
       switch (intent) {
         case 'balance_check':
-          return await this.processBalanceCheck(stellarKit, stellarPublicKey, language);
+          return await this.processBalanceCheck(stellarKit, stellarPublicKey, params, language);
           
         case 'send_payment':
           return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language);
@@ -249,8 +304,96 @@ export class AgentService {
   /**
    * Procesa la intención de consulta de saldo
    */
-  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'en') {
+  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, params: Record<string, any>, language: string = 'en') {
     try {
+      // Verificar si se está consultando un token específico
+      const isSpecificToken = params.tokenAddress && params.tokenAddress !== 'XLM';
+      
+      if (isSpecificToken) {
+        try {
+          console.log(`Consultando balance para token específico: ${params.tokenAddress}`);
+          // Verificamos si el token es un token personalizado
+          const tokenBalance = await stellarKit.getTokenBalance(params.tokenAddress, publicKey);
+          
+          if (!tokenBalance || (!tokenBalance.balance && !tokenBalance.formattedBalance)) {
+            // Usar LLM para mensaje de error en el idioma correcto
+            const llm = LLMService.getLLM();
+            const promptTemplate = ChatPromptTemplate.fromTemplate(`
+              Eres un asistente financiero amigable. El usuario intentó consultar el saldo de un token específico (${params.tokenAddress}) pero no se encontró información.
+              
+              Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
+              Explica que no se pudo encontrar información sobre el token solicitado y podría ser porque:
+              1. El token no existe
+              2. El usuario no posee ese token
+              3. La dirección del token es incorrecta
+            `);
+            
+            const chain = promptTemplate.pipe(llm);
+            const result = await chain.invoke({ language });
+            
+            return {
+              success: false,
+              message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+            };
+          }
+          
+          // Generar mensaje amigable con el LLM
+          const llm = LLMService.getLLM();
+          const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            Eres un asistente financiero amigable. El usuario ha solicitado su saldo de un token específico.
+            
+            Información del token:
+            - Símbolo/ID: ${params.tokenAddress}
+            - Balance: ${tokenBalance.formattedBalance || tokenBalance.balance || 0}
+            
+            Genera una respuesta amigable y profesional informando al usuario sobre su saldo actual de este token específico.
+            Incluye el saldo exacto pero también usa un tono conversacional.
+            
+            IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
+            Si el idioma es 'es', responde en español.
+            Si el idioma es 'en', responde en inglés.
+            Si el idioma es 'fr', responde en francés.
+            Si el idioma es 'pt', responde en portugués.
+            Si el idioma es 'de', responde en alemán.
+            Para cualquier otro código de idioma, intenta responder en ese idioma.
+          `);
+          
+          const chain = promptTemplate.pipe(llm);
+          const result = await chain.invoke({ language });
+          
+          return {
+            success: true,
+            message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
+            data: { 
+              tokenAddress: params.tokenAddress,
+              balance: tokenBalance.formattedBalance || tokenBalance.balance || 0
+            }
+          };
+        } catch (error: any) {
+          console.error(`Error al consultar saldo del token ${params.tokenAddress}:`, error);
+          
+          // Usar LLM para mensaje de error en el idioma correcto
+          const llm = LLMService.getLLM();
+          const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            Eres un asistente financiero amigable. Ocurrió un error al consultar el saldo de un token específico.
+            
+            Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
+            Explica que no se pudo obtener información sobre el token ${params.tokenAddress} y sugiere verificar si la dirección es correcta.
+            
+            Detalles técnicos (solo para referencia): {error}
+          `);
+          
+          const chain = promptTemplate.pipe(llm);
+          const result = await chain.invoke({ error: error.message, language });
+          
+          return {
+            success: false,
+            message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+          };
+        }
+      }
+      
+      // Consulta de balance general (XLM)
       // Obtener información de la cuenta
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       

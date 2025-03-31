@@ -21,6 +21,7 @@ The Stellar Kit is the backend service component of NeuralWallet, handling all i
 - Multi-party loan distribution and management
 - Interest calculation and distribution
 - Default risk management
+- Common fee pool to cover potential defaults
 
 ### Friend Vault Infrastructure
 - Smart contract management for collaborative wallets
@@ -107,6 +108,30 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_KEY=your_supabase_service_key
 ```
 
+## BLEND Protocol Integration
+
+NeuralWallet's lending system is inspired by Stellar's BLEND protocol, which offers:
+
+1. **Isolated Lending Pools**
+   - Each lending pool is isolated from others, minimizing systemic risk
+   - Lenders and borrowers are only exposed to risk in their specific pool
+   - Mandatory insurance through backstop modules for additional security
+
+2. **Capital Efficiency**
+   - Reactive interest rate mechanisms ensure optimal capital utilization
+   - Market-driven rates for both lenders and borrowers
+   - Automatic adjustment based on supply and demand
+
+3. **Permissionless Design**
+   - Anyone can use the system to lend or borrow 
+   - New lending pools can be created without governance approval
+   - User-managed community pool for additional security
+
+4. **Fee Collection System**
+   - A general pool collects application fees
+   - Anyone can provide liquidity to earn interest
+   - Pool funds help cover defaults, benefiting the entire ecosystem
+
 ## Decentralized Credit System Implementation
 
 The Stellar Kit implements a groundbreaking approach to credit scoring that:
@@ -144,6 +169,27 @@ Friend Vaults are implemented as:
    - Circuit breakers for suspicious activity
    - Gradual withdrawal limitations
    - Trust score adjustments based on behavior
+
+## Multisignature Implementation
+
+Multisignature (multisig) is a critical security feature in NeuralWallet that:
+
+1. **Enhances Security**
+   - Requires multiple signatures for high-value transactions
+   - Prevents single points of failure or compromise
+   - Protects against unauthorized access
+
+2. **Enables Friend Vault Governance**
+   - Grants different signing weights to different members
+   - Requires threshold approval for fund distribution
+   - Enforces group consensus for important decisions
+
+3. **Supports Advanced Lending Features**
+   - Secures collateral in lending contracts
+   - Authorizes automatic liquidations when thresholds are breached
+   - Manages shared pool assets with distributed authority
+
+Multisig is implemented using Stellar's native threshold system, where each account can have multiple signers with different weights.
 
 ## Security Considerations
 

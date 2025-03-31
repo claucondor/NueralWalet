@@ -54,6 +54,11 @@ export const processMessage = async (req: Request, res: Response) => {
     
     // Validar estructura de cada token si existen
     if (customTokens && customTokens.length > 0) {
+      console.log(`✅ [API] Tokens personalizados recibidos: ${customTokens.length}`);
+      customTokens.forEach((token: CustomToken, index: number) => {
+        console.log(`   Token #${index+1}: Símbolo=${token.symbol}, Nombre=${token.name}, Dirección=${token.address}`);
+      });
+      
       const invalidTokens = customTokens.filter((token: CustomToken) => 
         !token.symbol || !token.name || !token.address || token.decimals === undefined
       );
@@ -65,6 +70,8 @@ export const processMessage = async (req: Request, res: Response) => {
           error: 'Los custom tokens deben tener symbol, name, address y decimals'
         });
       }
+    } else {
+      console.log('ℹ️ [API] No se recibieron tokens personalizados');
     }
     
     // Validar historial de mensajes si existe
@@ -125,6 +132,26 @@ export const processMessage = async (req: Request, res: Response) => {
     const userIntent = await userIntentPromise;
     console.timeEnd('analyzeUserIntent');
     console.log(`✅ [API] Análisis completado. Intención detectada: ${userIntent.intentType} con confianza: ${userIntent.confidence}`);
+    console.log(`📝 [API] Parámetros detectados:`, userIntent.params);
+    
+    // Verificar y loguear información sobre tokens
+    if (userIntent.params.tokenAddress) {
+      console.log(`🔍 [API] Token referenciado: ${userIntent.params.tokenAddress}, Es nativo: ${userIntent.params.isNativeToken}`);
+      
+      // Si es un token personalizado, verificar si coincide con alguno de los tokens registrados
+      if (!userIntent.params.isNativeToken && userIntent.params.tokenAddress !== 'XLM') {
+        const matchingToken = customTokens?.find((t: CustomToken) => 
+          t.address === userIntent.params.tokenAddress || 
+          t.symbol.toLowerCase() === String(userIntent.params.tokenAddress).toLowerCase()
+        );
+        
+        if (matchingToken) {
+          console.log(`✅ [API] Token personalizado encontrado: ${matchingToken.symbol} (${matchingToken.address})`);
+        } else {
+          console.log(`⚠️ [API] Token personalizado no encontrado en la lista: ${userIntent.params.tokenAddress}`);
+        }
+      }
+    }
     
     // Verificar si faltan parámetros necesarios para la intención
     if (userIntent.intentType === 'send_payment') {
