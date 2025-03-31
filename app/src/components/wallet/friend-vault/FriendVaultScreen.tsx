@@ -24,7 +24,12 @@ const FriendVaultScreen: React.FC = () => {
   const { vaults, loadVaults, loading } = useFriendVault();
   
   useEffect(() => {
-    loadVaults();
+    console.log('🔄 Cargando vaults...');
+    loadVaults().then(() => {
+      console.log('✅ Vaults cargados correctamente');
+    }).catch(err => {
+      console.error('❌ Error al cargar vaults en useEffect:', err);
+    });
   }, [loadVaults]);
 
   const handleVaultClick = (vaultId: string) => {

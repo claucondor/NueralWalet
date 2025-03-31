@@ -3,6 +3,8 @@
  * Este servicio reemplaza el uso directo de StellarKit en el frontend
  */
 
+import axios, { AxiosResponse } from 'axios';
+
 // Obtener la URL base de la API desde las variables de entorno
 const API_BASE_URL = import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000';
 
@@ -64,34 +66,56 @@ export interface CreditScoreResult {
   error?: string;
 }
 
+type ApiResponse<T> = {
+  success: boolean;
+  message?: string;
+  data: T;
+};
+
 /**
- * Función auxiliar para realizar peticiones a la API
+ * Función para hacer peticiones a la API del backend de Stellar Kit
  */
-export async function apiRequest<T>(endpoint: string, method: string = 'GET', data?: Record<string, unknown>): Promise<{ data: T }> {
+export async function apiRequest<T>(
+  endpoint: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+  data?: any
+): Promise<ApiResponse<T>> {
   try {
     const url = `${API_BASE_URL}/api${endpoint}`;
-    const options: RequestInit = {
+    console.log(`🔄 API Request: ${method} ${url}`);
+    
+    const response: AxiosResponse<ApiResponse<T>> = await axios({
       method,
+      url,
+      data,
       headers: {
         'Content-Type': 'application/json',
       },
+    });
+    
+    console.log(`✅ API Response success: ${response.status}`);
+    
+    // Si la respuesta no tiene la estructura esperada, normalizarla
+    if (!response.data.hasOwnProperty('success')) {
+      return {
+        success: true,
+        data: response.data as unknown as T,
+      };
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    console.error(`❌ API Error: ${error.message}`, error);
+    
+    // Obtener datos del error si están disponibles
+    const errorResponse = error.response?.data;
+    
+    // Crear una respuesta de error normalizada
+    return {
+      success: false,
+      message: errorResponse?.message || error.message || 'Error en la petición',
+      data: {} as T,
     };
-
-    if (data && (method === 'POST' || method === 'PUT')) {
-      options.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(url, options);
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      throw new Error(responseData.error || 'Error en la petición a la API');
-    }
-
-    return responseData as { data: T };
-  } catch (error) {
-    console.error(`Error en la petición a ${endpoint}:`, error);
-    throw error;
   }
 }
 

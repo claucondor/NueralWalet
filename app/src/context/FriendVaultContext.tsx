@@ -54,8 +54,15 @@ export const FriendVaultProvider: React.FC<FriendVaultProviderProps> = ({ childr
     try {
       const userVaults = await friendVaultService.getVaultsByUser(userInfo.email);
       setVaults(userVaults);
+      
+      // Log para depuración
+      console.log(`📋 Vaults cargados: ${userVaults.length}`, userVaults);
+      
+      if (userVaults.length === 0) {
+        console.log('ℹ️ No se encontraron vaults para este usuario');
+      }
     } catch (error) {
-      console.error('Error al cargar vaults:', error);
+      console.error('❌ Error al cargar vaults:', error);
       toast({
         title: 'Error',
         description: 'No se pudieron cargar los vaults',

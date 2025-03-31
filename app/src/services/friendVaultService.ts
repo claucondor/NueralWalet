@@ -9,11 +9,11 @@ export interface FriendVault {
   id: string;
   name: string;
   description: string;
-  publicKey: string;
-  createdBy: string;
+  public_key: string;
+  created_by: string;
   members: string[];
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
   balance: string;
   isCreator?: boolean;
   tokenBalances?: TokenBalance[];
@@ -102,9 +102,12 @@ export const friendVaultService = {
   getVaultsByUser: async (email: string): Promise<FriendVault[]> => {
     try {
       const response = await apiRequest<FriendVault[]>(`/friend-vault/user/${email}`);
-      return response.data;
+      
+      // Asegurar que siempre devuelva un array, nunca nulo o undefined
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error obteniendo Friend Vaults del usuario:', error);
+      // En caso de error, devolver array vacío para evitar errores en el frontend
       return [];
     }
   },

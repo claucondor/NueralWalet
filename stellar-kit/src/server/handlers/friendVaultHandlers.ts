@@ -183,6 +183,7 @@ export async function getFriendVaultsByUser(req: Request, res: Response) {
     }
 
     // Buscar vaults donde el usuario es miembro
+    console.log(`🔍 Buscando vaults para el email: ${email}`);
     const { data, error } = await supabase
       .from('friend_vaults')
       .select('id, name, description, public_key, created_by, members, created_at, updated_at, balance')
@@ -194,6 +195,16 @@ export async function getFriendVaultsByUser(req: Request, res: Response) {
         success: false,
         error: 'Error de base de datos',
         message: 'No se pudieron obtener los Friend Vaults'
+      });
+    }
+
+    console.log(`✅ Resultados encontrados: ${data?.length || 0}`);
+    if (data && data.length === 0) {
+      console.log('ℹ️ No se encontraron vaults para este usuario, devolviendo array vacío');
+      return res.status(200).json({
+        success: true,
+        message: 'No se encontraron Friend Vaults',
+        data: []
       });
     }
 
