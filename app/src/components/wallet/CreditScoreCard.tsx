@@ -4,11 +4,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 interface CreditScoreProps {
   score: number;
   reason: string;
+  debtRatio?: number;
+  transactionCount?: number;
   loading: boolean;
   onClick?: () => void;
+  debug?: boolean;
 }
 
-const CreditScoreCard: React.FC<CreditScoreProps> = ({ score, reason, loading, onClick }) => {
+const CreditScoreCard: React.FC<CreditScoreProps> = ({ 
+  score, 
+  reason, 
+  debtRatio, 
+  transactionCount, 
+  loading, 
+  onClick,
+  debug = false
+}) => {
   // Function to determine score color based on value
   const getScoreColor = (score: number) => {
     if (score >= 800) return '#10B981'; // Excellent - green
@@ -29,6 +40,11 @@ const CreditScoreCard: React.FC<CreditScoreProps> = ({ score, reason, loading, o
 
   return (
     <Card className={`w-full shadow-md hover:shadow-lg transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+      {debug && (
+        <div className="text-xs text-gray-400 p-2 border-b border-gray-100">
+          Debug: Score={score}, Trans={transactionCount}, Ratio={debtRatio}
+        </div>
+      )}
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Credit Score</span>
@@ -53,14 +69,33 @@ const CreditScoreCard: React.FC<CreditScoreProps> = ({ score, reason, loading, o
           )}
         </div>
         {!loading && (
-          <div className="flex flex-col items-center mt-1">
-            <span className="text-lg font-semibold" style={{ color: getScoreColor(score) }}>
-              {getScoreRating(score)}
-            </span>
-            <p className="text-xs text-gray-500 text-center mt-1 line-clamp-2">
-              {reason}
-            </p>
-          </div>
+          <>
+            <div className="flex flex-col items-center mt-1">
+              <span className="text-lg font-semibold" style={{ color: getScoreColor(score) }}>
+                {getScoreRating(score)}
+              </span>
+              <p className="text-xs text-gray-500 text-center mt-1 line-clamp-2">
+                {reason}
+              </p>
+            </div>
+            
+            {(debtRatio !== undefined || transactionCount !== undefined) && (
+              <div className="w-full mt-3 border-t pt-3 grid grid-cols-2 gap-2">
+                {transactionCount !== undefined && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Transactions</p>
+                    <p className="text-sm font-semibold">{transactionCount}</p>
+                  </div>
+                )}
+                {debtRatio !== undefined && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Debt Ratio</p>
+                    <p className="text-sm font-semibold">{debtRatio.toFixed(2)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </CardContent>
       {!loading && (

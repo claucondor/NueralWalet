@@ -32,14 +32,14 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
       try {
         console.log("🔄 Fetching credit score...");
         const result = await getCreditScore('en');
-        console.log("📋 Credit score result:", result);
+        console.log("📋 Credit score result:", JSON.stringify(result, null, 2));
         
         if (isMounted) {
           setCreditData(result);
           setIsLoading(false);
           
           // Log detailed structure for debugging
-          if (result?.data) {
+          if (result?.success && result.data) {
             console.log("📊 Analysis data:", result.data.analysis);
             console.log("🏆 Credit score data:", result.data.creditScore);
           }
@@ -115,12 +115,12 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading information</h3>
             <p className="text-gray-500">{error}</p>
           </div>
-        ) : !creditData?.data?.creditScore?.score ? (
+        ) : !creditData?.success || !creditData?.data?.success || !creditData?.data?.creditScore?.score ? (
           <div className="py-10 text-center">
-            {/* Debug information */}
             <div className="text-xs text-gray-400 mb-4">
               Debug: {JSON.stringify({
                 hasData: !!creditData?.data,
+                dataSuccess: creditData?.data?.success,
                 hasAnalysis: !!creditData?.data?.analysis,
                 txCount: creditData?.data?.analysis?.transactionCount,
                 hasScore: !!creditData?.data?.creditScore?.score,
@@ -143,25 +143,6 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
           </div>
         ) : (
           <div className="animate-fadeIn space-y-6">
-            {/* Show warning for insufficient transactions */}
-            {creditData.data.analysis && creditData.data.analysis.transactionCount < 5 && (
-              <div className="bg-yellow-50 rounded-xl p-4 mb-4 shadow-sm border border-yellow-100">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">Limited Transaction History</h3>
-                    <div className="mt-1 text-xs text-yellow-700">
-                      <p>Your score is based on only {creditData.data.analysis.transactionCount} transactions. For a more accurate score, at least 5 transactions are recommended.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
             {/* Score Card */}
             <div className="bg-white rounded-xl p-6 shadow-sm animate-slideUp" style={{animationDelay: "0.1s"}}>
               <div className="flex flex-col items-center">
@@ -225,10 +206,26 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                   <p className="text-xs text-gray-500">Frequency</p>
                   <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.frequency.toFixed(2)}/day</p>
                 </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Net Flow</p>
+                  <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.netFlow.toFixed(2)} XLM</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Debt Ratio</p>
+                  <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.debtRatio.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Incoming Transactions</p>
+                  <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.incomingCount}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Outgoing Transactions</p>
+                  <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.outgoingCount}</p>
+                </div>
               </div>
             </div>
             
-            {/* AI Recommendation */}
+            {/* Professional Assessment */}
             {creditData.data.englishRecommendation && (
               <div className="bg-white rounded-xl p-6 shadow-sm animate-slideUp" style={{animationDelay: "0.4s"}}>
                 <div className="flex items-center mb-4">
@@ -240,14 +237,12 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                   <h3 className="font-semibold text-lg ml-3">Professional Assessment</h3>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700">{creditData.data.englishRecommendation}</p>
+                  <div className="prose prose-sm max-w-none text-gray-700" 
+                    dangerouslySetInnerHTML={{ 
+                      __html: creditData.data.englishRecommendation.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br/><br/>').replace(/\n([0-9]+\. )/g, '<br/><br/>$1')
+                    }} 
+                  />
                 </div>
-              </div>
-            )}
-            {creditData?.data?.englishRecommendation && (
-              <div className="mt-6 bg-blue-50 p-4 rounded-lg max-w-md mx-auto">
-                <h4 className="font-medium text-blue-800 mb-2">Recommendation</h4>
-                <p className="text-sm text-blue-900 italic">{creditData.data.englishRecommendation}</p>
               </div>
             )}
           </div>

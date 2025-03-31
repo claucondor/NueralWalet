@@ -42,27 +42,30 @@ export interface TransactionResult {
   error?: string;
 }
 
+export interface CreditScoreData {
+  success: boolean;
+  analysis: {
+    totalVolume: number;
+    transactionCount: number;
+    frequency: number;
+    averageAmount: number;
+    largestTransaction: number;
+    netFlow: number;
+    debtRatio: number;
+    incomingCount: number;
+    outgoingCount: number;
+  };
+  creditScore: {
+    score: number;
+    reason: string;
+    improvementTips: string[];
+  };
+  englishRecommendation: string;
+}
+
 export interface CreditScoreResult {
   success: boolean;
-  data?: {
-    analysis: {
-      totalVolume: number;
-      transactionCount: number;
-      frequency: number;
-      averageAmount: number;
-      largestTransaction: number;
-      netFlow: number;
-      debtRatio: number;
-      incomingCount: number;
-      outgoingCount: number;
-    };
-    creditScore: {
-      score: number;
-      reason: string;
-      improvementTips: string[];
-    };
-    englishRecommendation: string;
-  };
+  data?: CreditScoreData;
   error?: string;
 }
 
@@ -186,13 +189,13 @@ export const accountService = {
   /**
    * Evaluates the credit score of an account
    */
-  getCreditScore: async (publicKey: string, language: string = 'en'): Promise<CreditScoreResult | null> => {
+  getCreditScore: async (publicKey: string, language: string = 'en'): Promise<CreditScoreResult> => {
     try {
-      const response = await apiRequest<CreditScoreResult>(`/account/${publicKey}/credit-score?language=${language}`);
-      return response.data;
+      const response = await apiRequest<CreditScoreData>(`/account/${publicKey}/credit-score?language=${language}`);
+      return response;
     } catch (error) {
       console.error('Error getting credit score:', error);
-      return null;
+      return { success: false, error: String(error) };
     }
   }
 };

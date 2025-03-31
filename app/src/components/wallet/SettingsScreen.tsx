@@ -362,7 +362,12 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) => {
   const { userInfo, stellarAddress, getCreditScore } = useWeb3Auth();
   const [currentView, setCurrentView] = useState<string>("main");
-  const [creditScore, setCreditScore] = useState<{score: number, reason: string} | null>(null);
+  const [creditScore, setCreditScore] = useState<{
+    score: number, 
+    reason: string, 
+    debtRatio?: number, 
+    transactionCount?: number
+  } | null>(null);
   const [isLoadingScore, setIsLoadingScore] = useState(false);
 
   // Función para obtener una versión resumida del score crediticio
@@ -372,10 +377,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
       setIsLoadingScore(true);
       try {
         const result = await getCreditScore();
-        if (result?.success && result.data?.creditScore) {
+        console.log("Credit score result:", result);
+        
+        // Verificamos la estructura correcta del objeto
+        if (result?.success && result.data?.success) {
           setCreditScore({
             score: result.data.creditScore.score,
-            reason: result.data.creditScore.reason
+            reason: result.data.creditScore.reason,
+            debtRatio: result.data.analysis.debtRatio,
+            transactionCount: result.data.analysis.transactionCount
           });
         }
       } catch (error) {
@@ -538,8 +548,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
                 <CreditScoreCard 
                   score={creditScore?.score || 0}
                   reason={creditScore?.reason || ''}
+                  debtRatio={creditScore?.debtRatio}
+                  transactionCount={creditScore?.transactionCount}
                   loading={isLoadingScore}
                   onClick={() => handleShowView('creditScore')}
+                  debug={true}
                 />
               </div>
             )}

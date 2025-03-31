@@ -49,7 +49,7 @@ interface Web3AuthContextType {
   loadToken: (contractId: string) => Promise<TokenInfo | null>;
   getTokenBalance: (contractId: string, address?: string) => Promise<TokenBalance | null>;
   sendPayment: (destination: string, amount: string, memo?: string) => Promise<TransactionResult | null>;
-  getCreditScore: (language?: string) => Promise<CreditScoreResult | null>;
+  getCreditScore: (language?: string) => Promise<CreditScoreResult>;
 }
 
 const Web3AuthContext = createContext<Web3AuthContextType>({} as Web3AuthContextType);
@@ -535,14 +535,14 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
     }
   };
 
-  const getCreditScore = async (language: string = 'en'): Promise<CreditScoreResult | null> => {
+  const getCreditScore = async (language: string = 'en'): Promise<CreditScoreResult> => {
     try {
       if (!stellarAddress) {
         console.error('No address available to get credit score');
-        return null;
+        return { success: false, error: 'No wallet address available' };
       }
       
-      console.log(`�� [DEBUG] Requesting credit score for ${stellarAddress}`);
+      console.log(`[DEBUG] Requesting credit score for ${stellarAddress}`);
       const result = await accountService.getCreditScore(stellarAddress, language);
       console.log(`📊 [DEBUG] Credit score API response:`, result);
       
@@ -555,7 +555,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
       return result;
     } catch (error) {
       console.error('Error getting credit score:', error);
-      return null;
+      return { success: false, error: String(error) };
     }
   };
 
