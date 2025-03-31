@@ -1,7 +1,7 @@
 import React from 'react';
 import { useWeb3Auth } from '@/context/Web3AuthContext';
 import { FriendVaultProvider } from '@/context/FriendVaultContext';
-import FriendVaultScreen from '@/components/wallet/FriendVaultScreen';
+import FriendVaultScreen from '@/components/wallet/friend-vault/FriendVaultScreen';
 import { Navigate } from 'react-router-dom';
 
 const FriendVaultPage: React.FC = () => {
