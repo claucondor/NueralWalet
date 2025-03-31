@@ -184,14 +184,14 @@ export const accountService = {
   },
 
   /**
-   * Evalúa el score crediticio de una cuenta
+   * Evaluates the credit score of an account
    */
-  getCreditScore: async (publicKey: string, language: string = 'es'): Promise<CreditScoreResult | null> => {
+  getCreditScore: async (publicKey: string, language: string = 'en'): Promise<CreditScoreResult | null> => {
     try {
       const response = await apiRequest<CreditScoreResult>(`/account/${publicKey}/credit-score?language=${language}`);
       return response.data;
     } catch (error) {
-      console.error('Error obteniendo score crediticio:', error);
+      console.error('Error getting credit score:', error);
       return null;
     }
   }
@@ -200,20 +200,20 @@ export const accountService = {
 // Servicios de tokens
 export const tokenService = {
   /**
-   * Obtiene la lista de tokens cargados
+   * Gets the list of loaded tokens
    */
   getTokenList: async (): Promise<TokenInfo[]> => {
     try {
       const response = await apiRequest<TokenInfo[]>('/token/list');
       return response.data;
     } catch (error) {
-      console.error('Error obteniendo lista de tokens:', error);
+      console.error('Error getting token list:', error);
       return [];
     }
   },
 
   /**
-   * Obtiene información de un token
+   * Gets information for a token
    */
   getTokenInfo: async (contractId: string, sourceAccount?: string): Promise<TokenInfo | null> => {
     try {
@@ -221,26 +221,26 @@ export const tokenService = {
       const response = await apiRequest<TokenInfo>(`/token/info/${contractId}${queryParams}`);
       return response.data;
     } catch (error) {
-      console.error('Error obteniendo información del token:', error);
+      console.error('Error getting token information:', error);
       return null;
     }
   },
 
   /**
-   * Obtiene el balance de un token para una dirección
+   * Gets the token balance for an address
    */
   getTokenBalance: async (contractId: string, address: string): Promise<TokenBalance | null> => {
     try {
       const response = await apiRequest<TokenBalance>(`/token/balance/${contractId}/${address}`);
       return response.data;
     } catch (error) {
-      console.error('Error obteniendo balance del token:', error);
+      console.error('Error getting token balance:', error);
       return null;
     }
   },
 
   /**
-   * Envía tokens de una dirección a otra
+   * Sends tokens from one address to another
    */
   sendToken: async (
     contractId: string,
@@ -257,13 +257,13 @@ export const tokenService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error enviando tokens:', error);
+      console.error('Error sending tokens:', error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   },
 
   /**
-   * Acuña nuevos tokens (requiere ser administrador)
+   * Mints new tokens (requires admin rights)
    */
   mintToken: async (
     contractId: string,
@@ -286,7 +286,7 @@ export const tokenService = {
   },
 
   /**
-   * Quema tokens
+   * Burns tokens
    */
   burnToken: async (
     contractId: string,
@@ -301,7 +301,7 @@ export const tokenService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error quemando tokens:', error);
+      console.error('Error burning tokens:', error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -310,7 +310,7 @@ export const tokenService = {
 // Servicios de transacciones
 export const transactionService = {
   /**
-   * Realiza un pago en XLM
+   * Makes a payment in XLM
    */
   sendPayment: async (
     sourceSecretKey: string,
@@ -328,12 +328,12 @@ export const transactionService = {
       if (typeof response.data === 'object' && response.data !== null) {
         return { success: true, ...response.data };
       } else {
-        console.error('Error: response.data no es un objeto válido:', response.data);
-        throw new Error('La respuesta de la API no contiene datos válidos');
+        console.error('Error: response.data is not a valid object:', response.data);
+        throw new Error('The API response does not contain valid data');
       }
     } catch (error) {
-      console.error('Error enviando pago:', error);
+      console.error('Error sending payment:', error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
-    }
+  }
 };

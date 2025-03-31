@@ -819,19 +819,19 @@ export class StellarWalletKit {
     public async generateCreditScore(
         transactionAnalysis: any,
         transactionsSummary: string = '',
-        language: string = 'es'
+        language: string = 'en'
     ) {
         try {
-            console.log(`🔄 [GENERATE SCORE] Iniciando generación de score crediticio`);
-            console.log(`🌐 [GENERATE SCORE] Idioma solicitado: ${language}`);
+            console.log(`🔄 [GENERATE SCORE] Starting credit score generation`);
+            console.log(`🌐 [GENERATE SCORE] Requested language: ${language}`);
             
             // Importaciones necesarias para LLM
-            console.log(`📚 [GENERATE SCORE] Importando dependencias LLM...`);
+            console.log(`📚 [GENERATE SCORE] Importing LLM dependencies...`);
             const { LLMService } = await import('./llm.service');
             const { ChatPromptTemplate } = await import('@langchain/core/prompts');
             const { JsonOutputParser } = await import('@langchain/core/output_parsers');
             
-            console.log(`🤖 [GENERATE SCORE] Inicializando modelo LLM...`);
+            console.log(`🤖 [GENERATE SCORE] Initializing LLM model...`);
             const llm = LLMService.getLLM();
             
             // Verificar número mínimo de transacciones
@@ -844,8 +844,8 @@ export class StellarWalletKit {
             // Si no hay suficientes transacciones, establecer un score máximo bajo
             const maxPossibleScore = hasMinimumTransactions ? 850 : 350;
             
-            console.log(`📊 [GENERATE SCORE] Calculando score base. Transacciones mínimas requeridas: ${minTransactions}, Disponibles: ${transactionAnalysis.transactionCount}`);
-            console.log(`📊 [GENERATE SCORE] Score máximo posible: ${maxPossibleScore}/1000`);
+            console.log(`📊 [GENERATE SCORE] Calculating base score. Minimum transactions required: ${minTransactions}, Available: ${transactionAnalysis.transactionCount}`);
+            console.log(`📊 [GENERATE SCORE] Maximum possible score: ${maxPossibleScore}/1000`);
             
             const promptTemplate = ChatPromptTemplate.fromTemplate(`
                 You are a strict credit analyst evaluating creditworthiness in a decentralized system.
@@ -891,27 +891,27 @@ export class StellarWalletKit {
                 }}
             `);
 
-            console.log(`🔄 [GENERATE SCORE] Creando cadena de procesamiento LLM con parser JSON...`);
+            console.log(`🔄 [GENERATE SCORE] Creating LLM processing chain with JSON parser...`);
             const chain = promptTemplate.pipe(llm).pipe(new JsonOutputParser());
             
-            console.log(`⏳ [GENERATE SCORE] Invocando LLM para cálculo de score...`);
-            const result = await chain.invoke({
+            console.log(`⏳ [GENERATE SCORE] Invoking LLM for score calculation...`);
+            const result: { score: number, reason: string, improvementTips: string[] } = await chain.invoke({
                 ...transactionAnalysis,
                 transactionsSummary,
                 language: 'en' // Forzar siempre inglés para consistencia
             });
             
-            console.log(`✅ [GENERATE SCORE] Score generado exitosamente:`, result);
+            console.log(`✅ [GENERATE SCORE] Score generated successfully:`, result);
             
             // Verificar que el score no supere el máximo posible basado en nuestras reglas
             if (result && typeof result === 'object' && 'score' in result && result.score > maxPossibleScore) {
-                console.log(`⚠️ [GENERATE SCORE] Score sobrepasa el máximo permitido (${result.score} > ${maxPossibleScore}). Ajustando a ${maxPossibleScore}`);
+                console.log(`⚠️ [GENERATE SCORE] Score exceeds maximum allowed (${result.score} > ${maxPossibleScore}). Adjusting to ${maxPossibleScore}`);
                 result.score = maxPossibleScore;
             }
             
             return result;
         } catch (error) {
-            console.error(`❌ [GENERATE SCORE] Error al generar score crediticio:`, error);
+            console.error(`❌ [GENERATE SCORE] Error generating credit score:`, error);
             // Devolver un valor por defecto en caso de error
             return {
                 score: 0,
@@ -927,67 +927,67 @@ export class StellarWalletKit {
      * @param language Idioma para la respuesta
      * @returns Evaluación crediticia con score y recomendaciones
      */
-    async evaluateCreditReputation(publicKey: string, language: string = 'es') {
+    async evaluateCreditReputation(publicKey: string, language: string = 'en') {
         try {
-            console.log(`🔄 [CREDIT REPUTATION] Iniciando evaluación para ${publicKey} en idioma: ${language}`);
+            console.log(`🔄 [CREDIT REPUTATION] Starting evaluation for ${publicKey} in language: ${language}`);
             
             // Verificar la red que estamos usando
             const networkType = this.getNetwork();
-            console.log(`🌐 [CREDIT REPUTATION] Red utilizada: ${networkType}`);
+            console.log(`🌐 [CREDIT REPUTATION] Network used: ${networkType}`);
             
             // Obtener historial de transacciones (últimos 30 días o 100 transacciones)
-            console.log(`📜 [CREDIT REPUTATION] Obteniendo historial de transacciones...`);
+            console.log(`📜 [CREDIT REPUTATION] Getting transaction history...`);
             const historyResult = await this.getTransactionHistory(publicKey, {
                 limit: 100,
                 order: 'desc'
             });
             
             const { transactions } = historyResult;
-            console.log(`✅ [CREDIT REPUTATION] Transacciones obtenidas: ${transactions.length}`);
+            console.log(`✅ [CREDIT REPUTATION] Transactions obtained: ${transactions.length}`);
             
             if (transactions.length === 0) {
-                console.warn(`⚠️ [CREDIT REPUTATION] No hay transacciones disponibles para analizar`);
+                console.warn(`⚠️ [CREDIT REPUTATION] No transactions available to analyze`);
                 return {
                     success: false,
-                    error: 'No hay historial de transacciones suficiente para evaluar la reputación crediticia'
+                    error: 'Not enough transaction history to evaluate credit reputation'
                 };
             }
             
             // Crear un resumen de las transacciones más recientes para el LLM
-            console.log(`📝 [CREDIT REPUTATION] Creando resumen de transacciones recientes...`);
+            console.log(`📝 [CREDIT REPUTATION] Creating summary of recent transactions...`);
             const transactionsSummary = transactions.slice(0, 10).map(tx => {
                 const operations = tx.operations || [];
                 const opSummaries = operations.map(op => {
                     if (op.type === 'payment' || op.type === 'create_account') {
-                        const direction = op.to === publicKey ? 'RECIBIDO' : 'ENVIADO';
-                        return `${op.createdAt}: ${direction} ${op.amount} XLM ${direction === 'RECIBIDO' ? 'de' : 'a'} ${direction === 'RECIBIDO' ? op.from : op.to}`;
+                        const direction = op.to === publicKey ? 'RECEIVED' : 'SENT';
+                        return `${op.createdAt}: ${direction} ${op.amount} XLM ${direction === 'RECEIVED' ? 'from' : 'to'} ${direction === 'RECEIVED' ? op.from : op.to}`;
                     }
-                    return `${op.createdAt}: Operación ${op.type}`;
+                    return `${op.createdAt}: Operation ${op.type}`;
                 }).join('\n  ');
                 
-                return `- ID: ${tx.id}\n  Fecha: ${tx.createdAt}\n  ${opSummaries || 'Sin detalles de operaciones'}`;
+                return `- ID: ${tx.id}\n  Date: ${tx.createdAt}\n  ${opSummaries || 'No operation details'}`;
             }).join('\n\n');
             
             // Analizar patrones de transacciones
-            console.log(`📊 [CREDIT REPUTATION] Analizando patrones de transacciones...`);
+            console.log(`📊 [CREDIT REPUTATION] Analyzing transaction patterns...`);
             const analysis = await StellarWalletKit.analyzeTransactionPatterns(transactions, publicKey);
             
-            console.log(`📈 [CREDIT REPUTATION] Resumen del análisis: 
-                Volumen total: ${analysis.totalVolume} XLM
-                Transacciones: ${analysis.transactionCount}
-                Frecuencia: ${analysis.frequency} tx/día
-                Flujo neto: ${analysis.netFlow} XLM
-                Ratio deuda: ${analysis.debtRatio}
+            console.log(`📈 [CREDIT REPUTATION] Analysis summary: 
+                Total volume: ${analysis.totalVolume} XLM
+                Transactions: ${analysis.transactionCount}
+                Frequency: ${analysis.frequency} tx/day
+                Net flow: ${analysis.netFlow} XLM
+                Debt ratio: ${analysis.debtRatio}
             `);
             
             // Generar score crediticio
-            console.log(`🧮 [CREDIT REPUTATION] Generando score crediticio con LLM...`);
+            console.log(`🧮 [CREDIT REPUTATION] Generating credit score with LLM...`);
             const creditScore = await this.generateCreditScore(
                 analysis,
                 transactionsSummary,
                 language
             );
-            console.log(`🏆 [CREDIT REPUTATION] Score crediticio generado:`, creditScore);
+            console.log(`🏆 [CREDIT REPUTATION] Credit score generated:`, creditScore);
             
             return {
                 success: true,
@@ -996,11 +996,10 @@ export class StellarWalletKit {
             };
             
         } catch (error: any) {
-            console.error('❌ [CREDIT REPUTATION] Error al evaluar reputación crediticia:', error);
-            console.error('Stack trace:', error.stack);
+            console.error('❌ [CREDIT REPUTATION] Error evaluating credit reputation:', error);
             return {
                 success: false,
-                error: error.message || 'Error desconocido al evaluar reputación crediticia'
+                error: error.message || 'Unknown error evaluating credit reputation'
             };
         }
     }

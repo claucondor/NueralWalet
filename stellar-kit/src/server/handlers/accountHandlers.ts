@@ -1,11 +1,11 @@
 /**
- * Handlers para operaciones relacionadas con cuentas Stellar
+ * Handlers for Stellar account operations
  */
 
 import { Request, Response } from 'express';
 import { StellarWalletKit } from '../../lib/services/StellarWalletKit';
 
-// Definición de tipos para la respuesta de evaluación crediticia
+// Definition of types for credit assessment response
 interface CreditScoreData {
   score: number;
   reason: string;
@@ -19,11 +19,11 @@ interface CreditResult {
   error?: string;
 }
 
-// Inicializar StellarWalletKit (usamos testnet por defecto)
+// Initialize StellarWalletKit (using testnet by default)
 const walletKit = new StellarWalletKit(true);
 
 /**
- * Genera un nuevo par de claves Stellar
+ * Generates a new Stellar keypair
  */
 export const generateKeypair = (req: Request, res: Response) => {
   try {
@@ -35,13 +35,13 @@ export const generateKeypair = (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message || 'Error generando keypair'
+      error: error.message || 'Error generating keypair'
     });
   }
 };
 
 /**
- * Obtiene información de una cuenta
+ * Gets account information
  */
 export const getAccountInfo = async (req: Request, res: Response) => {
   try {
@@ -50,7 +50,7 @@ export const getAccountInfo = async (req: Request, res: Response) => {
     if (!publicKey) {
       return res.status(400).json({
         success: false,
-        error: 'Se requiere una clave pública'
+        error: 'Public key is required'
       });
     }
     
@@ -59,7 +59,7 @@ export const getAccountInfo = async (req: Request, res: Response) => {
     if (!accountInfo) {
       return res.status(404).json({
         success: false,
-        error: 'Cuenta no encontrada o no activada'
+        error: 'Account not found or not activated'
       });
     }
     
@@ -70,13 +70,13 @@ export const getAccountInfo = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message || 'Error obteniendo información de la cuenta'
+      error: error.message || 'Error getting account information'
     });
   }
 };
 
 /**
- * Fondea una cuenta con friendbot (testnet)
+ * Funds an account with friendbot (testnet)
  */
 export const fundAccount = async (req: Request, res: Response) => {
   try {
@@ -85,7 +85,7 @@ export const fundAccount = async (req: Request, res: Response) => {
     if (!publicKey) {
       return res.status(400).json({
         success: false,
-        error: 'Se requiere una clave pública'
+        error: 'Public key is required'
       });
     }
     
@@ -94,7 +94,7 @@ export const fundAccount = async (req: Request, res: Response) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        error: result.error || 'Error fondeando la cuenta'
+        error: result.error || 'Error funding the account'
       });
     }
     
@@ -107,13 +107,13 @@ export const fundAccount = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message || 'Error fondeando la cuenta'
+      error: error.message || 'Error funding the account'
     });
   }
 };
 
 /**
- * Crea una nueva cuenta en la red Stellar
+ * Creates a new account on the Stellar network
  */
 export const createAccount = async (req: Request, res: Response) => {
   try {
@@ -122,7 +122,7 @@ export const createAccount = async (req: Request, res: Response) => {
     if (!sourceSecretKey || !destinationPublicKey || !startingBalance) {
       return res.status(400).json({
         success: false,
-        error: 'Se requieren sourceSecretKey, destinationPublicKey y startingBalance'
+        error: 'sourceSecretKey, destinationPublicKey and startingBalance are required'
       });
     }
     
@@ -138,7 +138,7 @@ export const createAccount = async (req: Request, res: Response) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        error: result.error || 'Error creando la cuenta'
+        error: result.error || 'Error creating the account'
       });
     }
     
@@ -151,62 +151,46 @@ export const createAccount = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message || 'Error creando la cuenta'
+      error: error.message || 'Error creating the account'
     });
   }
 };
 
 /**
- * Evalúa la reputación crediticia de una cuenta Stellar
+ * Evaluates the credit reputation of a Stellar account
  */
 export const evaluateCreditScore = async (req: Request, res: Response) => {
   try {
     const { publicKey } = req.params;
-    const { language = 'es' } = req.query;
+    const { language = 'en' } = req.query;
     
-    console.log(`🔍 [CREDIT SCORE] Iniciando evaluación crediticia para la dirección: ${publicKey}`);
-    console.log(`🌐 [CREDIT SCORE] Idioma solicitado: ${language}`);
+    console.log(`🔍 [CREDIT SCORE] Starting credit evaluation for address: ${publicKey}`);
+    console.log(`🌐 [CREDIT SCORE] Requested language: ${language}`);
     
-    // Verificar que estamos usando la red correcta (testnet)
+    // Verify that we are using the correct network (testnet)
     const networkType = walletKit.getNetwork();
-    console.log(`🌍 [CREDIT SCORE] Red Stellar utilizada: ${networkType}`);
-    
-    if (networkType !== 'testnet') {
-      console.warn(`⚠️ [CREDIT SCORE] ADVERTENCIA: No estás usando la testnet de Stellar. Cambia a testnet para pruebas.`);
-    }
+    console.log(`🌍 [CREDIT SCORE] Stellar network used: ${networkType}`);
     
     if (!publicKey) {
-      console.error(`❌ [CREDIT SCORE] Error: No se proporcionó una clave pública`);
       return res.status(400).json({
         success: false,
-        error: 'Se requiere una clave pública'
+        error: 'Public key is required'
       });
     }
     
-    console.log(`⏳ [CREDIT SCORE] Obteniendo datos de transacciones para análisis...`);
+    console.log(`⏳ [CREDIT SCORE] Getting transaction data for analysis...`);
     const creditResult = await walletKit.evaluateCreditReputation(publicKey, language as string) as CreditResult;
-    console.log(`✅ [CREDIT SCORE] Proceso de evaluación completado con éxito: ${creditResult.success}`);
     
     if (!creditResult.success) {
-      console.error(`❌ [CREDIT SCORE] Error en evaluación: ${creditResult.error}`);
       return res.status(400).json({
         success: false,
-        error: creditResult.error || 'Error evaluando reputación crediticia'
+        error: creditResult.error || 'Error evaluating credit reputation'
       });
     }
     
-    // Verificar si tenemos datos de análisis
-    if (creditResult.analysis) {
-      console.log(`📊 [CREDIT SCORE] Estadísticas: Volumen total=${creditResult.analysis.totalVolume} XLM, Transacciones=${creditResult.analysis.transactionCount}, Frecuencia=${creditResult.analysis.frequency}/día`);
-    } else {
-      console.warn(`⚠️ [CREDIT SCORE] No se obtuvo análisis de transacciones`);
-    }
-    
-    // Verificar si hay suficientes transacciones para mostrar un score válido
+    // Check if we have sufficient transactions to show a valid score
     if (creditResult.analysis && creditResult.analysis.transactionCount < 5) {
-      console.warn(`⚠️ [CREDIT SCORE] Insuficientes transacciones para generar un score crediticio confiable: ${creditResult.analysis.transactionCount}/5 mínimas`);
-      
-      // Establecer un mensaje claro sobre transacciones insuficientes
+      // Set a clear message about insufficient transactions
       const insufficientTransactionsMessage = {
         success: true,
         data: {
@@ -226,29 +210,28 @@ export const evaluateCreditScore = async (req: Request, res: Response) => {
         }
       };
       
-      console.log(`📤 [CREDIT SCORE] Enviando respuesta de transacciones insuficientes al cliente`);
+      console.log(`📤 [CREDIT SCORE] Sending insufficient transactions response to client`);
       return res.json(insufficientTransactionsMessage);
     }
     
-    // Verificar si tenemos score crediticio
+    // Check if we have credit score
     const score = creditResult.creditScore ? (creditResult.creditScore as any).score || 0 : 0;
     const improvementTips = creditResult.creditScore ? (creditResult.creditScore as any).improvementTips || [] : [];
     
-    console.log(`🏆 [CREDIT SCORE] Score calculado: ${score}/1000`);
-    console.log(`💡 [CREDIT SCORE] Consejos de mejora: ${improvementTips.length}`);
+    console.log(`🏆 [CREDIT SCORE] Calculated score: ${score}/1000`);
     
     const recommendations = Array.isArray(improvementTips) ? improvementTips.join('. ') : '';
     
-    console.log(`⏳ [CREDIT SCORE] Generando recomendación en inglés...`);
+    console.log(`⏳ [CREDIT SCORE] Generating English recommendation...`);
     const englishRecommendation = await generateEnglishRecommendation(
       score, 
       recommendations,
       creditResult.analysis
     );
-    console.log(`✅ [CREDIT SCORE] Recomendación en inglés generada correctamente`);
+    console.log(`✅ [CREDIT SCORE] English recommendation generated successfully`);
     
-    // Construir y enviar respuesta completa
-    console.log(`📤 [CREDIT SCORE] Enviando respuesta completa al cliente`);
+    // Build and send complete response
+    console.log(`📤 [CREDIT SCORE] Sending complete response to client`);
     res.json({
       success: true,
       data: {
@@ -257,21 +240,20 @@ export const evaluateCreditScore = async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    console.error(`❌ [CREDIT SCORE] Error no controlado: ${error.message}`);
-    console.error('Stack trace:', error.stack);
+    console.error(`❌ [CREDIT SCORE] Unhandled error: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error evaluando reputación crediticia'
+      error: error.message || 'Error evaluating credit reputation'
     });
   }
 };
 
 /**
- * Genera recomendaciones en inglés para mejorar el score crediticio
+ * Generates recommendations in English to improve credit score
  */
 async function generateEnglishRecommendation(score: number, tips: string, analysis: any): Promise<string> {
   try {
-    // Importar LLMService de forma dinámica
+    // Dynamically import LLMService
     const { LLMService } = await import('../../lib/services/llm.service');
     const { ChatPromptTemplate } = await import('@langchain/core/prompts');
     
@@ -312,7 +294,7 @@ async function generateEnglishRecommendation(score: number, tips: string, analys
     
     return typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
   } catch (error) {
-    console.error('Error generando recomendación en inglés:', error);
+    console.error('Error generating English recommendation:', error);
     return "We were unable to generate personalized recommendations at this time. To improve your credit score, consider maintaining consistent transaction activity and balancing incoming and outgoing payments.";
   }
 } 

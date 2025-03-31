@@ -1,7 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
 
 interface CreditScoreProps {
   score: number;
@@ -11,52 +9,46 @@ interface CreditScoreProps {
 }
 
 const CreditScoreCard: React.FC<CreditScoreProps> = ({ score, reason, loading, onClick }) => {
-  // Función para determinar el color del score basado en el valor
+  // Function to determine score color based on value
   const getScoreColor = (score: number) => {
-    if (score >= 800) return '#10B981'; // Verde excelente
-    if (score >= 650) return '#34D399'; // Verde bueno
-    if (score >= 500) return '#FBBF24'; // Amarillo regular
-    if (score >= 350) return '#F59E0B'; // Naranja bajo
-    return '#EF4444'; // Rojo muy bajo
+    if (score >= 800) return '#10B981'; // Excellent - green
+    if (score >= 650) return '#34D399'; // Good - green
+    if (score >= 500) return '#FBBF24'; // Average - yellow
+    if (score >= 350) return '#F59E0B'; // Low - orange
+    return '#EF4444'; // Very low - red
   };
 
-  // Obtener calificación descriptiva basada en el score
+  // Get descriptive rating based on score
   const getScoreRating = (score: number) => {
-    if (score >= 800) return 'Excelente';
-    if (score >= 650) return 'Bueno';
-    if (score >= 500) return 'Regular';
-    if (score >= 350) return 'Bajo';
-    return 'Muy bajo';
+    if (score >= 800) return 'Excellent';
+    if (score >= 650) return 'Good';
+    if (score >= 500) return 'Average';
+    if (score >= 350) return 'Low';
+    return 'Very Low';
   };
 
   return (
     <Card className={`w-full shadow-md hover:shadow-lg transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between">
-          <span>Score Crediticio</span>
+          <span>Credit Score</span>
           {loading && (
             <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
           )}
         </CardTitle>
-        <CardDescription>Basado en tu historial de transacciones</CardDescription>
+        <CardDescription>Based on your transaction history</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center pt-1">
         <div className="w-28 h-28 relative mb-3">
           {!loading ? (
-            <CircularProgressbar
-              value={score}
-              maxValue={1000}
-              text={`${score}`}
-              styles={buildStyles({
-                textSize: '22px',
-                pathColor: getScoreColor(score),
-                textColor: getScoreColor(score),
-                trailColor: '#e2e8f0',
-              })}
-            />
+            <div className="w-full h-full rounded-full border-8 flex items-center justify-center" style={{ borderColor: getScoreColor(score) }}>
+              <span className="text-2xl font-bold" style={{ color: getScoreColor(score) }}>
+                {score}
+              </span>
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-gray-300">
-              <span className="text-sm">Cargando...</span>
+              <span className="text-sm">Loading...</span>
             </div>
           )}
         </div>
@@ -74,7 +66,7 @@ const CreditScoreCard: React.FC<CreditScoreProps> = ({ score, reason, loading, o
       {!loading && (
         <CardFooter className="flex justify-center pb-4 pt-0">
           <div className="text-xs text-blue-600 flex items-center">
-            <span>Ver detalles</span>
+            <span>View details</span>
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
               className="h-4 w-4 ml-1" 

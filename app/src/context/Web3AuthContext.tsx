@@ -535,7 +535,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
     }
   };
 
-  const getCreditScore = async (language: string = 'es'): Promise<CreditScoreResult | null> => {
+  const getCreditScore = async (language: string = 'en'): Promise<CreditScoreResult | null> => {
     try {
       if (!stellarAddress) {
         console.error('No address available to get credit score');

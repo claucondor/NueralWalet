@@ -1,22 +1,22 @@
 /**
- * Constantes utilizadas por el servicio de agente
+ * Constants used by the agent service
  */
 
-/** Umbral de confianza mínimo para validar una intención */
+/** Minimum confidence threshold to validate an intent */
 export const CONFIDENCE_THRESHOLD = 0.7;
 
-/** Idioma por defecto para respuestas */
-export const DEFAULT_LANGUAGE = 'es';
+/** Default language for responses */
+export const DEFAULT_LANGUAGE = 'en';
 
-/** Reserva mínima requerida de XLM en cuentas Stellar */
+/** Minimum XLM reserve required in Stellar accounts */
 export const MINIMUM_XLM_RESERVE = 1;
 
-/** Memo predeterminado para transacciones */
-export const DEFAULT_PAYMENT_MEMO = 'Pago desde GuardWallet';
-export const DEFAULT_ACCOUNT_CREATION_MEMO = 'Creación de cuenta desde GuardWallet';
+/** Default memo for transactions */
+export const DEFAULT_PAYMENT_MEMO = 'Payment from GuardWallet';
+export const DEFAULT_ACCOUNT_CREATION_MEMO = 'Account creation from GuardWallet';
 
-/** Número máximo de transacciones a obtener en el historial */
+/** Maximum number of transactions to get in history */
 export const MAX_TRANSACTION_HISTORY = 10;
 
-/** Balance inicial predeterminado para creación de cuentas */
+/** Default starting balance for account creation */
 export const DEFAULT_STARTING_BALANCE = '1'; 

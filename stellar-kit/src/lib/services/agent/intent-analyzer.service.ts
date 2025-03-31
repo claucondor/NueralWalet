@@ -83,68 +83,68 @@ export class IntentAnalyzerService {
       // Si el email está registrado, actualizar el destinatario con la dirección de Stellar
       intent.params.recipient = addressResult.address;
     } else {
-      // Si el email no está registrado, actualizar la respuesta sugerida
-      intent.suggestedResponse = `El email ${recipientEmail} no está asociado a ninguna wallet en nuestra plataforma.`;
+      // If email is not registered, update suggested response
+      intent.suggestedResponse = `The email ${recipientEmail} is not associated with any wallet on our platform.`;
     }
     
     return intent;
   }
 
   /**
-   * Obtiene el prompt para analizar la intención del usuario
-   * @returns Texto del prompt para el análisis
+   * Gets the prompt to analyze user intent
+   * @returns Prompt text for the analysis
    */
   private static getAnalysisPrompt(): string {
     return `
-      Eres un asistente especializado en analizar mensajes de usuarios para una wallet de Stellar.
-      Analiza el siguiente mensaje y extrae la intención del usuario, el idioma en que está escrito y cualquier parámetro relevante.
+      You are an assistant specialized in analyzing user messages for a Stellar wallet.
+      Analyze the following message and extract the user's intent, the language it's written in, and any relevant parameters.
       
-      Tokens personalizados disponibles: {customTokens}
+      Available custom tokens: {customTokens}
       
       {conversationContext}
       
-      Posibles intenciones:
-      - balance_check: El usuario quiere consultar su saldo
-      - send_payment: El usuario quiere enviar un pago
-      - token_info: El usuario quiere información sobre un token
-      - transaction_history: El usuario quiere ver su historial de transacciones
-      - unknown: No se puede determinar la intención
+      Possible intents:
+      - balance_check: User wants to check their balance
+      - send_payment: User wants to send a payment
+      - token_info: User wants information about a token
+      - transaction_history: User wants to see their transaction history
+      - unknown: Intent cannot be determined
       
-      IMPORTANTE: Esta wallet solo soporta XLM (token nativo) y tokens Soroban. Debes especificar claramente en la respuesta:
-      - Para XLM (nativo): siempre incluir "isNativeToken": true y "tokenAddress": "XLM" en los parámetros
-      - Para tokens Soroban (no nativos): siempre incluir "isNativeToken": false y "tokenAddress": "<contrato_completo>" donde <contrato_completo> es el ID completo del contrato
+      IMPORTANT: This wallet only supports XLM (native token) and Soroban tokens. You must clearly specify in the response:
+      - For XLM (native): always include "isNativeToken": true and "tokenAddress": "XLM" in the parameters
+      - For Soroban tokens (non-native): always include "isNativeToken": false and "tokenAddress": "<full_contract>" where <full_contract> is the complete contract ID
       
-      Si el usuario menciona cualquier otro tipo de token que no sea XLM o Soroban, marca la intención como 'unknown' y sugiere al usuario que solo podemos manejar tokens nativos (XLM) y tokens Soroban con su contrato correspondiente.
+      If the user mentions any other type of token that isn't XLM or Soroban, mark the intent as 'unknown' and suggest to the user that we can only handle native tokens (XLM) and Soroban tokens with their corresponding contract.
       
-      Si el usuario menciona un token que no está en la lista de tokens personalizados disponibles, debes establecer la intención como 'unknown' y generar una respuesta que explique que ese token no está soportado por nuestra wallet. Sé específico mencionando el nombre del token no soportado.
+      If the user mentions a token that is not in the list of available custom tokens, you must set the intent as 'unknown' and generate a response explaining that the token is not supported by our wallet. Be specific by mentioning the name of the unsupported token.
       
-      NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
+      NEVER return a tokenType without specifying if it's XLM or SOROBAN with its full contract.
       
-      IMPORTANTE SOBRE EL IDIOMA: Debes detectar correctamente el idioma del mensaje del usuario. 
-      Si el mensaje está en inglés, el campo "language" debe ser "en".
-      Si el mensaje está en español, el campo "language" debe ser "es".
-      La respuesta sugerida DEBE estar en el MISMO IDIOMA que el mensaje original del usuario.
-      La respuesta sugerida debe ser un mensaje directo, sin frases introductorias ni explicaciones adicionales.
+      IMPORTANT ABOUT LANGUAGE: You must correctly detect the language of the user's message.
+      If the message is in English, the "language" field should be "en".
+      If the message is in Spanish, the "language" field should be "es".
+      The suggested response MUST be in the SAME LANGUAGE as the user's original message.
+      The suggested response should be a direct message, without introductory phrases or additional explanations.
       
-      Mensaje del usuario: {message}
+      User message: {message}
       
-      Si el usuario menciona un token personalizado (por símbolo o nombre), asócialo con su address correspondiente en los tokens personalizados.
+      If the user mentions a custom token (by symbol or name), associate it with its corresponding address in the custom tokens.
       
-      Responde ÚNICAMENTE con un objeto JSON con la siguiente estructura:
+      Respond ONLY with a JSON object with the following structure:
       {{
-        "intentType": "tipo_de_intencion",
+        "intentType": "intent_type",
         "confidence": 0.95,
-        "language": "idioma_detectado_en_el_mensaje", // Por ejemplo: 'es' para español, 'en' para inglés, 'fr' para francés, etc.
+        "language": "detected_language", // For example: 'es' for Spanish, 'en' for English, 'fr' for French, etc.
         "params": {{
-          "walletAddress": "direccion_si_se_menciona",
-          "amount": "cantidad_si_se_menciona",
-          "isNativeToken": "booleano_indicando_si_es_token_nativo",
-          "tokenAddress": "direccion_del_token_si_se_menciona",
-          "recipient": "destinatario_si_se_menciona",
-          "recipientEmail": "email_si_se_menciona"
+          "walletAddress": "address_if_mentioned",
+          "amount": "amount_if_mentioned",
+          "isNativeToken": "boolean_indicating_if_native_token",
+          "tokenAddress": "token_address_if_mentioned",
+          "recipient": "recipient_if_mentioned",
+          "recipientEmail": "email_if_mentioned"
         }},
-        "originalMessage": "mensaje_original",
-        "suggestedResponse": "respuesta_sugerida_al_usuario"
+        "originalMessage": "original_message",
+        "suggestedResponse": "suggested_response_to_user"
       }}
     `;
   }

@@ -113,10 +113,10 @@ export class AgentService {
       return {
         intentType: 'unknown',
         confidence: 0,
-        language: 'es', // Añadimos el idioma por defecto (español)
+        language: 'en', // Set default language to English
         params: {},
         originalMessage: message,
-        suggestedResponse: 'Lo siento, no pude entender tu solicitud. ¿Podrías reformularla?'
+        suggestedResponse: 'Sorry, I could not understand your request. Could you rephrase it?'
       };
     }
   }
@@ -181,7 +181,7 @@ export class AgentService {
     fullPrivateKey: string,
     stellarPublicKey: string,
     originalMessage?: string,
-    language: string = 'es' // Idioma por defecto: español
+    language: string = 'en' // Default language: English
   ): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       // Obtener instancia del kit de Stellar
@@ -208,10 +208,10 @@ export class AgentService {
           // Usar LLM para mensaje de error en el idioma correcto
           const llm = LLMService.getLLM();
           const promptTemplate = ChatPromptTemplate.fromTemplate(`
-            Eres un asistente financiero amigable. El usuario envió una solicitud que no pudo ser procesada.
+            You are a friendly financial assistant. The user sent a request that could not be processed.
             
-            Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-            Explica que no se pudo procesar la intención y sugiere intentar con una solicitud diferente.
+            Generate a clear and helpful error message in the following language: {language}.
+            Explain that the intent could not be processed and suggest trying a different request.
           `);
           
           const chain = promptTemplate.pipe(llm);
@@ -223,17 +223,17 @@ export class AgentService {
           };
       }
     } catch (error: any) {
-      console.error('Error procesando la intención:', error);
+      console.error('Error processing the intent:', error);
       
       // Usar LLM para mensaje de error en el idioma correcto
       const llm = LLMService.getLLM();
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
+        You are a friendly financial assistant. An error occurred while processing the user's request.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-        Explica que ocurrió un error y sugiere intentar más tarde.
+        Generate a clear and helpful error message in the following language: {language}.
+        Explain that an error occurred and suggest trying again later.
         
-        Detalles técnicos (solo para referencia): {error}
+        Technical details (for reference only): {error}
       `);
       
       const chain = promptTemplate.pipe(llm);
@@ -249,7 +249,7 @@ export class AgentService {
   /**
    * Procesa la intención de consulta de saldo
    */
-  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'es') {
+  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'en') {
     try {
       // Obtener información de la cuenta
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
@@ -331,7 +331,7 @@ export class AgentService {
     privateKey: string,
     publicKey: string,
     params: Record<string, any>,
-    language: string = 'es'
+    language: string = 'en'
   ) {
     // Verificar si es un token Soroban
     const isSorobanToken = params.tokenAddress && !params.isNativeToken;
@@ -568,7 +568,7 @@ export class AgentService {
     stellarKit: typeof StellarWalletKit,
     privateKey: string,
     params: Record<string, any>,
-    language: string = 'es'
+    language: string = 'en'
   ) {
     try {
       // Verificar que tenemos los parámetros necesarios
@@ -684,7 +684,7 @@ export class AgentService {
     stellarKit: typeof StellarWalletKit,
     publicKey: string,
     params: Record<string, any>,
-    language: string = 'es' // Idioma por defecto: español
+    language: string = 'en' // Default language: English
   ) {
     try {
       // Por ahora, solo devolvemos información sobre XLM
@@ -770,7 +770,7 @@ export class AgentService {
     stellarKit: typeof StellarWalletKit,
     publicKey: string,
     originalMessage?: string,
-    language: string = 'es' // Idioma por defecto: español
+    language: string = 'en' // Default language: English
   ) {
     try {
       // Obtener información de la cuenta para verificar que existe
@@ -917,7 +917,7 @@ export class AgentService {
     paymentResult: PaymentResult,
     amount: string,
     recipient: string,
-    language: string = 'es' // Idioma por defecto: español
+    language: string = 'en' // Default language: English
   ) {
     const llm = LLMService.getLLM();
     
@@ -1016,7 +1016,7 @@ export class AgentService {
     const result = await chain.invoke({
       intent,
       error_details: error.message || 'Error desconocido',
-      language: 'es'
+      language: 'en'
     });
     
     return {

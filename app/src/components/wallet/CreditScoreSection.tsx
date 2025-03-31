@@ -30,7 +30,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
       setError(null);
       
       try {
-        const result = await getCreditScore();
+        const result = await getCreditScore('en');
         
         if (isMounted) {
           setCreditData(result);
@@ -39,7 +39,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
       } catch (err) {
         if (isMounted) {
           console.error("Error fetching credit score:", err);
-          setError("No se pudo obtener el score crediticio. Por favor intenta más tarde.");
+          setError("Could not get the credit score. Please try again later.");
           setIsLoading(false);
         }
       }
@@ -52,22 +52,22 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
     };
   }, [getCreditScore]);
 
-  // Función para determinar el color del score basado en el valor
+  // Function to determine score color based on value
   const getScoreColor = (score: number) => {
-    if (score >= 800) return '#10B981'; // Verde excelente
-    if (score >= 650) return '#34D399'; // Verde bueno
-    if (score >= 500) return '#FBBF24'; // Amarillo regular
-    if (score >= 350) return '#F59E0B'; // Naranja bajo
-    return '#EF4444'; // Rojo muy bajo
+    if (score >= 800) return '#10B981'; // Excellent - green
+    if (score >= 650) return '#34D399'; // Good - green
+    if (score >= 500) return '#FBBF24'; // Average - yellow
+    if (score >= 350) return '#F59E0B'; // Low - orange
+    return '#EF4444'; // Very low - red
   };
 
-  // Obtener calificación descriptiva basada en el score
+  // Get descriptive rating based on score
   const getScoreRating = (score: number) => {
-    if (score >= 800) return 'Excelente';
-    if (score >= 650) return 'Bueno';
-    if (score >= 500) return 'Regular';
-    if (score >= 350) return 'Bajo';
-    return 'Muy bajo';
+    if (score >= 800) return 'Excellent';
+    if (score >= 650) return 'Good';
+    if (score >= 500) return 'Average';
+    if (score >= 350) return 'Low';
+    return 'Very Low';
   };
 
   return (
@@ -89,7 +89,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
             <path d="M19 12H5M12 19l-7-7 7-7"></path>
           </svg>
         </button>
-        <h2 className="text-lg font-semibold mx-auto">Score Crediticio</h2>
+        <h2 className="text-lg font-semibold mx-auto">Credit Score</h2>
         <div className="w-8"></div>
       </div>
 
@@ -104,7 +104,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Error al cargar la información</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading information</h3>
             <p className="text-gray-500">{error}</p>
           </div>
         ) : !creditData?.data?.creditScore ? (
@@ -114,17 +114,17 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Historial insuficiente</h3>
-            <p className="text-gray-500 mb-4">Se necesitan al menos 5 transacciones para generar un score crediticio confiable.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Insufficient History</h3>
+            <p className="text-gray-500 mb-4">At least 5 transactions are needed to generate a reliable credit score.</p>
             {creditData?.data?.analysis && (
               <div className="bg-white rounded-lg p-4 max-w-md mx-auto">
-                <p className="text-sm text-gray-700 mb-2">Transacciones actuales: <span className="font-semibold">{creditData.data.analysis.transactionCount}</span></p>
-                <p className="text-sm text-gray-700">Para mejorar tu score, realiza más transacciones y mantén un historial constante.</p>
+                <p className="text-sm text-gray-700 mb-2">Current transactions: <span className="font-semibold">{creditData.data.analysis.transactionCount}</span></p>
+                <p className="text-sm text-gray-700">To improve your score, make more transactions and maintain a consistent history.</p>
               </div>
             )}
             {creditData?.data?.englishRecommendation && (
               <div className="mt-6 bg-blue-50 p-4 rounded-lg max-w-md mx-auto">
-                <h4 className="font-medium text-blue-800 mb-2">Recomendación</h4>
+                <h4 className="font-medium text-blue-800 mb-2">Recommendation</h4>
                 <p className="text-sm text-blue-900 italic">{creditData.data.englishRecommendation}</p>
               </div>
             )}
@@ -147,11 +147,11 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                     {getScoreRating(creditData.data.creditScore.score)}
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    De un máximo de 1000 puntos
+                    Out of a maximum of 1000 points
                   </p>
                 </div>
                 <div className="w-full p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium text-gray-700 mb-2">Análisis</h4>
+                  <h4 className="font-medium text-gray-700 mb-2">Analysis</h4>
                   <p className="text-sm text-gray-600">{creditData.data.creditScore.reason}</p>
                 </div>
               </div>
@@ -159,7 +159,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
             
             {/* Recommendations */}
             <div className="bg-white rounded-xl p-6 shadow-sm animate-slideUp" style={{animationDelay: "0.2s"}}>
-              <h3 className="font-semibold text-lg mb-4">Recomendaciones para Mejorar</h3>
+              <h3 className="font-semibold text-lg mb-4">Recommendations to Improve</h3>
               <ul className="space-y-3">
                 {creditData.data.creditScore.improvementTips.map((tip, index) => (
                   <li key={index} className="flex items-start">
@@ -176,23 +176,23 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
             
             {/* Analysis Details */}
             <div className="bg-white rounded-xl p-6 shadow-sm animate-slideUp" style={{animationDelay: "0.3s"}}>
-              <h3 className="font-semibold text-lg mb-4">Detalles de Actividad</h3>
+              <h3 className="font-semibold text-lg mb-4">Activity Details</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Total Transacciones</p>
+                  <p className="text-xs text-gray-500">Total Transactions</p>
                   <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.transactionCount}</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Volumen Total</p>
+                  <p className="text-xs text-gray-500">Total Volume</p>
                   <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.totalVolume.toFixed(2)} XLM</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Mayor Transacción</p>
+                  <p className="text-xs text-gray-500">Largest Transaction</p>
                   <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.largestTransaction.toFixed(2)} XLM</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Frecuencia</p>
-                  <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.frequency.toFixed(2)}/día</p>
+                  <p className="text-xs text-gray-500">Frequency</p>
+                  <p className="text-lg font-semibold text-gray-800">{creditData.data.analysis.frequency.toFixed(2)}/day</p>
                 </div>
               </div>
             </div>
@@ -206,7 +206,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
-                  <h3 className="font-semibold text-lg ml-3">Evaluación Profesional</h3>
+                  <h3 className="font-semibold text-lg ml-3">Professional Assessment</h3>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-700">{creditData.data.englishRecommendation}</p>

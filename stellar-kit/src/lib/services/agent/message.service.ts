@@ -39,110 +39,110 @@ export class MessageService {
   }
   
   /**
-   * Añade instrucciones de idioma a una plantilla
-   * @param template Plantilla base
-   * @param language Idioma deseado
-   * @returns Plantilla con instrucciones de idioma
+   * Adds language instructions to a template
+   * @param template Base template
+   * @param language Desired language
+   * @returns Template with language instructions
    */
   private static addLanguageInstructions(template: string, language: string): string {
     return `${template}
       
-      IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
-      Si el idioma es 'es', responde en español.
-      Si el idioma es 'en', responde en inglés.
-      Si el idioma es 'fr', responde en francés.
-      Si el idioma es 'pt', responde en portugués.
-      Si el idioma es 'de', responde en alemán.
-      Para cualquier otro código de idioma, intenta responder en ese idioma.
+      IMPORTANT: Your response MUST be in the following language: ${language}.
+      If the language is 'es', respond in Spanish.
+      If the language is 'en', respond in English.
+      If the language is 'fr', respond in French.
+      If the language is 'pt', respond in Portuguese.
+      If the language is 'de', respond in German.
+      For any other language code, try to respond in that language.
       
-      Tu respuesta debe ser EXACTAMENTE el mensaje para el usuario, sin añadir frases introductorias, sin comillas, sin explicaciones adicionales.
-      Escribe como si tú fueras directamente la aplicación hablando con el usuario.
+      Your response must be EXACTLY the message for the user, without adding introductory phrases, without quotes, without additional explanations.
+      Write as if you were the application directly speaking to the user.
     `;
   }
 
   /**
-   * Plantillas de mensajes comunes
+   * Common message templates
    */
   static templates = {
-    // Plantillas para balance
+    // Balance templates
     balanceSuccess: `
-      Eres un asistente financiero amigable. El usuario ha solicitado su saldo en su wallet de Stellar.
-      La cuenta tiene un saldo de {balance} XLM.
+      You are a friendly financial assistant. The user has requested their balance in their Stellar wallet.
+      The account has a balance of {balance} XLM.
       
-      Genera una respuesta amigable y profesional informando al usuario sobre su saldo actual.
-      Incluye el saldo exacto pero también usa un tono conversacional.
+      Generate a friendly and professional response informing the user about their current balance.
+      Include the exact balance but also use a conversational tone.
     `,
     
     accountNotFound: `
-      Eres un asistente financiero amigable. El usuario intentó realizar una operación pero no fue posible encontrar su cuenta.
+      You are a friendly financial assistant. The user tried to perform an operation but it was not possible to find their account.
       
-      Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-      Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
+      Generate a clear and helpful error message in the following language: {language}.
+      Explain that the account was not found and may not be activated on the Stellar network.
     `,
     
-    // Plantillas para pagos
+    // Payment templates
     paymentSuccess: `
-      Eres un asistente financiero amigable. El usuario ha realizado un pago en Stellar.
+      You are a friendly financial assistant. The user has made a payment on Stellar.
       
-      Detalles del pago:
-      - Cantidad: {amount} XLM
-      - Destinatario: {recipient}
-      - Hash de la transacción: {hash}
+      Payment details:
+      - Amount: {amount} XLM
+      - Recipient: {recipient}
+      - Transaction hash: {hash}
       
-      Genera una respuesta amigable y profesional confirmando que el pago se ha realizado con éxito.
-      Incluye los detalles del pago pero usa un tono conversacional.
+      Generate a friendly and professional response confirming that the payment has been made successfully.
+      Include the payment details but use a conversational tone.
     `,
     
     paymentFailed: `
-      Eres un asistente financiero amigable. El usuario ha intentado realizar un pago en Stellar pero ha fallado.
+      You are a friendly financial assistant. The user has tried to make a payment on Stellar but it has failed.
       
-      Detalles del intento de pago:
-      - Cantidad: {amount} XLM
-      - Destinatario: {recipient}
+      Payment attempt details:
+      - Amount: {amount} XLM
+      - Recipient: {recipient}
       - Error: {error}
       
-      Genera una respuesta amigable y profesional explicando que el pago no se ha podido realizar.
-      Incluye una explicación del error en términos que un usuario no técnico pueda entender.
-      Sugiere posibles soluciones o alternativas.
-      Usa un tono conversacional y servicial.
+      Generate a friendly and professional response explaining that the payment could not be made.
+      Include an explanation of the error in terms that a non-technical user can understand.
+      Suggest possible solutions or alternatives.
+      Use a conversational and helpful tone.
     `,
     
     missingRecipient: `
-      Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no especificó un destinatario.
+      You are a friendly financial assistant. The user tried to send a payment but did not specify a recipient.
       
-      Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-      Explica que es necesario especificar un destinatario para completar la operación.
+      Generate a clear and helpful error message in the following language: {language}.
+      Explain that it is necessary to specify a recipient to complete the operation.
     `,
     
     missingAmount: `
-      Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no especificó una cantidad.
+      You are a friendly financial assistant. The user tried to send a payment but did not specify an amount.
       
-      Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-      Explica que es necesario especificar una cantidad para completar la operación.
+      Generate a clear and helpful error message in the following language: {language}.
+      Explain that it is necessary to specify an amount to complete the operation.
     `,
     
     insufficientBalance: `
-      Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no tiene saldo suficiente.
+      You are a friendly financial assistant. The user tried to send a payment but does not have sufficient balance.
       
-      Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-      Informa que el saldo actual es de {balance} XLM y necesita mantener al menos {minimumReserve} XLM como reserva.
+      Generate a clear and helpful error message in the following language: {language}.
+      Inform that the current balance is {balance} XLM and they need to maintain at least {minimumReserve} XLM as a reserve.
     `,
     
-    // Plantillas genéricas
+    // Generic templates
     genericError: `
-      Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
+      You are a friendly financial assistant. An error occurred while processing the user's request.
       
-      Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-      Explica que ocurrió un error y sugiere intentar más tarde.
+      Generate a clear and helpful error message in the following language: {language}.
+      Explain that an error occurred and suggest trying again later.
       
-      Detalles técnicos (solo para referencia): {error}
+      Technical details (for reference only): {error}
     `,
     
     unknownIntent: `
-      Eres un asistente financiero amigable. El usuario envió una solicitud que no pudo ser procesada.
+      You are a friendly financial assistant. The user sent a request that could not be processed.
       
-      Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
-      Explica que no se pudo procesar la intención y sugiere intentar con una solicitud diferente.
+      Generate a clear and helpful error message in the following language: {language}.
+      Explain that the intent could not be processed and suggest trying a different request.
     `
   };
 } 
