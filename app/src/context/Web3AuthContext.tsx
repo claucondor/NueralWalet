@@ -11,7 +11,8 @@ import {
   transactionService,
   type TokenInfo,
   type TokenBalance,
-  type TransactionResult
+  type TransactionResult,
+  type CreditScoreResult
 } from '@/services/stellarKitApi';
 
 // Definir la interfaz KeyPair localmente
@@ -48,6 +49,7 @@ interface Web3AuthContextType {
   loadToken: (contractId: string) => Promise<TokenInfo | null>;
   getTokenBalance: (contractId: string, address?: string) => Promise<TokenBalance | null>;
   sendPayment: (destination: string, amount: string, memo?: string) => Promise<TransactionResult | null>;
+  getCreditScore: (language?: string) => Promise<CreditScoreResult | null>;
 }
 
 const Web3AuthContext = createContext<Web3AuthContextType>({} as Web3AuthContextType);
@@ -533,6 +535,20 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
     }
   };
 
+  const getCreditScore = async (language: string = 'es'): Promise<CreditScoreResult | null> => {
+    try {
+      if (!stellarAddress) {
+        console.error('No address available to get credit score');
+        return null;
+      }
+      
+      return await accountService.getCreditScore(stellarAddress, language);
+    } catch (error) {
+      console.error('Error getting credit score:', error);
+      return null;
+    }
+  };
+
   return (
     <Web3AuthContext.Provider
       value={{
@@ -553,6 +569,7 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         loadToken,
         getTokenBalance,
         sendPayment,
+        getCreditScore
       }}
     >
       {children}

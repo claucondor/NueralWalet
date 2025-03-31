@@ -60,7 +60,7 @@ export class AgentService {
         Eres un asistente especializado en analizar mensajes de usuarios para una wallet de Stellar.
         Analiza el siguiente mensaje y extrae la intención del usuario, el idioma en que está escrito y cualquier parámetro relevante.
         
-        Tokens personalizados disponibles: \{customTokens\}
+        Tokens personalizados disponibles: {customTokens}
         
         Posibles intenciones:
         - balance_check: El usuario quiere consultar su saldo
@@ -80,26 +80,26 @@ export class AgentService {
         NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
         Asegúrate de que los parámetros devueltos coincidan exactamente con la interfaz UserIntent.
         
-        Mensaje del usuario: \{message\}
+        Mensaje del usuario: {message}
         
         Si el usuario menciona un token personalizado (por símbolo o nombre), asócialo con su address correspondiente en los tokens personalizados.
         
         Responde ÚNICAMENTE con un objeto JSON con la siguiente estructura:
-        \{
+        {{
           "intentType": "tipo_de_intencion",
           "confidence": 0.95,
           "language": "idioma_detectado_en_el_mensaje", // Por ejemplo: 'es' para español, 'en' para inglés, 'fr' para francés, etc.
-          "params": \{
+          "params": {{
             "walletAddress": "direccion_si_se_menciona",
             "amount": "cantidad_si_se_menciona",
             "isNativeToken": "booleano_indicando_si_es_token_nativo",
             "tokenAddress": "direccion_del_token_si_se_menciona",
             "recipient": "destinatario_si_se_menciona",
             "recipientEmail": "email_si_se_menciona"
-          \},
+          }},
           "originalMessage": "mensaje_original",
           "suggestedResponse": "respuesta_sugerida_al_usuario"
-        \}
+        }}
       `);
 
       // Crear la cadena de procesamiento

@@ -40,6 +40,30 @@ export interface TransactionResult {
   error?: string;
 }
 
+export interface CreditScoreResult {
+  success: boolean;
+  data?: {
+    analysis: {
+      totalVolume: number;
+      transactionCount: number;
+      frequency: number;
+      averageAmount: number;
+      largestTransaction: number;
+      netFlow: number;
+      debtRatio: number;
+      incomingCount: number;
+      outgoingCount: number;
+    };
+    creditScore: {
+      score: number;
+      reason: string;
+      improvementTips: string[];
+    };
+    englishRecommendation: string;
+  };
+  error?: string;
+}
+
 /**
  * Función auxiliar para realizar peticiones a la API
  */
@@ -132,6 +156,19 @@ export const accountService = {
     } catch (error) {
       console.error('Error creando cuenta:', error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  },
+
+  /**
+   * Evalúa el score crediticio de una cuenta
+   */
+  getCreditScore: async (publicKey: string, language: string = 'es'): Promise<CreditScoreResult | null> => {
+    try {
+      const response = await apiRequest<CreditScoreResult>(`/account/${publicKey}/credit-score?language=${language}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error obteniendo score crediticio:', error);
+      return null;
     }
   }
 };

@@ -122,21 +122,21 @@ export class IntentAnalyzerService {
       Si el usuario menciona un token personalizado (por símbolo o nombre), asócialo con su address correspondiente en los tokens personalizados.
       
       Responde ÚNICAMENTE con un objeto JSON con la siguiente estructura:
-      {
+      {{
         "intentType": "tipo_de_intencion",
         "confidence": 0.95,
         "language": "idioma_detectado_en_el_mensaje", // Por ejemplo: 'es' para español, 'en' para inglés, 'fr' para francés, etc.
-        "params": {
+        "params": {{
           "walletAddress": "direccion_si_se_menciona",
           "amount": "cantidad_si_se_menciona",
           "isNativeToken": "booleano_indicando_si_es_token_nativo",
           "tokenAddress": "direccion_del_token_si_se_menciona",
           "recipient": "destinatario_si_se_menciona",
           "recipientEmail": "email_si_se_menciona"
-        },
+        }},
         "originalMessage": "mensaje_original",
         "suggestedResponse": "respuesta_sugerida_al_usuario"
-      }
+      }}
     `;
   }
 } 

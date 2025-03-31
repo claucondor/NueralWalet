@@ -3,6 +3,8 @@ import { useWeb3Auth } from "@/context/Web3AuthContext";
 import { getUserByEmail } from "@/utils/supabase";
 import AnimatedView from "@/components/ui/AnimatedView";
 import AgentLimitsPanel from './AgentLimitsPanel';
+import CreditScoreSection from './CreditScoreSection';
+import CreditScoreCard from './CreditScoreCard';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -358,71 +360,47 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ onBack }) => {
 };
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) => {
-  const { userInfo, stellarAddress } = useWeb3Auth();
-  const [language, setLanguage] = useState("English");
-  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
-  const [showSecurity, setShowSecurity] = useState(false);
-  const [exitingView, setExitingView] = useState("");
-  const [mainContentVisible, setMainContentVisible] = useState(true);
-  
-  // Mostrar animación al iniciar
+  const { userInfo, stellarAddress, getCreditScore } = useWeb3Auth();
+  const [currentView, setCurrentView] = useState<string>("main");
+  const [creditScore, setCreditScore] = useState<{score: number, reason: string} | null>(null);
+  const [isLoadingScore, setIsLoadingScore] = useState(false);
+
+  // Función para obtener una versión resumida del score crediticio
+  // Solo se ejecutará una vez cuando se abra la configuración
   useEffect(() => {
-    setMainContentVisible(true);
-  }, []);
-  
-  // Gestión de transiciones entre vistas
+    const fetchCreditScorePreview = async () => {
+      setIsLoadingScore(true);
+      try {
+        const result = await getCreditScore();
+        if (result?.success && result.data?.creditScore) {
+          setCreditScore({
+            score: result.data.creditScore.score,
+            reason: result.data.creditScore.reason
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching credit score preview:", error);
+      } finally {
+        setIsLoadingScore(false);
+      }
+    };
+
+    // Solo hacer la petición una vez cuando se abre la pantalla
+    fetchCreditScorePreview();
+  }, [getCreditScore]);
+
   const handleShowView = (view: string) => {
-    // Si ya hay una vista mostrándose, primero la ocultamos con animación
-    if (showPersonalInfo || showSecurity) {
-      if (showPersonalInfo) setExitingView("personal");
-      if (showSecurity) setExitingView("security");
-      
-      setShowPersonalInfo(false);
-      setShowSecurity(false);
-      setMainContentVisible(true);
-      
-      // Después de un breve retraso para la transición, mostramos la nueva vista
-      setTimeout(() => {
-        setExitingView("");
-        setMainContentVisible(false);
-        if (view === "personal") setShowPersonalInfo(true);
-        if (view === "security") setShowSecurity(true);
-      }, 500);
-    } else {
-      // Si no hay ninguna vista activa, ocultamos el contenido principal y mostramos la nueva vista
-      setMainContentVisible(false);
-      setTimeout(() => {
-        if (view === "personal") setShowPersonalInfo(true);
-        if (view === "security") setShowSecurity(true);
-      }, 300);
-    }
+    setCurrentView(view);
   };
-  
+
   const handleCloseView = (view: string) => {
-    setExitingView(view);
-    
-    if (view === "personal") {
-      setShowPersonalInfo(false);
-    }
-    
-    if (view === "security") {
-      setShowSecurity(false);
-    }
-    
-    setMainContentVisible(true);
-    
-    setTimeout(() => {
-      setExitingView("");
-    }, 500);
+    setCurrentView("main");
   };
-  
-  // Verificación de si una vista está activa o saliendo (para animaciones)
+
   const isViewActive = (view: string) => {
-    return (view === "personal" && showPersonalInfo) || 
-           (view === "security" && showSecurity) || 
-           exitingView === view;
+    return currentView === view;
   };
-  
+
   const settingsItems = [
     {
       id: "personal",
@@ -458,10 +436,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
         </svg>
       ),
       title: "Language",
-      rightContent: language,
+      rightContent: "English",
       onClick: () => {
-        const newLanguage = language === "English" ? "Español" : "English";
-        setLanguage(newLanguage);
+        const newLanguage = "English" === "English" ? "Español" : "English";
+        // Implement language change logic
       }
     },
     {
@@ -514,12 +492,188 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
   };
 
   return (
-    <>
-      <div className={`fixed inset-0 bg-gray-100 flex items-center justify-center overflow-hidden transition-opacity duration-500 ${mainContentVisible ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="relative w-full max-w-md h-[85vh] bg-white flex flex-col overflow-hidden rounded-xl shadow-lg">
-          {/* Header */}
-          <div className="p-4 flex items-center border-b border-gray-200">
-            <button onClick={onClose} className="text-gray-500 hover:bg-gray-100 p-2 rounded-full transition-colors">
+    <div className="fixed inset-0 bg-white z-50 flex flex-col h-full">
+      {/* Navbar */}
+      <div className="flex items-center p-4 border-b border-gray-200">
+        <button
+          onClick={onClose}
+          className="text-gray-500 hover:bg-gray-100 p-2 rounded-full transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <h1 className="text-xl font-semibold text-center flex-grow">Configuración</h1>
+        <div className="w-10"></div>
+      </div>
+
+      {/* Main view */}
+      {isViewActive("main") && (
+        <div className="flex-1 overflow-y-auto p-5 bg-gray-50">
+          <div className="max-w-md mx-auto space-y-4">
+            {/* User info */}
+            <div className="bg-white rounded-xl p-5 shadow-sm flex items-center space-x-4">
+              <div className="h-14 w-14 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold text-xl">
+                {getInitials(userInfo?.name || "Usuario")}
+              </div>
+              <div>
+                <h2 className="font-semibold text-lg">{userInfo?.name || "Usuario"}</h2>
+                <p className="text-sm text-gray-500">{userInfo?.email || "Sin correo"}</p>
+              </div>
+            </div>
+
+            {/* Score crediticio card */}
+            {(creditScore || isLoadingScore) && (
+              <div className="mb-4">
+                <CreditScoreCard 
+                  score={creditScore?.score || 0}
+                  reason={creditScore?.reason || ''}
+                  loading={isLoadingScore}
+                  onClick={() => handleShowView('creditScore')}
+                />
+              </div>
+            )}
+
+            {/* Options */}
+            <div className="bg-white rounded-xl shadow-sm divide-y">
+              <button
+                onClick={() => handleShowView("personal")}
+                className="w-full p-4 flex items-center hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-medium">Información Personal</h3>
+                  <p className="text-xs text-gray-500">Ver y gestionar tu información</p>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-gray-400"
+                >
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+
+              <button
+                onClick={() => handleShowView("security")}
+                className="w-full p-4 flex items-center hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-medium">Seguridad</h3>
+                  <p className="text-xs text-gray-500">Gestionar claves privadas</p>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-gray-400"
+                >
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+
+              {/* Botón de Score Crediticio si no estamos mostrando directamente la card */}
+              {!creditScore && !isLoadingScore && (
+                <button
+                  onClick={() => handleShowView("creditScore")}
+                  className="w-full p-4 flex items-center hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 mr-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-medium">Score Crediticio</h3>
+                    <p className="text-xs text-gray-500">Ver tu reputación crediticia</p>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-gray-400"
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Logout button */}
+            <button
+              onClick={onLogout}
+              className="w-full p-4 flex items-center justify-center bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -530,96 +684,33 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout }) =>
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="mr-2"
               >
-                <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
-            </button>
-            <h2 className="text-lg font-semibold mx-auto">Account</h2>
-            <div className="w-8"></div>
-          </div>
-
-          {/* Content with scroll */}
-          <div className="flex-1 overflow-y-auto">
-            {/* User profile section with animation */}
-            <div className="flex items-center p-5 border-b border-gray-200 hover:bg-gray-50 transition-colors transform transition-transform duration-300 hover:scale-[1.01]">
-              <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-xl font-semibold mr-4">
-                {getInitials(userInfo?.name || "")}
-              </div>
-              <div>
-                <h3 className="font-medium">{userInfo?.name || "Claudio Condor"}</h3>
-                <p className="text-sm text-yellow-600">{userInfo?.email || "claucondor@gmail.com"}</p>
-              </div>
-            </div>
-
-            {/* Settings items with animations */}
-            <div>
-              {settingsItems.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="flex items-center p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-all duration-300 hover:translate-x-1"
-                  onClick={item.onClick}
-                  style={{
-                    animationDelay: `${index * 0.05}s`,
-                    transform: `translateY(${mainContentVisible ? '0' : '10px'})`,
-                    opacity: mainContentVisible ? 1 : 0,
-                    transition: `transform 0.3s ease ${index * 0.05}s, opacity 0.3s ease ${index * 0.05}s`
-                  }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-4 text-gray-600 transition-all duration-300 group-hover:bg-blue-100">
-                    {item.icon}
-                  </div>
-                  <div className="flex-1 flex items-center justify-between">
-                    <span className="font-medium">{item.title}</span>
-                    <div className="flex items-center">
-                      {item.rightContent && (
-                        <span className="text-gray-500 mr-2">{item.rightContent}</span>
-                      )}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-gray-400 transition-transform duration-300"
-                      >
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Logout Button at bottom with animation */}
-          <div className="p-4">
-            <button
-              onClick={onLogout}
-              className="w-full p-3 rounded-xl text-black font-medium border border-gray-300 hover:bg-gray-100 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Log out
+              Cerrar Sesión
             </button>
           </div>
         </div>
-      </div>
-      
-      {/* Vistas animadas */}
-      <AnimatedView show={isViewActive("personal")} direction="right">
-        <PersonalInfo 
-          onBack={() => handleCloseView("personal")} 
-          userInfo={userInfo} 
-          walletAddress={stellarAddress}
-        />
+      )}
+
+      {/* Credit score view */}
+      <AnimatedView show={isViewActive("creditScore")}>
+        <CreditScoreSection onBack={() => handleCloseView("creditScore")} />
       </AnimatedView>
-      
-      <AnimatedView show={isViewActive("security")} direction="right">
+
+      {/* Personal info view */}
+      <AnimatedView show={isViewActive("personal")}>
+        <PersonalInfo onBack={() => handleCloseView("personal")} userInfo={userInfo} walletAddress={stellarAddress} />
+      </AnimatedView>
+
+      {/* Security view */}
+      <AnimatedView show={isViewActive("security")}>
         <SecuritySection onBack={() => handleCloseView("security")} />
       </AnimatedView>
-    </>
+    </div>
   );
 };
 
