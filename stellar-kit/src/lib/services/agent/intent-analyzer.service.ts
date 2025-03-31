@@ -6,84 +6,73 @@ import { getAddressByEmail } from '../../utils/supabase';
 import { DEFAULT_LANGUAGE } from './constants';
 
 /**
- * Servicio para analizar la intención del usuario
+ * Service for analyzing user intent
  */
 export class IntentAnalyzerService {
   /**
-   * Analiza un mensaje de usuario para detectar su intención
-   * @param message Mensaje del usuario
-   * @param customTokens Tokens personalizados disponibles
-   * @param conversationContext Contexto de conversación (mensajes anteriores)
-   * @returns Intención detectada con parámetros
+   * Analyzes a user message to detect their intent
+   * @param message User message
+   * @param customTokens Available custom tokens
+   * @param conversationContext Conversation context (previous messages)
+   * @returns Detected intent with parameters
    */
   static async analyzeUserIntent(message: string, customTokens?: CustomToken[], conversationContext?: string): Promise<UserIntent> {
     try {
-      // Obtener el modelo LLM
       const llm = LLMService.getLLM();
-
-      // Crear el parser para obtener JSON
       const parser = new JsonOutputParser<UserIntent>();
-
-      // Crear el prompt para el análisis de intención
       const promptTemplate = ChatPromptTemplate.fromTemplate(this.getAnalysisPrompt());
-
-      // Crear la cadena de procesamiento
       const chain = promptTemplate.pipe(llm).pipe(parser);
 
-      // Ejecutar la cadena con el mensaje del usuario
       const result = await chain.invoke({
         message: message,
         customTokens: customTokens ? JSON.stringify(customTokens) : '[]',
         conversationContext: conversationContext || ''
       });
       
-      // Procesar el resultado para verificar si hay un email como destinatario
       return await this.processEmailRecipient(result);
     } catch (error) {
-      console.error('Error al analizar la intención del usuario:', error);
+      console.error('Error analyzing user intent:', error);
       
-      // Devolver una intención desconocida en caso de error
+      const defaultResponses = {
+        en: "Sorry, I couldn't understand your request. Could you rephrase it?",
+        es: "Lo siento, no pude entender tu solicitud. ¿Podrías reformularla?"
+      };
+      
       return {
         intentType: 'unknown',
         confidence: 0,
         language: DEFAULT_LANGUAGE,
         params: {},
         originalMessage: message,
-        suggestedResponse: 'Lo siento, no pude entender tu solicitud. ¿Podrías reformularla?'
+        suggestedResponse: defaultResponses[DEFAULT_LANGUAGE]
       };
     }
   }
   
   /**
-   * Procesa la intención para verificar si hay un email como destinatario
-   * @param intent Intención detectada por el LLM
-   * @returns Intención procesada con la dirección de Stellar si el email está registrado
+   * Processes the intent to check if there's an email as recipient
+   * @param intent Intent detected by the LLM
+   * @returns Processed intent with Stellar address if the email is registered
    */
   private static async processEmailRecipient(intent: UserIntent): Promise<UserIntent> {
-    // Si no es una intención de envío de pago, devolver la intención sin cambios
     if (intent.intentType !== 'send_payment') {
       return intent;
     }
     
-    // Verificar si hay un email como destinatario
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const recipientEmail = intent.params.recipientEmail || intent.params.recipient;
     
     if (!recipientEmail || !emailRegex.test(recipientEmail)) {
-      return intent; // No hay email o el formato no es válido
+      return intent;
     }
     
-    // Guardar el email en los parámetros
     intent.params.recipientEmail = recipientEmail;
     
-    // Verificar si el email está registrado en Supabase
     const addressResult = await getAddressByEmail(recipientEmail);
     
     if (addressResult.success && addressResult.address) {
-      // Si el email está registrado, actualizar el destinatario con la dirección de Stellar
       intent.params.recipient = addressResult.address;
     } else {
-      // If email is not registered, update suggested response
       intent.suggestedResponse = `The email ${recipientEmail} is not associated with any wallet on our platform.`;
     }
     

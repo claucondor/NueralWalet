@@ -1,8 +1,8 @@
-// Exportar el servicio principal
+// Export main service
 export { AgentService } from './agent.service';
 
-// Exportar tipos
+// Export types
 export * from './types';
 
-// Exportar constantes
+// Export constants
 export * from './constants'; 

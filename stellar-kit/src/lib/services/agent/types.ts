@@ -2,80 +2,80 @@ import { PaymentResult } from '../../interfaces/wallet.interface';
 import StellarWalletKit from '../..';
 
 /**
- * Interfaz para la intención detectada del usuario
+ * Interface for detected user intent
  */
 export interface UserIntent {
-  /** Tipo de intención detectada */
+  /** Type of detected intent */
   intentType: IntentType;
-  /** Confianza en la detección (0-1) */
+  /** Detection confidence (0-1) */
   confidence: number;
-  /** Idioma detectado en el mensaje del usuario */
+  /** Language detected in user message */
   language: string;
-  /** Parámetros extraídos del mensaje */
+  /** Parameters extracted from message */
   params: UserIntentParams;
-  /** Mensaje original */
+  /** Original message */
   originalMessage: string;
-  /** Respuesta sugerida al usuario */
+  /** Suggested response to user */
   suggestedResponse?: string;
 }
 
 /**
- * Tipos de intenciones soportadas
+ * Supported intent types
  */
 export type IntentType = 'balance_check' | 'send_payment' | 'token_info' | 'transaction_history' | 'informative_response' | 'unknown';
 
 /**
- * Parámetros extraídos de la intención del usuario
+ * Parameters extracted from user intent
  */
 export interface UserIntentParams {
-  /** Dirección de wallet (si se detectó) */
+  /** Wallet address (if detected) */
   walletAddress?: string;
-  /** Cantidad (si se detectó) */
+  /** Amount (if detected) */
   amount?: string;
-  /** Indica si el token es nativo (XLM) */
+  /** Indicates if token is native (XLM) */
   isNativeToken?: boolean;
-  /** Dirección del contrato del token (para tokens no nativos) */
+  /** Token contract address (for non-native tokens) */
   tokenAddress?: string;
-  /** Destinatario (si se detectó) */
+  /** Recipient (if detected) */
   recipient?: string;
-  /** Email del destinatario (si se detectó) */
+  /** Recipient email (if detected) */
   recipientEmail?: string;
-  /** Otros parámetros detectados */
+  /** Other detected parameters */
   [key: string]: any;
 }
 
 /**
- * Resultado de una operación del agente
+ * Result of an agent operation
  */
 export interface AgentResult {
-  /** Indica si la operación fue exitosa */
+  /** Indicates if operation was successful */
   success: boolean;
-  /** Mensaje para el usuario */
+  /** Message for user */
   message: string;
-  /** Datos adicionales de la operación */
+  /** Additional operation data */
   data?: any;
 }
 
 /**
- * Parámetros para la generación de mensajes mediante LLM
+ * Parameters for message generation using LLM
  */
 export interface MessageParams {
-  /** Idioma en el que generar el mensaje */
+  /** Language to generate message in */
   language: string;
-  /** Detalles adicionales para la generación del mensaje */
+  /** Additional details for message generation */
   [key: string]: any;
 }
 
 /**
- * Token personalizado
+ * Custom token
  */
 export interface CustomToken {
-  /** Símbolo del token */
+  /** Token symbol */
   symbol: string;
-  /** Nombre del token */
+  /** Token name */
   name: string;
-  /** Dirección del contrato del token */
+  /** Token contract address */
   address: string;
-  /** Decimales del token */
+  /** Token decimals */
   decimals: number;
 } 

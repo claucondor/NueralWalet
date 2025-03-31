@@ -3,14 +3,14 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { MessageParams } from './types';
 
 /**
- * Servicio para la generación de mensajes mediante LLM
+ * Service for message generation using LLM
  */
 export class MessageService {
   /**
-   * Genera un mensaje para una operación exitosa
-   * @param template Plantilla del mensaje
-   * @param params Parámetros para la generación del mensaje
-   * @returns Mensaje generado
+   * Generates a message for a successful operation
+   * @param template Message template
+   * @param params Parameters for message generation
+   * @returns Generated message
    */
   static async generateSuccessMessage(template: string, params: MessageParams): Promise<string> {
     const llm = LLMService.getLLM();
@@ -23,10 +23,10 @@ export class MessageService {
   }
   
   /**
-   * Genera un mensaje de error
-   * @param template Plantilla del mensaje de error
-   * @param params Parámetros para la generación del mensaje
-   * @returns Mensaje de error generado
+   * Generates an error message
+   * @param template Error message template
+   * @param params Parameters for message generation
+   * @returns Generated error message
    */
   static async generateErrorMessage(template: string, params: MessageParams): Promise<string> {
     const llm = LLMService.getLLM();

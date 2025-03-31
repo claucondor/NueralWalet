@@ -7,38 +7,38 @@ import StellarWalletKit from '../..';
 import { CONFIDENCE_THRESHOLD, DEFAULT_LANGUAGE } from './constants';
 
 /**
- * Servicio principal del agente
+ * Main agent service
  */
 export class AgentService {
   /**
-   * Analiza un mensaje de usuario para detectar su intención
-   * @param message Mensaje del usuario
-   * @param customTokens Tokens personalizados disponibles
-   * @param conversationContext Contexto de conversación (mensajes anteriores)
-   * @returns Intención detectada con parámetros
+   * Analyzes a user message to detect intent
+   * @param message User message
+   * @param customTokens Available custom tokens
+   * @param conversationContext Conversation context (previous messages)
+   * @returns Detected intent with parameters
    */
   static async analyzeUserIntent(message: string, customTokens?: CustomToken[], conversationContext?: string): Promise<UserIntent> {
     return await IntentAnalyzerService.analyzeUserIntent(message, customTokens, conversationContext);
   }
   
   /**
-   * Determina si una intención tiene suficiente confianza para ser procesada
-   * @param intent Intención detectada
-   * @returns true si la confianza es suficiente
+   * Determines if an intent has enough confidence to be processed
+   * @param intent Detected intent
+   * @returns true if confidence is sufficient
    */
   static hasConfidence(intent: UserIntent): boolean {
     return intent.confidence >= CONFIDENCE_THRESHOLD;
   }
   
   /**
-   * Procesa la intención del usuario y ejecuta la acción correspondiente
-   * @param intent Intención detectada
-   * @param params Parámetros para la acción
-   * @param fullPrivateKey Clave privada completa de Stellar
-   * @param stellarPublicKey Clave pública de Stellar
-   * @param originalMessage Mensaje original del usuario
-   * @param language Idioma para la respuesta
-   * @returns Resultado de la operación con mensaje amigable para el usuario
+   * Processes user intent and executes the corresponding action
+   * @param intent Detected intent
+   * @param params Action parameters
+   * @param fullPrivateKey Full Stellar private key
+   * @param stellarPublicKey Stellar public key
+   * @param originalMessage Original user message
+   * @param language Response language
+   * @returns Operation result with user-friendly message
    */
   static async processIntent(
     intent: string,
@@ -49,10 +49,8 @@ export class AgentService {
     language: string = DEFAULT_LANGUAGE
   ): Promise<AgentResult> {
     try {
-      // Obtener instancia del kit de Stellar
       const stellarKit = StellarWalletKit;
       
-      // Procesar según la intención detectada
       switch (intent) {
         case 'balance_check':
           return await BalanceHandlerService.processBalanceCheck(stellarKit, stellarPublicKey, language);
@@ -60,20 +58,19 @@ export class AgentService {
         case 'send_payment':
           return await PaymentHandlerService.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language);
           
-        // Aquí podrían agregarse más manejadores para otras intenciones
+        // Additional handlers for other intents could be added here
         // case 'token_info':
         // case 'transaction_history':
         // etc.
         
         case 'informative_response':
-          // Si hay una respuesta sugerida en los parámetros, utilizarla
           if (params.suggestedResponse) {
             return {
               success: true,
               message: params.suggestedResponse
             };
           }
-          // Si no hay respuesta sugerida, generar una genérica
+          
           const helpMessage = await MessageService.generateErrorMessage(
             MessageService.templates.genericHelp,
             { language }
@@ -85,7 +82,6 @@ export class AgentService {
           };
           
         default:
-          // Generar mensaje para intención desconocida
           const errorMessage = await MessageService.generateErrorMessage(
             MessageService.templates.unknownIntent,
             { language }
@@ -97,14 +93,13 @@ export class AgentService {
           };
       }
     } catch (error: any) {
-      console.error('Error procesando la intención:', error);
+      console.error('Error processing intent:', error);
       
-      // Generar mensaje de error genérico
       const errorMessage = await MessageService.generateErrorMessage(
         MessageService.templates.genericError,
         {
           language,
-          error: error.message || 'Error desconocido'
+          error: error.message || 'Unknown error'
         }
       );
       
