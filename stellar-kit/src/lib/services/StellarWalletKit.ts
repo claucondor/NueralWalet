@@ -849,7 +849,7 @@ export class StellarWalletKit {
             
             const promptTemplate = ChatPromptTemplate.fromTemplate(`
                 You are a strict credit analyst evaluating creditworthiness in a decentralized system.
-                Your scoring system must be extremely conservative, especially for accounts with limited history.
+                Your scoring system must be EXTREMELY conservative and pessimistic, especially for accounts with limited history.
                 
                 Transaction data:
                 - Total volume: {totalVolume} XLM
@@ -867,11 +867,14 @@ export class StellarWalletKit {
                 SCORING GUIDELINES (MUST FOLLOW STRICTLY):
                 1. Minimum transactions needed for a score above 350: 5 transactions
                 2. Maximum possible score: ${maxPossibleScore} out of 1000
-                3. Be extremely conservative - this score will determine lending risk
-                4. For any account with fewer than 10 transactions, score should never exceed 500
-                5. Debt/payment ratio above 3 is a severe red flag and should significantly reduce score
-                6. High frequency of transactions (>1 per day) is a positive signal
-                7. Accounts with imbalanced ratios of incoming/outgoing should be scored lower
+                3. Be EXTREMELY conservative - this score will determine serious lending risk
+                4. For any account with fewer than 10 transactions, score should never exceed 400
+                5. For fewer than 20 transactions, score should not exceed 600
+                6. Debt/payment ratio above 2.0 is a severe red flag and should reduce score by at least 200 points
+                7. High frequency of transactions (>1 per day) is a positive signal, but not enough to overcome other negative factors
+                8. Accounts with imbalanced ratios of incoming/outgoing should be scored significantly lower
+                9. Prioritize consistency and predictability over volume
+                10. For accounts with limited transactions, start with a baseline score of 250 and add points based on positive factors
                 
                 Generate a credit score (0-1000) based on:
                 1. Consistency in payments
@@ -881,7 +884,7 @@ export class StellarWalletKit {
                 5. Complete history
                 
                 Briefly explain the reasoning in less than 100 words.
-                Include suggestions to improve the score.
+                Include specific suggestions to improve the score.
                 
                 IMPORTANT: Always respond in English regardless of the request language, using exactly this JSON format:
                 {{
@@ -904,9 +907,34 @@ export class StellarWalletKit {
             console.log(`✅ [GENERATE SCORE] Score generated successfully:`, result);
             
             // Verificar que el score no supere el máximo posible basado en nuestras reglas
-            if (result && typeof result === 'object' && 'score' in result && result.score > maxPossibleScore) {
-                console.log(`⚠️ [GENERATE SCORE] Score exceeds maximum allowed (${result.score} > ${maxPossibleScore}). Adjusting to ${maxPossibleScore}`);
-                result.score = maxPossibleScore;
+            if (result && typeof result === 'object' && 'score' in result) {
+                // Verificar maxPossibleScore
+                if (result.score > maxPossibleScore) {
+                    console.log(`⚠️ [GENERATE SCORE] Score exceeds maximum allowed (${result.score} > ${maxPossibleScore}). Adjusting to ${maxPossibleScore}`);
+                    result.score = maxPossibleScore;
+                }
+                
+                // Aplicar restricciones adicionales basadas en las guías
+                const transactionCount = transactionAnalysis.transactionCount || 0;
+                
+                // Para cuentas con menos de 10 transacciones, máximo 400
+                if (transactionCount < 10 && result.score > 400) {
+                    console.log(`⚠️ [GENERATE SCORE] Score too high (${result.score}) for account with only ${transactionCount} transactions. Adjusting to 400`);
+                    result.score = 400;
+                }
+                // Para cuentas con menos de 20 transacciones, máximo 600
+                else if (transactionCount < 20 && result.score > 600) {
+                    console.log(`⚠️ [GENERATE SCORE] Score too high (${result.score}) for account with only ${transactionCount} transactions. Adjusting to 600`);
+                    result.score = 600;
+                }
+                
+                // Penalizar severamente ratios de deuda superiores a 2.0
+                const debtRatio = transactionAnalysis.debtRatio || 0;
+                if (debtRatio > 2.0) {
+                    const originalScore = result.score;
+                    result.score = Math.max(100, result.score - 200); // Reducir al menos 200 puntos, pero no por debajo de 100
+                    console.log(`⚠️ [GENERATE SCORE] Applied debt ratio penalty: ${originalScore} -> ${result.score} (ratio: ${debtRatio})`);
+                }
             }
             
             return result;

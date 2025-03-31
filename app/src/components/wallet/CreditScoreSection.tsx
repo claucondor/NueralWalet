@@ -107,7 +107,7 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading information</h3>
             <p className="text-gray-500">{error}</p>
           </div>
-        ) : !creditData?.data?.creditScore ? (
+        ) : !creditData?.data?.analysis || !creditData?.data?.analysis.transactionCount || creditData?.data?.analysis.transactionCount < 5 ? (
           <div className="py-10 text-center">
             <div className="rounded-full bg-yellow-50 w-16 h-16 flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
