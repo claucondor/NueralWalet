@@ -18,10 +18,18 @@ export interface CustomToken {
 }
 
 export const processMessage = async (req: Request, res: Response) => {
+  console.log('⚡ [API] Iniciando processMessage con request:', {
+    messageLength: req?.body?.text?.length || 0,
+    hasKeys: !!req?.body?.stellar_key_first_half && !!req?.body?.stellarPublicKey,
+    customTokensCount: req?.body?.customTokens?.length || 0,
+    timestamp: new Date().toISOString()
+  });
+  
   try {
     const { text, stellar_key_first_half, stellarPublicKey, customTokens } = req.body;
     
     if (!text || !stellar_key_first_half || !stellarPublicKey) {
+      console.log('❌ [API] Error de validación: campos requeridos faltantes');
       return res.status(400).json({
         success: false,
         error: 'Se requiere texto del mensaje, mitad de clave privada y clave pública de Stellar'
@@ -29,6 +37,7 @@ export const processMessage = async (req: Request, res: Response) => {
     }
     
     if (customTokens && !Array.isArray(customTokens)) {
+      console.log('❌ [API] Error de validación: customTokens no es un array');
       return res.status(400).json({
         success: false,
         error: 'customTokens debe ser un array de objetos'
@@ -42,7 +51,7 @@ export const processMessage = async (req: Request, res: Response) => {
       );
       
       if (invalidTokens.length > 0) {
-        console.log('Tokens inválidos recibidos:', invalidTokens);
+        console.log('❌ [API] Tokens inválidos recibidos:', invalidTokens);
         return res.status(400).json({
           success: false,
           error: 'Los custom tokens deben tener symbol, name, address y decimals'
@@ -50,7 +59,10 @@ export const processMessage = async (req: Request, res: Response) => {
       }
     }
     
+    console.log(`✅ [API] Validación completada para mensaje de ${text.length} caracteres`);
+    
     // Buscar la otra mitad de la clave en Supabase
+    console.log(`🔍 [API] Buscando mitad de clave para dirección: ${stellarPublicKey}`);
     const { data, error } = await supabase
       .from('users')
       .select('stellar_key_half')
@@ -58,24 +70,33 @@ export const processMessage = async (req: Request, res: Response) => {
       .single();
     
     if (error || !data?.stellar_key_half) {
-      console.error('Error obteniendo la otra mitad de la clave:', error);
+      console.error('❌ [API] Error obteniendo la otra mitad de la clave:', error);
       return res.status(500).json({
         success: false,
         error: 'Error obteniendo la otra mitad de la clave'
       });
     }
     
+    console.log('✅ [API] Recuperada mitad de clave de Supabase correctamente');
+    
     // Reconstruir la clave completa
     const fullPrivateKey = stellar_key_first_half + data.stellar_key_half;
     
     // Iniciar procesamiento en paralelo
+    console.log('🔄 [API] Iniciando análisis de intención del usuario...');
+    console.time('analyzeUserIntent');
     const userIntentPromise = AgentService.analyzeUserIntent(text, customTokens);
     
     // Esperar a que se complete el análisis de intención
     const userIntent = await userIntentPromise;
+    console.timeEnd('analyzeUserIntent');
+    console.log(`✅ [API] Análisis completado. Intención detectada: ${userIntent.intentType} con confianza: ${userIntent.confidence}`);
     
     // Procesar la intención del usuario si tiene suficiente confianza
     if (AgentService.hasConfidence(userIntent)) {
+      console.log(`🔄 [API] Procesando intención ${userIntent.intentType} con parámetros:`, userIntent.params);
+      console.time('processIntent');
+      
       // Ya no es necesario pasar los customTokens porque la información necesaria ya está en userIntent.params
       const processResult = await AgentService.processIntent(
         userIntent.intentType,
@@ -85,6 +106,9 @@ export const processMessage = async (req: Request, res: Response) => {
         userIntent.originalMessage,
         userIntent.language // Pasar el idioma detectado al método processIntent
       );
+      
+      console.timeEnd('processIntent');
+      console.log(`✅ [API] Procesamiento completado. Éxito: ${processResult.success}`);
       
       // Devolver el resultado del procesamiento
       return res.json({
@@ -98,6 +122,7 @@ export const processMessage = async (req: Request, res: Response) => {
         }
       });
     } else {
+      console.log(`ℹ️ [API] Confianza insuficiente (${userIntent.confidence}). No se procesará la intención.`);
       // Si no hay suficiente confianza, devolver solo la intención detectada
       return res.json({
         success: true,
@@ -110,8 +135,11 @@ export const processMessage = async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
+    console.error('❌ [API] Error en processMessage:', error);
+    console.error('❌ [API] Stack trace:', error.stack);
+    
     // Usar LLM para generar un mensaje de error amigable
-    const llm = LLMService.getLLM();
+    console.log('🔄 [API] Generando mensaje de error amigable...');
     const errorMessage = await generateErrorMessage(error.message || 'Error desconocido');
     
     res.status(500).json({
@@ -126,6 +154,7 @@ export const processMessage = async (req: Request, res: Response) => {
  */
 async function generateErrorMessage(errorDetails: string): Promise<string> {
   try {
+    console.log('🔄 [API] Iniciando generación de mensaje de error con LLM');
     const llm = LLMService.getLLM();
     const result = await llm.invoke(
       `Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
@@ -136,8 +165,10 @@ async function generateErrorMessage(errorDetails: string): Promise<string> {
       Detalles técnicos (solo para referencia): ${errorDetails}`
     );
     
+    console.log('✅ [API] Mensaje de error generado correctamente');
     return typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
   } catch (e) {
+    console.error('❌ [API] Error al generar mensaje con LLM:', e);
     // Si falla el LLM, devolver mensaje predeterminado
     return 'Lo siento, ocurrió un error al procesar tu solicitud. Por favor, intenta más tarde.';
   }

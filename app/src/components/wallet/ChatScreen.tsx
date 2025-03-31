@@ -281,6 +281,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         }
       }
       
+      // Mostrar un indicador de que la solicitud está en proceso
+      const updatedProcessingMessage: Message = {
+        ...processingMessage,
+        content: "Procesando tu solicitud... Esto puede tomar hasta 60 segundos."
+      };
+      setMessages(prev => prev.map(msg => 
+        msg.id === processingMsgId.toString() ? updatedProcessingMessage : msg
+      ));
+      
       // Llamar al servicio de Move Agent con la mitad de la clave
       const response = await agentService.processMessage(
         userMessage.content,
@@ -292,10 +301,22 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       // Eliminar el mensaje transitorio
       setMessages(prev => prev.filter(msg => msg.id !== processingMsgId.toString()));
       
+      if (!response.success) {
+        // Si hay un error específico del API
+        const botErrorMessage: Message = {
+          id: (Date.now() + 100).toString(),
+          content: response.message || "No pude procesar tu solicitud.",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botErrorMessage]);
+        return;
+      }
+      
       // Agregar respuesta del bot
       const botMessage: Message = {
         id: (Date.now() + 100).toString(),
-        content: response.success && response.data?.suggestedResponse 
+        content: response.data?.suggestedResponse 
           ? response.data.suggestedResponse 
           : response.data?.response?.content || "No pude procesar tu solicitud.",
         sender: 'bot',
@@ -303,16 +324,36 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       };
       
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing message:', error);
       
       // Eliminar el mensaje transitorio
       setMessages(prev => prev.filter(msg => msg.id !== processingMsgId.toString()));
       
+      // Determinar el tipo de error para mostrar un mensaje más específico
+      let errorContent = "Lo siento, ocurrió un error al procesar tu solicitud.";
+      
+      if (error.code === "ECONNABORTED") {
+        errorContent = "La solicitud tardó demasiado tiempo en procesarse. Por favor, intenta con una consulta más simple o inténtalo de nuevo más tarde.";
+      } else if (error.message?.includes("timeout")) {
+        errorContent = "Se agotó el tiempo de espera para procesar tu solicitud. Esto suele ocurrir con consultas complejas. Por favor, intenta con una consulta más simple.";
+      } else if (error.response) {
+        // Error con respuesta del servidor
+        if (error.response.status === 429) {
+          errorContent = "Demasiadas solicitudes en poco tiempo. Por favor, espera un momento antes de intentar nuevamente.";
+        } else if (error.response.status >= 500) {
+          errorContent = "El servicio está experimentando problemas. Por favor, inténtalo de nuevo más tarde.";
+        } else if (error.response.data?.error) {
+          errorContent = error.response.data.error;
+        }
+      } else if (!navigator.onLine) {
+        errorContent = "Parece que no tienes conexión a internet. Por favor, verifica tu conexión e inténtalo de nuevo.";
+      }
+      
       // Agregar mensaje de error como respuesta del bot
       const errorMessage: Message = {
         id: (Date.now() + 100).toString(),
-        content: "Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.",
+        content: errorContent,
         sender: 'bot',
         timestamp: new Date()
       };
