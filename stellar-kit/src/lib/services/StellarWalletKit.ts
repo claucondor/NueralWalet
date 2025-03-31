@@ -730,42 +730,83 @@ export class StellarWalletKit {
      * @returns Análisis de patrones de transacciones
      */
     private static async analyzeTransactionPatterns(transactions: any[], publicKey: string) {
-        const analysis = {
-            totalVolume: 0,
-            transactionCount: transactions.length,
-            frequency: 0,
-            averageAmount: 0,
-            largestTransaction: 0,
-            netFlow: 0,
-            debtRatio: 0,
-            incomingCount: 0,
-            outgoingCount: 0
-        };
-
+        console.log(`🔍 [ANALYZE PATTERNS] Iniciando análisis de patrones para ${transactions.length} transacciones`);
+        
+        // Inicializar variables para el análisis
+        let totalIncoming = 0;
+        let totalOutgoing = 0;
+        let largestTransaction = 0;
+        let incomingCount = 0;
+        let outgoingCount = 0;
+        
+        // Calcular la fecha más antigua y más reciente
+        const dates = transactions
+            .map(tx => new Date(tx.createdAt).getTime())
+            .sort((a, b) => a - b);
+        
+        const startDate = dates.length > 0 ? new Date(dates[0]) : new Date();
+        const endDate = dates.length > 0 ? new Date(dates[dates.length - 1]) : new Date();
+        
+        // Calcular días entre la primera y última transacción
+        const daysDiff = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+        console.log(`📅 [ANALYZE PATTERNS] Periodo de análisis: ${daysDiff} días (${startDate.toISOString()} - ${endDate.toISOString()})`);
+        
+        // Analizar cada transacción
+        console.log(`🔄 [ANALYZE PATTERNS] Procesando transacciones...`);
         transactions.forEach(tx => {
-            const amount = parseFloat(tx.amount || '0');
-            const isIncoming = tx.type === 'payment' && tx.to === publicKey;
+            const operations = tx.operations || [];
             
-            analysis.totalVolume += amount;
-            analysis.netFlow += isIncoming ? amount : -amount;
-            
-            if (isIncoming) {
-                analysis.incomingCount++;
-            } else {
-                analysis.outgoingCount++;
-            }
-
-            if (amount > analysis.largestTransaction) {
-                analysis.largestTransaction = amount;
-            }
+            operations.forEach((op: any) => {
+                // Solo analizar operaciones de pago y creación de cuenta
+                if (op.type === 'payment' || op.type === 'create_account') {
+                    const amount = parseFloat(op.amount);
+                    
+                    // Si la operación es recibida por la cuenta analizada
+                    if (op.to === publicKey) {
+                        totalIncoming += amount;
+                        incomingCount++;
+                        console.log(`  📥 Entrada: ${amount} XLM de ${op.from || 'desconocido'}`);
+                    } 
+                    // Si la operación es enviada por la cuenta analizada
+                    else if (op.from === publicKey) {
+                        totalOutgoing += amount;
+                        outgoingCount++;
+                        console.log(`  📤 Salida: ${amount} XLM a ${op.to || 'desconocido'}`);
+                    }
+                    
+                    // Actualizar transacción más grande
+                    if (amount > largestTransaction) {
+                        largestTransaction = amount;
+                    }
+                }
+            });
         });
-
-        analysis.averageAmount = analysis.totalVolume / analysis.transactionCount;
-        analysis.frequency = analysis.transactionCount / 30; // Assuming 30 day period
-        analysis.debtRatio = analysis.outgoingCount > 0 ? 
-            (analysis.incomingCount / analysis.outgoingCount) : 0;
-
-        return analysis;
+        
+        // Calcular métricas
+        const totalVolume = totalIncoming + totalOutgoing;
+        const netFlow = totalIncoming - totalOutgoing;
+        const frequency = transactions.length / daysDiff;
+        const debtRatio = totalOutgoing > 0 ? totalIncoming / totalOutgoing : 0;
+        
+        console.log(`📊 [ANALYZE PATTERNS] Análisis completado:`);
+        console.log(`  💰 Volumen total: ${totalVolume.toFixed(2)} XLM`);
+        console.log(`  🔄 Transacciones: ${transactions.length} (${incomingCount} entradas, ${outgoingCount} salidas)`);
+        console.log(`  📈 Flujo neto: ${netFlow.toFixed(2)} XLM`);
+        console.log(`  💹 Ratio deuda: ${debtRatio.toFixed(2)}`);
+        console.log(`  ⚡ Frecuencia: ${frequency.toFixed(2)} tx/día`);
+        console.log(`  🔝 Mayor transacción: ${largestTransaction.toFixed(2)} XLM`);
+        
+        return {
+            totalVolume,
+            transactionCount: transactions.length,
+            frequency,
+            averageAmount: totalVolume / Math.max(1, transactions.length),
+            largestTransaction,
+            netFlow,
+            debtRatio,
+            incomingCount,
+            outgoingCount
+        };
     }
 
     /**
@@ -780,50 +821,72 @@ export class StellarWalletKit {
         transactionsSummary: string = '',
         language: string = 'es'
     ) {
-        // Importaciones necesarias para LLM
-        const { LLMService } = await import('./llm.service');
-        const { ChatPromptTemplate } = await import('@langchain/core/prompts');
-        const { JsonOutputParser } = await import('@langchain/core/output_parsers');
-        
-        const llm = LLMService.getLLM();
-        const promptTemplate = ChatPromptTemplate.fromTemplate(`
-            Eres un analista de crédito experto evaluando la reputación crediticia en un sistema descentralizado.
+        try {
+            console.log(`🔄 [GENERATE SCORE] Iniciando generación de score crediticio`);
+            console.log(`🌐 [GENERATE SCORE] Idioma solicitado: ${language}`);
             
-            Datos de transacciones:
-            - Volumen total: {totalVolume} XLM
-            - Número de transacciones: {transactionCount}
-            - Frecuencia: {frequency} transacciones/día
-            - Flujo neto: {netFlow} XLM
-            - Transacción más grande: {largestTransaction} XLM
-            - Relación deuda/pagos: {debtRatio}
+            // Importaciones necesarias para LLM
+            console.log(`📚 [GENERATE SCORE] Importando dependencias LLM...`);
+            const { LLMService } = await import('./llm.service');
+            const { ChatPromptTemplate } = await import('@langchain/core/prompts');
+            const { JsonOutputParser } = await import('@langchain/core/output_parsers');
             
-            Historial de transacciones recientes:
-            {transactionsSummary}
-            
-            Genera un score de crédito (0-1000) considerando:
-            1. Consistencia en pagos
-            2. Volumen de actividad
-            3. Balance entre deuda y crédito
-            4. Patrones de comportamiento
-            5. Historial completo
-            
-            Explica brevemente el razonamiento en menos de 100 palabras.
-            Incluye sugerencias para mejorar el score si es menor a 700.
-            
-            IMPORTANTE: Responde en {language} con este formato JSON:
-            {{
-                "score": 0-1000,
-                "reason": "razón breve",
-                "improvementTips": ["sugerencia1", "sugerencia2"]
-            }}
-        `);
+            console.log(`🤖 [GENERATE SCORE] Inicializando modelo LLM...`);
+            const llm = LLMService.getLLM();
+            const promptTemplate = ChatPromptTemplate.fromTemplate(`
+                Eres un analista de crédito experto evaluando la reputación crediticia en un sistema descentralizado.
+                
+                Datos de transacciones:
+                - Volumen total: {totalVolume} XLM
+                - Número de transacciones: {transactionCount}
+                - Frecuencia: {frequency} transacciones/día
+                - Flujo neto: {netFlow} XLM
+                - Transacción más grande: {largestTransaction} XLM
+                - Relación deuda/pagos: {debtRatio}
+                
+                Historial de transacciones recientes:
+                {transactionsSummary}
+                
+                Genera un score de crédito (0-1000) considerando:
+                1. Consistencia en pagos
+                2. Volumen de actividad
+                3. Balance entre deuda y crédito
+                4. Patrones de comportamiento
+                5. Historial completo
+                
+                Explica brevemente el razonamiento en menos de 100 palabras.
+                Incluye sugerencias para mejorar el score si es menor a 700.
+                
+                IMPORTANTE: Responde en {language} con este formato JSON:
+                {{
+                    "score": 0-1000,
+                    "reason": "razón breve",
+                    "improvementTips": ["sugerencia1", "sugerencia2"]
+                }}
+            `);
 
-        const chain = promptTemplate.pipe(llm).pipe(new JsonOutputParser());
-        return await chain.invoke({
-            ...transactionAnalysis,
-            transactionsSummary,
-            language
-        });
+            console.log(`🔄 [GENERATE SCORE] Creando cadena de procesamiento LLM con parser JSON...`);
+            const chain = promptTemplate.pipe(llm).pipe(new JsonOutputParser());
+            
+            console.log(`⏳ [GENERATE SCORE] Invocando LLM para cálculo de score...`);
+            const result = await chain.invoke({
+                ...transactionAnalysis,
+                transactionsSummary,
+                language
+            });
+            
+            console.log(`✅ [GENERATE SCORE] Score generado exitosamente:`, result);
+            
+            return result;
+        } catch (error) {
+            console.error(`❌ [GENERATE SCORE] Error al generar score crediticio:`, error);
+            // Devolver un valor por defecto en caso de error
+            return {
+                score: 0,
+                reason: "Error al calcular el score crediticio",
+                improvementTips: ["Intentar más tarde con más historial de transacciones"]
+            };
+        }
     }
 
     /**
@@ -834,15 +897,24 @@ export class StellarWalletKit {
      */
     async evaluateCreditReputation(publicKey: string, language: string = 'es') {
         try {
+            console.log(`🔄 [CREDIT REPUTATION] Iniciando evaluación para ${publicKey} en idioma: ${language}`);
+            
+            // Verificar la red que estamos usando
+            const networkType = this.getNetwork();
+            console.log(`🌐 [CREDIT REPUTATION] Red utilizada: ${networkType}`);
+            
             // Obtener historial de transacciones (últimos 30 días o 100 transacciones)
+            console.log(`📜 [CREDIT REPUTATION] Obteniendo historial de transacciones...`);
             const historyResult = await this.getTransactionHistory(publicKey, {
                 limit: 100,
                 order: 'desc'
             });
             
             const { transactions } = historyResult;
+            console.log(`✅ [CREDIT REPUTATION] Transacciones obtenidas: ${transactions.length}`);
             
             if (transactions.length === 0) {
+                console.warn(`⚠️ [CREDIT REPUTATION] No hay transacciones disponibles para analizar`);
                 return {
                     success: false,
                     error: 'No hay historial de transacciones suficiente para evaluar la reputación crediticia'
@@ -850,6 +922,7 @@ export class StellarWalletKit {
             }
             
             // Crear un resumen de las transacciones más recientes para el LLM
+            console.log(`📝 [CREDIT REPUTATION] Creando resumen de transacciones recientes...`);
             const transactionsSummary = transactions.slice(0, 10).map(tx => {
                 const operations = tx.operations || [];
                 const opSummaries = operations.map(op => {
@@ -864,14 +937,25 @@ export class StellarWalletKit {
             }).join('\n\n');
             
             // Analizar patrones de transacciones
+            console.log(`📊 [CREDIT REPUTATION] Analizando patrones de transacciones...`);
             const analysis = await StellarWalletKit.analyzeTransactionPatterns(transactions, publicKey);
             
+            console.log(`📈 [CREDIT REPUTATION] Resumen del análisis: 
+                Volumen total: ${analysis.totalVolume} XLM
+                Transacciones: ${analysis.transactionCount}
+                Frecuencia: ${analysis.frequency} tx/día
+                Flujo neto: ${analysis.netFlow} XLM
+                Ratio deuda: ${analysis.debtRatio}
+            `);
+            
             // Generar score crediticio
+            console.log(`🧮 [CREDIT REPUTATION] Generando score crediticio con LLM...`);
             const creditScore = await this.generateCreditScore(
                 analysis,
                 transactionsSummary,
                 language
             );
+            console.log(`🏆 [CREDIT REPUTATION] Score crediticio generado:`, creditScore);
             
             return {
                 success: true,
@@ -880,7 +964,8 @@ export class StellarWalletKit {
             };
             
         } catch (error: any) {
-            console.error('Error al evaluar reputación crediticia:', error);
+            console.error('❌ [CREDIT REPUTATION] Error al evaluar reputación crediticia:', error);
+            console.error('Stack trace:', error.stack);
             return {
                 success: false,
                 error: error.message || 'Error desconocido al evaluar reputación crediticia'

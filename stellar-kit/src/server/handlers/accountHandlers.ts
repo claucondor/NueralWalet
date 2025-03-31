@@ -164,33 +164,63 @@ export const evaluateCreditScore = async (req: Request, res: Response) => {
     const { publicKey } = req.params;
     const { language = 'es' } = req.query;
     
+    console.log(`🔍 [CREDIT SCORE] Iniciando evaluación crediticia para la dirección: ${publicKey}`);
+    console.log(`🌐 [CREDIT SCORE] Idioma solicitado: ${language}`);
+    
+    // Verificar que estamos usando la red correcta (testnet)
+    const networkType = walletKit.getNetwork();
+    console.log(`🌍 [CREDIT SCORE] Red Stellar utilizada: ${networkType}`);
+    
+    if (networkType !== 'testnet') {
+      console.warn(`⚠️ [CREDIT SCORE] ADVERTENCIA: No estás usando la testnet de Stellar. Cambia a testnet para pruebas.`);
+    }
+    
     if (!publicKey) {
+      console.error(`❌ [CREDIT SCORE] Error: No se proporcionó una clave pública`);
       return res.status(400).json({
         success: false,
         error: 'Se requiere una clave pública'
       });
     }
     
+    console.log(`⏳ [CREDIT SCORE] Obteniendo datos de transacciones para análisis...`);
     const creditResult = await walletKit.evaluateCreditReputation(publicKey, language as string) as CreditResult;
+    console.log(`✅ [CREDIT SCORE] Proceso de evaluación completado con éxito: ${creditResult.success}`);
     
     if (!creditResult.success) {
+      console.error(`❌ [CREDIT SCORE] Error en evaluación: ${creditResult.error}`);
       return res.status(400).json({
         success: false,
         error: creditResult.error || 'Error evaluando reputación crediticia'
       });
     }
     
-    // Generar mensaje de recomendación en inglés independientemente del idioma del score
+    // Verificar si tenemos datos de análisis
+    if (creditResult.analysis) {
+      console.log(`📊 [CREDIT SCORE] Estadísticas: Volumen total=${creditResult.analysis.totalVolume} XLM, Transacciones=${creditResult.analysis.transactionCount}, Frecuencia=${creditResult.analysis.frequency}/día`);
+    } else {
+      console.warn(`⚠️ [CREDIT SCORE] No se obtuvo análisis de transacciones`);
+    }
+    
+    // Verificar si tenemos score crediticio
     const score = creditResult.creditScore ? (creditResult.creditScore as any).score || 0 : 0;
     const improvementTips = creditResult.creditScore ? (creditResult.creditScore as any).improvementTips || [] : [];
+    
+    console.log(`🏆 [CREDIT SCORE] Score calculado: ${score}/1000`);
+    console.log(`💡 [CREDIT SCORE] Consejos de mejora: ${improvementTips.length}`);
+    
     const recommendations = Array.isArray(improvementTips) ? improvementTips.join('. ') : '';
     
+    console.log(`⏳ [CREDIT SCORE] Generando recomendación en inglés...`);
     const englishRecommendation = await generateEnglishRecommendation(
       score, 
       recommendations,
       creditResult.analysis
     );
+    console.log(`✅ [CREDIT SCORE] Recomendación en inglés generada correctamente`);
     
+    // Construir y enviar respuesta completa
+    console.log(`📤 [CREDIT SCORE] Enviando respuesta completa al cliente`);
     res.json({
       success: true,
       data: {
@@ -199,6 +229,8 @@ export const evaluateCreditScore = async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
+    console.error(`❌ [CREDIT SCORE] Error no controlado: ${error.message}`);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       error: error.message || 'Error evaluando reputación crediticia'
