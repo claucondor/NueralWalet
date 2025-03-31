@@ -5,6 +5,7 @@
 import { Request, Response } from 'express';
 import { AgentService } from '../../lib/services/agent.service';
 import { supabase } from '../../lib/utils/supabase';
+import { LLMService } from '../../lib/services/llm.service';
 
 /**
  * Procesa un mensaje enviado al agente
@@ -66,14 +67,14 @@ export const processMessage = async (req: Request, res: Response) => {
     
     // Reconstruir la clave completa
     const fullPrivateKey = stellar_key_first_half + data.stellar_key_half;
-    //console.log('Clave privada completa reconstruida:', fullPrivateKey);
     
-    // Analizar la intención del usuario utilizando el servicio de agente
-    const userIntent = await AgentService.analyzeUserIntent(text);
+    // Analizar la intención del usuario pasando los customTokens
+    // Al analizarla, el LLM detectará el nombre del token y lo relacionará con su address
+    const userIntent = await AgentService.analyzeUserIntent(text, customTokens);
     
     // Procesar la intención del usuario si tiene suficiente confianza
     if (AgentService.hasConfidence(userIntent)) {
-      // Procesar la intención utilizando la clave privada reconstruida
+      // Ya no es necesario pasar los customTokens porque la información necesaria ya está en userIntent.params
       const processResult = await AgentService.processIntent(
         userIntent.intentType,
         userIntent.params,
@@ -107,12 +108,38 @@ export const processMessage = async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
+    // Usar LLM para generar un mensaje de error amigable
+    const llm = LLMService.getLLM();
+    const errorMessage = await generateErrorMessage(error.message || 'Error desconocido');
+    
     res.status(500).json({
       success: false,
-      error: error.message || 'Error procesando el mensaje'
+      error: errorMessage
     });
   }
 };
+
+/**
+ * Genera un mensaje de error amigable utilizando LLM
+ */
+async function generateErrorMessage(errorDetails: string): Promise<string> {
+  try {
+    const llm = LLMService.getLLM();
+    const result = await llm.invoke(
+      `Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
+      
+      Genera un mensaje de error claro y útil en español o en el idioma en que el usuario escribió su mensaje si lo puedes detectar.
+      Explica que ocurrió un error y sugiere intentar más tarde.
+      
+      Detalles técnicos (solo para referencia): ${errorDetails}`
+    );
+    
+    return typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+  } catch (e) {
+    // Si falla el LLM, devolver mensaje predeterminado
+    return 'Lo siento, ocurrió un error al procesar tu solicitud. Por favor, intenta más tarde.';
+  }
+}
 
 /**
  * Verifica el estado del agente

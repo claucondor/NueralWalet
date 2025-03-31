@@ -4,7 +4,7 @@ const agentService = {
   processMessage: async (message: string, stellar_key_first_half: string, stellarPublicKey: string, customTokens?: any[]) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_MOVE_AGENT_SERVICE_URL}/process-message`,
+        `${import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000'}/api/agent/process-message`,
         { text: message, stellar_key_first_half, stellarPublicKey, customTokens }
       );
       return response.data;
@@ -17,7 +17,7 @@ const agentService = {
   getStatus: async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_MOVE_AGENT_SERVICE_URL}/status`
+        `${import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000'}/api/status`
       );
       return response.data;
     } catch (error) {

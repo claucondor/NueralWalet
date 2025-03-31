@@ -7,7 +7,7 @@ export { StellarWalletKit } from './StellarWalletKit';
 // Exportar otros servicios
 export { StellarNetworkService } from './network.service';
 export { LLMService } from './llm.service';
-export { AgentService } from './agent.service';
+export { AgentService } from './agent';
 
 // Servicio para interactuar con la red Stellar
 export class NetworkService {

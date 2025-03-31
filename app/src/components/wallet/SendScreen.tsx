@@ -77,7 +77,7 @@ const SendScreen: React.FC<SendScreenProps> = ({ onClose, initialAddress = null 
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_MOVE_AGENT_SERVICE_URL || 'http://localhost:3001'}/api/user/check-email/${encodeURIComponent(recipient)}`
+          `${import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000'}/api/user/check-email/${encodeURIComponent(recipient)}`
         );
         
         const data = await response.json();

@@ -75,6 +75,8 @@ export class AgentService {
         
         Si el usuario menciona cualquier otro tipo de token que no sea XLM o Soroban, marca la intención como 'unknown' y sugiere al usuario que solo podemos manejar tokens nativos (XLM) y tokens Soroban con su contrato correspondiente.
         
+        Si el usuario menciona un token que no está en la lista de tokens personalizados disponibles, debes establecer la intención como 'unknown' y generar una respuesta que explique que ese token no está soportado por nuestra wallet. Sé específico mencionando el nombre del token no soportado.
+        
         NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
         Asegúrate de que los parámetros devueltos coincidan exactamente con la interfaz UserIntent.
         
@@ -186,8 +188,7 @@ export class AgentService {
     fullPrivateKey: string,
     stellarPublicKey: string,
     originalMessage?: string,
-    language: string = 'es', // Idioma por defecto: español
-    customTokens?: any[] // Tokens personalizados incluyendo Soroban
+    language: string = 'es' // Idioma por defecto: español
   ): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       // Obtener instancia del kit de Stellar
@@ -199,7 +200,7 @@ export class AgentService {
           return await this.processBalanceCheck(stellarKit, stellarPublicKey, language);
           
         case 'send_payment':
-          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language, customTokens);
+          return await this.processSendPayment(stellarKit, fullPrivateKey, stellarPublicKey, params, language);
           
         case 'create_account':
           return await this.processCreateAccount(stellarKit, fullPrivateKey, params, language);
@@ -255,24 +256,27 @@ export class AgentService {
   /**
    * Procesa la intención de consulta de saldo
    */
-  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'es', customTokens?: any[]) {
+  private static async processBalanceCheck(stellarKit: typeof StellarWalletKit, publicKey: string, language: string = 'es') {
     try {
       // Obtener información de la cuenta
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
-        // Mensajes de error predefinidos según el idioma
-        const errorMessages: Record<string, string> = {
-          'es': 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.',
-          'en': 'The account could not be found. It may not be activated on the Stellar network.',
-          'fr': 'Le compte n\'a pas pu être trouvé. Il n\'est peut-être pas activé sur le réseau Stellar.',
-          'pt': 'A conta não pôde ser encontrada. Pode não estar ativada na rede Stellar.',
-          'de': 'Das Konto konnte nicht gefunden werden. Es ist möglicherweise nicht im Stellar-Netzwerk aktiviert.'
-        };
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó consultar su saldo pero no fue posible encontrar su cuenta.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
         
         return {
           success: false,
-          message: errorMessages[language] || errorMessages['en'] // Usar inglés como fallback
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -297,13 +301,6 @@ export class AgentService {
       const chain = promptTemplate.pipe(llm);
       const result = await chain.invoke({});
       
-      if (!accountInfo) {
-        return {
-          success: false,
-          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
-        };
-      }
-      
       return {
         success: true,
         message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
@@ -311,9 +308,24 @@ export class AgentService {
       };
     } catch (error: any) {
       console.error('Error al consultar saldo:', error);
+      
+      // Usar LLM para mensaje de error en el idioma correcto
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. Ocurrió un error al consultar el saldo del usuario.
+        
+        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Explica que ocurrió un error y sugiere intentar más tarde.
+        
+        Detalles técnicos (solo para referencia): {error}
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({ error: error.message });
+      
       return {
         success: false,
-        message: 'Lo siento, no pude consultar tu saldo en este momento. Por favor, intenta más tarde.'
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
       };
     }
   }
@@ -326,8 +338,7 @@ export class AgentService {
     privateKey: string,
     publicKey: string,
     params: Record<string, any>,
-    language: string = 'es',
-    customTokens?: any[]
+    language: string = 'es'
   ) {
     // Verificar si es un token Soroban
     const isSorobanToken = params.tokenAddress && !params.isNativeToken;
@@ -381,15 +392,43 @@ export class AgentService {
             data: { hash: result.hash }
           };
         } else {
+          // Usar LLM para mensaje de error en el idioma correcto
+          const llm = LLMService.getLLM();
+          const promptTemplate = ChatPromptTemplate.fromTemplate(`
+            Eres un asistente financiero amigable. El usuario ha intentado enviar tokens Soroban pero la operación falló.
+            
+            Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+            Explica que no se pudieron enviar los tokens y sugiere intentar más tarde.
+            
+            Detalles técnicos (solo para referencia): ${result.error || 'Error desconocido al enviar tokens'}
+          `);
+          
+          const chain = promptTemplate.pipe(llm);
+          const errorMsg = await chain.invoke({});
+          
           return {
             success: false,
-            message: result.error || 'Error desconocido al enviar tokens'
+            message: typeof errorMsg.content === 'string' ? errorMsg.content : JSON.stringify(errorMsg.content)
           };
         }
       } catch (error: any) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. Ocurrió un error al procesar el pago con token Soroban.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que ocurrió un error al procesar el pago y sugiere intentar más tarde.
+          
+          Detalles técnicos (solo para referencia): {error}
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({ error: error.message || 'Error desconocido' });
+        
         return {
           success: false,
-          message: error.message || 'Error al procesar pago con token Soroban'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
     }
@@ -500,9 +539,24 @@ export class AgentService {
       return await this.generatePaymentResponseMessage(paymentResult, amount, recipient, language);
     } catch (error: any) {
       console.error('Error al enviar pago:', error);
+      
+      // Usar LLM para mensaje de error en el idioma correcto
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. Ocurrió un error al procesar el pago.
+        
+        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Explica que ocurrió un error al procesar el pago y sugiere intentar más tarde.
+        
+        Detalles técnicos (solo para referencia): {error}
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({ error: error.message || 'Error desconocido' });
+      
       return {
         success: false,
-        message: 'Lo siento, no pude procesar el pago en este momento. Por favor, intenta más tarde.'
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
       };
     }
   }
@@ -522,9 +576,21 @@ export class AgentService {
       const startingBalance = amount || '1'; // Si no se especifica, usar 1 XLM como balance inicial
       
       if (!recipient) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó crear una cuenta pero no especificó una dirección.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que es necesario especificar una dirección para crear una nueva cuenta en la red Stellar.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se especificó una dirección para la nueva cuenta.'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -546,6 +612,14 @@ export class AgentService {
           
           Genera una respuesta amigable y profesional informando al usuario sobre la creación exitosa de la cuenta.
           Incluye la dirección y el balance inicial, pero usa un tono conversacional.
+          
+          IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+          Si el idioma es 'es', responde en español.
+          Si el idioma es 'en', responde en inglés.
+          Si el idioma es 'fr', responde en francés.
+          Si el idioma es 'pt', responde en portugués.
+          Si el idioma es 'de', responde en alemán.
+          Para cualquier otro código de idioma, intenta responder en ese idioma.
         `);
         
         const chain = promptTemplate.pipe(llm);
@@ -557,16 +631,45 @@ export class AgentService {
           data: { hash: result.hash }
         };
       } else {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó crear una cuenta pero la operación falló.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que no se pudo crear la cuenta y sugiere verificar la dirección e intentar nuevamente.
+          
+          Detalles técnicos (solo para referencia): ${result.error || 'Error desconocido'}
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const response = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se pudo crear la cuenta. Por favor, verifica la dirección e intenta nuevamente.'
+          message: typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
         };
       }
     } catch (error: any) {
       console.error('Error al crear cuenta:', error);
+      
+      // Usar LLM para mensaje de error en el idioma correcto
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. Ocurrió un error al intentar crear una cuenta en la red Stellar.
+        
+        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Explica que ocurrió un error y sugiere intentar más tarde.
+        
+        Detalles técnicos (solo para referencia): {error}
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({ error: error.message });
+      
       return {
         success: false,
-        message: 'Lo siento, no pude crear la cuenta en este momento. Por favor, intenta más tarde.'
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
       };
     }
   }
@@ -585,9 +688,21 @@ export class AgentService {
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó obtener información sobre tokens pero no fue posible encontrar su cuenta.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -613,13 +728,6 @@ export class AgentService {
       const chain = promptTemplate.pipe(llm);
       const result = await chain.invoke({});
       
-      if (!accountInfo) {
-        return {
-          success: false,
-          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
-        };
-      }
-      
       return {
         success: true,
         message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
@@ -627,9 +735,24 @@ export class AgentService {
       };
     } catch (error: any) {
       console.error('Error al consultar información de token:', error);
+      
+      // Usar LLM para mensaje de error en el idioma correcto
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. Ocurrió un error al obtener información sobre los tokens del usuario.
+        
+        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Explica que ocurrió un error y sugiere intentar más tarde.
+        
+        Detalles técnicos (solo para referencia): {error}
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({ error: error.message });
+      
       return {
         success: false,
-        message: 'Lo siento, no pude obtener información sobre tus tokens en este momento. Por favor, intenta más tarde.'
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
       };
     }
   }
@@ -651,9 +774,21 @@ export class AgentService {
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
+        // Usar LLM para mensaje de error en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario intentó consultar su historial de transacciones pero no fue posible encontrar su cuenta.
+          
+          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: false,
-          message: 'No se pudo encontrar la cuenta. Es posible que no esté activada en la red Stellar.'
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
         };
       }
       
@@ -663,9 +798,21 @@ export class AgentService {
       
       // Si no hay transacciones, devolver un mensaje informativo
       if (!transactions || transactions.length === 0) {
+        // Usar LLM para mensaje informativo en el idioma correcto
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario ha solicitado su historial de transacciones pero no tiene ninguna transacción.
+          
+          Genera un mensaje informativo claro y útil en el siguiente idioma: ${language}.
+          Explica que no hay transacciones en su historial y que cuando realice operaciones en la red Stellar, aparecerán en su historial.
+        `);
+        
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({});
+        
         return {
           success: true,
-          message: 'No se encontraron transacciones en tu historial. Cuando realices operaciones en la red Stellar, aparecerán aquí.',
+          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content),
           data: { transactions: [] }
         };
       }
@@ -734,9 +881,24 @@ export class AgentService {
       };
     } catch (error: any) {
       console.error('Error al consultar historial de transacciones:', error);
+      
+      // Usar LLM para mensaje de error en el idioma correcto
+      const llm = LLMService.getLLM();
+      const promptTemplate = ChatPromptTemplate.fromTemplate(`
+        Eres un asistente financiero amigable. Ocurrió un error al consultar el historial de transacciones del usuario.
+        
+        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Explica que ocurrió un error y sugiere intentar más tarde.
+        
+        Detalles técnicos (solo para referencia): {error}
+      `);
+      
+      const chain = promptTemplate.pipe(llm);
+      const result = await chain.invoke({ error: error.message });
+      
       return {
         success: false,
-        message: 'Lo siento, no pude obtener tu historial de transacciones en este momento. Por favor, intenta más tarde.'
+        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
       };
     }
   }

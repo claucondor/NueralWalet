@@ -6,14 +6,20 @@
 // Obtener URL del entorno o usar local por defecto
 //esto es aptos - Move Agent Kit
 const getAgentServiceUrl = (): string => {
+  // Primero intentar usar la URL de StellarKit API
+  if (import.meta.env.VITE_STELLARKIT_API_URL) {
+    return import.meta.env.VITE_STELLARKIT_API_URL;
+  }
+  
+  // Como fallback, usar la URL específica del Move Agent si existe
   if (import.meta.env.VITE_MOVE_AGENT_SERVICE_URL) {
     return import.meta.env.VITE_MOVE_AGENT_SERVICE_URL;
   }
   
   // Usar localhost en desarrollo
   return import.meta.env.DEV 
-    ? 'http://localhost:3001' 
-    : 'https://move-agent-service.yourproduction.com';
+    ? 'http://localhost:3000' 
+    : 'https://stellar-kit-server-425691224878.us-central1.run.app';
 };
 
 // Configuración del servicio

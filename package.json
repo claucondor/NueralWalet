@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@langchain/core": "^0.3.43"
+  },
+  "devDependencies": {
+    "@types/babel__template": "^7.4.4",
+    "@types/morgan": "^1.9.9"
+  }
+}
