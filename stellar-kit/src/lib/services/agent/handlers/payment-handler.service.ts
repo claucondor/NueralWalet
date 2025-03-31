@@ -5,17 +5,17 @@ import { MINIMUM_XLM_RESERVE, DEFAULT_PAYMENT_MEMO } from '../constants';
 import { PaymentResult } from '../../../interfaces/wallet.interface';
 
 /**
- * Servicio para manejar las operaciones de pago
+ * Service for handling payment operations
  */
 export class PaymentHandlerService {
   /**
-   * Procesa la intención de envío de pago
-   * @param stellarKit Kit de Stellar
-   * @param privateKey Clave privada de Stellar
-   * @param publicKey Clave pública de Stellar
-   * @param params Parámetros del pago
-   * @param language Idioma para la respuesta
-   * @returns Resultado de la operación
+   * Processes payment sending intent
+   * @param stellarKit Stellar Kit
+   * @param privateKey Stellar private key
+   * @param publicKey Stellar public key
+   * @param params Payment parameters
+   * @param language Response language
+   * @returns Operation result
    */
   static async processSendPayment(
     stellarKit: typeof StellarWalletKit,
@@ -24,24 +24,24 @@ export class PaymentHandlerService {
     params: Record<string, any>,
     language: string
   ): Promise<AgentResult> {
-    // Verificar si es un token Soroban
+    // Check if it's a Soroban token
     const isSorobanToken = params.tokenAddress && !params.isNativeToken;
     
     if (isSorobanToken) {
       return await this.processSorobanTokenPayment(stellarKit, privateKey, params, language);
     }
     
-    // Procesar pago con XLM nativo
+    // Process payment with native XLM
     return await this.processNativePayment(stellarKit, privateKey, publicKey, params, language);
   }
   
   /**
-   * Procesa un pago con token Soroban
-   * @param stellarKit Kit de Stellar
-   * @param privateKey Clave privada de Stellar
-   * @param params Parámetros del pago
-   * @param language Idioma para la respuesta
-   * @returns Resultado de la operación
+   * Processes a Soroban token payment
+   * @param stellarKit Stellar Kit
+   * @param privateKey Stellar private key
+   * @param params Payment parameters
+   * @param language Response language
+   * @returns Operation result
    */
   private static async processSorobanTokenPayment(
     stellarKit: typeof StellarWalletKit,
@@ -50,16 +50,16 @@ export class PaymentHandlerService {
     language: string
   ): Promise<AgentResult> {
     try {
-      // Verificar que tenemos los parámetros necesarios
+      // Verify we have the necessary parameters
       const { recipient, amount, tokenAddress, isNativeToken } = params;
       
       if (!recipient || !amount || !tokenAddress || isNativeToken === undefined) {
-        // Generar mensaje de error por parámetros faltantes
+        // Generate error message for missing parameters
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.genericError,
           {
             language,
-            error: 'Faltan parámetros requeridos: destinatario, cantidad o dirección del token'
+            error: 'Missing required parameters: recipient, amount or token address'
           }
         );
         
@@ -69,13 +69,13 @@ export class PaymentHandlerService {
         };
       }
       
-      // Verificar formato de clave privada (debe ser formato Stellar, no VET u otro)
+      // Verify private key format (must be Stellar format, not VET or other)
       if (!privateKey.startsWith('S')) {
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.genericError,
           {
             language,
-            error: 'El formato de la clave privada no es válido para Stellar'
+            error: 'The private key format is not valid for Stellar'
           }
         );
         
@@ -85,7 +85,7 @@ export class PaymentHandlerService {
         };
       }
       
-      // Realizar transferencia de token Soroban
+      // Perform Soroban token transfer
       const result = await stellarKit.sendToken(
         tokenAddress,
         privateKey,
@@ -94,7 +94,7 @@ export class PaymentHandlerService {
       );
       
       if (result.success) {
-        // Generar mensaje de éxito
+        // Generate success message
         const successMessage = await MessageService.generateSuccessMessage(
           MessageService.templates.paymentSuccess,
           {
@@ -111,14 +111,14 @@ export class PaymentHandlerService {
           data: { hash: result.hash }
         };
       } else {
-        // Generar mensaje de error
+        // Generate error message
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.paymentFailed,
           {
             language,
             amount,
             recipient,
-            error: result.error || 'Error desconocido al enviar tokens'
+            error: result.error || 'Unknown error when sending tokens'
           }
         );
         
@@ -128,14 +128,14 @@ export class PaymentHandlerService {
         };
       }
     } catch (error: any) {
-      console.error('Error al enviar pago con token Soroban:', error);
+      console.error('Error sending Soroban token payment:', error);
       
-      // Generar mensaje de error genérico
+      // Generate generic error message
       const errorMessage = await MessageService.generateErrorMessage(
         MessageService.templates.genericError,
         {
           language,
-          error: error.message || 'Error desconocido'
+          error: error.message || 'Unknown error'
         }
       );
       
@@ -147,13 +147,13 @@ export class PaymentHandlerService {
   }
   
   /**
-   * Procesa un pago con XLM nativo
-   * @param stellarKit Kit de Stellar
-   * @param privateKey Clave privada de Stellar
-   * @param publicKey Clave pública de Stellar
-   * @param params Parámetros del pago
-   * @param language Idioma para la respuesta
-   * @returns Resultado de la operación
+   * Processes a native XLM payment
+   * @param stellarKit Stellar Kit
+   * @param privateKey Stellar private key
+   * @param publicKey Stellar public key
+   * @param params Payment parameters
+   * @param language Response language
+   * @returns Operation result
    */
   private static async processNativePayment(
     stellarKit: typeof StellarWalletKit,
@@ -163,10 +163,10 @@ export class PaymentHandlerService {
     language: string
   ): Promise<AgentResult> {
     try {
-      // Verificar que tenemos los parámetros necesarios
+      // Verify we have the necessary parameters
       const { recipient, amount } = params;
       
-      // Verificar que existe un destinatario
+      // Verify recipient exists
       if (!recipient) {
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.missingRecipient,
@@ -179,7 +179,7 @@ export class PaymentHandlerService {
         };
       }
       
-      // Verificar que existe una cantidad
+      // Verify amount exists
       if (!amount) {
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.missingAmount,
@@ -192,7 +192,7 @@ export class PaymentHandlerService {
         };
       }
       
-      // Verificar que la cuenta existe
+      // Verify account exists
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
@@ -207,33 +207,17 @@ export class PaymentHandlerService {
         };
       }
       
-      // Verificar formato de clave privada (debe ser formato Stellar, no VET u otro)
-      if (!privateKey.startsWith('S')) {
-        const errorMessage = await MessageService.generateErrorMessage(
-          MessageService.templates.genericError,
-          {
-            language,
-            error: 'El formato de la clave privada no es válido para Stellar'
-          }
-        );
-        
-        return {
-          success: false,
-          message: errorMessage
-        };
-      }
-      
-      // Verificar saldo suficiente
-      const balance = parseFloat(accountInfo.balance || '0');
+      // Check if there's enough balance
+      const currentBalance = parseFloat(accountInfo.balance || '0');
       const amountToSend = parseFloat(amount);
       
-      if (balance - amountToSend < MINIMUM_XLM_RESERVE) {
+      if (currentBalance < amountToSend + MINIMUM_XLM_RESERVE) {
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.insufficientBalance,
-          {
+          { 
             language,
-            balance,
-            minimumReserve: MINIMUM_XLM_RESERVE
+            balance: currentBalance.toString(),
+            minimumReserve: MINIMUM_XLM_RESERVE.toString()
           }
         );
         
@@ -243,7 +227,7 @@ export class PaymentHandlerService {
         };
       }
       
-      // Realizar el pago
+      // Perform native XLM payment
       const paymentResult = await stellarKit.sendPayment(
         privateKey,
         recipient,
@@ -251,17 +235,17 @@ export class PaymentHandlerService {
         { memo: DEFAULT_PAYMENT_MEMO }
       );
       
-      // Generar mensaje según el resultado
+      // Return appropriate response based on payment result
       return await this.generatePaymentResponseMessage(paymentResult, amount, recipient, language);
     } catch (error: any) {
-      console.error('Error al enviar pago nativo:', error);
+      console.error('Error sending native payment:', error);
       
-      // Generar mensaje de error genérico
+      // Generate generic error message
       const errorMessage = await MessageService.generateErrorMessage(
         MessageService.templates.genericError,
         {
           language,
-          error: error.message || 'Error desconocido'
+          error: error.message || 'Unknown error'
         }
       );
       
@@ -273,12 +257,12 @@ export class PaymentHandlerService {
   }
   
   /**
-   * Genera un mensaje de respuesta basado en el resultado del pago
-   * @param paymentResult Resultado del pago
-   * @param amount Cantidad enviada
-   * @param recipient Destinatario
-   * @param language Idioma para la respuesta
-   * @returns Resultado de la operación
+   * Generates response message for payment operations
+   * @param paymentResult Payment operation result
+   * @param amount Payment amount
+   * @param recipient Payment recipient
+   * @param language Response language
+   * @returns Formatted operation result
    */
   private static async generatePaymentResponseMessage(
     paymentResult: PaymentResult,
@@ -287,7 +271,7 @@ export class PaymentHandlerService {
     language: string
   ): Promise<AgentResult> {
     if (paymentResult.success) {
-      // Generar mensaje de éxito
+      // Generate success message
       const successMessage = await MessageService.generateSuccessMessage(
         MessageService.templates.paymentSuccess,
         {
@@ -304,14 +288,14 @@ export class PaymentHandlerService {
         data: { hash: paymentResult.hash }
       };
     } else {
-      // Generar mensaje de error
+      // Generate error message
       const errorMessage = await MessageService.generateErrorMessage(
         MessageService.templates.paymentFailed,
         {
           language,
           amount,
           recipient,
-          error: paymentResult.error || 'Error desconocido'
+          error: paymentResult.error || 'Unknown error'
         }
       );
       

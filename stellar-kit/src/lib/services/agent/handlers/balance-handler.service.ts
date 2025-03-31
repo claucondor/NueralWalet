@@ -3,15 +3,15 @@ import { MessageService } from '../message.service';
 import StellarWalletKit from '../../..';
 
 /**
- * Servicio para manejar las consultas de saldo
+ * Service for handling balance queries
  */
 export class BalanceHandlerService {
   /**
-   * Procesa la intención de consulta de saldo
-   * @param stellarKit Kit de Stellar
-   * @param publicKey Clave pública de Stellar
-   * @param language Idioma para la respuesta
-   * @returns Resultado de la operación
+   * Processes balance check intent
+   * @param stellarKit Stellar Kit
+   * @param publicKey Stellar public key
+   * @param language Response language
+   * @returns Operation result
    */
   static async processBalanceCheck(
     stellarKit: typeof StellarWalletKit, 
@@ -19,11 +19,11 @@ export class BalanceHandlerService {
     language: string
   ): Promise<AgentResult> {
     try {
-      // Obtener información de la cuenta
+      // Get account information
       const accountInfo = await stellarKit.getAccountInfo(publicKey);
       
       if (!accountInfo) {
-        // Generar mensaje de error si la cuenta no existe
+        // Generate error message if account doesn't exist
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.accountNotFound,
           { language }
@@ -35,7 +35,7 @@ export class BalanceHandlerService {
         };
       }
       
-      // Generar mensaje de éxito con el saldo
+      // Generate success message with balance
       const successMessage = await MessageService.generateSuccessMessage(
         MessageService.templates.balanceSuccess,
         { 
@@ -50,9 +50,9 @@ export class BalanceHandlerService {
         data: { balance: accountInfo.balance }
       };
     } catch (error: any) {
-      console.error('Error al consultar saldo:', error);
+      console.error('Error checking balance:', error);
       
-      // Generar mensaje de error genérico
+      // Generate generic error message
       const errorMessage = await MessageService.generateErrorMessage(
         MessageService.templates.genericError,
         { 
