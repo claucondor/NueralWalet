@@ -49,60 +49,50 @@ export class AgentService {
    */
   static async analyzeUserIntent(message: string, customTokens?: CustomToken[]): Promise<UserIntent> {
     try {
-      // Obtener el modelo LLM
+      // Obtener el modelo LLM con timeout aumentado
       const llm = LLMService.getLLM();
 
       // Crear el parser para obtener JSON
       const parser = new JsonOutputParser<UserIntent>();
 
-      // Crear el prompt para el análisis de intención
+      // Acortar y simplificar el prompt para el análisis de intención
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
-        Eres un asistente especializado en analizar mensajes de usuarios para una wallet de Stellar.
-        Analiza el siguiente mensaje y extrae la intención del usuario, el idioma en que está escrito y cualquier parámetro relevante.
+        Analiza este mensaje de usuario para una wallet Stellar. Extrae la intención, idioma y parámetros.
         
         Tokens personalizados disponibles: {customTokens}
         
         Posibles intenciones:
-        - balance_check: El usuario quiere consultar su saldo
-        - send_payment: El usuario quiere enviar un pago
-        - token_info: El usuario quiere información sobre un token
-        - transaction_history: El usuario quiere ver su historial de transacciones
-        - unknown: No se puede determinar la intención
+        - balance_check: Consulta de saldo
+        - send_payment: Envío de pago
+        - token_info: Información de token
+        - transaction_history: Historial de transacciones
+        - unknown: Intención desconocida
         
-        IMPORTANTE: Esta wallet solo soporta XLM (token nativo) y tokens Soroban. Debes especificar claramente en la respuesta:
-        - Para XLM (nativo): siempre incluir "isNativeToken": true y "tokenAddress": "XLM" en los parámetros
-        - Para tokens Soroban (no nativos): siempre incluir "isNativeToken": false y "tokenAddress": "<contrato_completo>" donde <contrato_completo> es el ID completo del contrato
+        Esta wallet soporta XLM (nativo) y tokens Soroban. 
+        - Para XLM: "isNativeToken": true, "tokenAddress": "XLM"
+        - Para Soroban: "isNativeToken": false, "tokenAddress": "<contrato_completo>"
         
-        Si el usuario menciona cualquier otro tipo de token que no sea XLM o Soroban, marca la intención como 'unknown' y sugiere al usuario que solo podemos manejar tokens nativos (XLM) y tokens Soroban con su contrato correspondiente.
+        Mensaje: {message}
         
-        Si el usuario menciona un token que no está en la lista de tokens personalizados disponibles, debes establecer la intención como 'unknown' y generar una respuesta que explique que ese token no está soportado por nuestra wallet. Sé específico mencionando el nombre del token no soportado.
-        
-        NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
-        Asegúrate de que los parámetros devueltos coincidan exactamente con la interfaz UserIntent.
-        
-        Mensaje del usuario: {message}
-        
-        Si el usuario menciona un token personalizado (por símbolo o nombre), asócialo con su address correspondiente en los tokens personalizados.
-        
-        Responde ÚNICAMENTE con un objeto JSON con la siguiente estructura:
+        Responde solo con un objeto JSON:
         {{
-          "intentType": "tipo_de_intencion",
-          "confidence": 0.95,
-          "language": "idioma_detectado_en_el_mensaje", // Por ejemplo: 'es' para español, 'en' para inglés, 'fr' para francés, etc.
+          "intentType": "tipo_intencion",
+          "confidence": 0.0-1.0,
+          "language": "codigo_idioma",
           "params": {{
             "walletAddress": "direccion_si_se_menciona",
             "amount": "cantidad_si_se_menciona",
-            "isNativeToken": "booleano_indicando_si_es_token_nativo",
-            "tokenAddress": "direccion_del_token_si_se_menciona",
+            "isNativeToken": true/false,
+            "tokenAddress": "XLM_o_direccion",
             "recipient": "destinatario_si_se_menciona",
             "recipientEmail": "email_si_se_menciona"
           }},
-          "originalMessage": "mensaje_original",
-          "suggestedResponse": "respuesta_sugerida_al_usuario"
+          "originalMessage": "{message}",
+          "suggestedResponse": "respuesta_sugerida"
         }}
       `);
 
-      // Crear la cadena de procesamiento
+      // Crear la cadena de procesamiento con timeout
       const chain = promptTemplate.pipe(llm).pipe(parser);
 
       // Ejecutar la cadena con el mensaje del usuario

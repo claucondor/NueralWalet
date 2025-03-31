@@ -15,7 +15,10 @@ export class LLMService {
       openAIApiKey: process.env.OPENROUTER_API_KEY as string,
       configuration: {
         baseURL: 'https://openrouter.ai/api/v1'
-      }
+      },
+      timeout: 25000, // 25 segundos de timeout
+      maxRetries: 2,
+      maxConcurrency: 5 // Limitar concurrencia para evitar sobrecarga
     });
   }
 }

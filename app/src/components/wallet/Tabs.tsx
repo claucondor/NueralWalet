@@ -29,11 +29,6 @@ const Tabs: React.FC<TabsProps> = ({
     }
   }, [activeTab]);
 
-  const handleFriendVaultClick = () => {
-    // Navegar a la página de Friend Vault
-    navigate("/friend-vault");
-  };
-
   return (
     <div ref={tabsRef} className="self-stretch bg-[rgba(243,245,246,1)] flex items-center gap-auto text-sm font-semibold whitespace-nowrap text-center justify-center p-1 rounded-2xl relative">
       <div 
@@ -59,8 +54,8 @@ const Tabs: React.FC<TabsProps> = ({
       </button>
       <button 
         data-tab="friendvault"
-        className={`self-stretch min-h-12 gap-2.5 w-full my-auto px-2.5 py-4 rounded-2xl z-10 relative transition-colors duration-300 text-[rgba(39,39,41,1)]`} 
-        onClick={handleFriendVaultClick}
+        className={`self-stretch min-h-12 gap-2.5 w-full my-auto px-2.5 py-4 rounded-2xl z-10 relative transition-colors duration-300 ${activeTab === "friendvault" ? "text-[rgba(227,223,223,1)]" : "text-[rgba(39,39,41,1)]"}`} 
+        onClick={() => onTabChange("friendvault")}
       >
         Vaults
       </button>

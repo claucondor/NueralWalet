@@ -68,9 +68,11 @@ export const processMessage = async (req: Request, res: Response) => {
     // Reconstruir la clave completa
     const fullPrivateKey = stellar_key_first_half + data.stellar_key_half;
     
-    // Analizar la intención del usuario pasando los customTokens
-    // Al analizarla, el LLM detectará el nombre del token y lo relacionará con su address
-    const userIntent = await AgentService.analyzeUserIntent(text, customTokens);
+    // Iniciar procesamiento en paralelo
+    const userIntentPromise = AgentService.analyzeUserIntent(text, customTokens);
+    
+    // Esperar a que se complete el análisis de intención
+    const userIntent = await userIntentPromise;
     
     // Procesar la intención del usuario si tiene suficiente confianza
     if (AgentService.hasConfidence(userIntent)) {

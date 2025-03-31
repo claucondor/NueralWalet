@@ -255,6 +255,17 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     setChatStarted(true);
     setIsLoading(true);
     
+    // Agregar mensaje transitorio mientras se procesa
+    const processingMsgId = Date.now() + 50;
+    const processingMessage: Message = {
+      id: processingMsgId.toString(),
+      content: "Procesando tu solicitud...",
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, processingMessage]);
+    
     try {
       // Obtener la clave privada de Stellar y dividirla
       let clientHalf = '';
@@ -278,6 +289,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         customTokens
       );
       
+      // Eliminar el mensaje transitorio
+      setMessages(prev => prev.filter(msg => msg.id !== processingMsgId.toString()));
+      
       // Agregar respuesta del bot
       const botMessage: Message = {
         id: (Date.now() + 100).toString(),
@@ -291,6 +305,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error processing message:', error);
+      
+      // Eliminar el mensaje transitorio
+      setMessages(prev => prev.filter(msg => msg.id !== processingMsgId.toString()));
       
       // Agregar mensaje de error como respuesta del bot
       const errorMessage: Message = {

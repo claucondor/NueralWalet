@@ -29,7 +29,7 @@ const agentService = {
         const response = await axios.post(
           apiUrl,
           { text: message, stellar_key_first_half, stellarPublicKey, customTokens },
-          { timeout: 15000 } // 15 segundos de timeout
+          { timeout: 30000 } // 30 segundos de timeout
         );
         
         console.log('Respuesta recibida:', response.status);

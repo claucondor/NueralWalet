@@ -1,7 +1,19 @@
 import React from 'react';
-import { FriendVault } from '@/services/friendVaultService';
-import { ChevronRight, Users, Wallet } from 'lucide-react';
+import { ChevronRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Definimos la interfaz para un Vault
+interface FriendVault {
+  id: string;
+  name: string;
+  description?: string;
+  publicKey: string;
+  createdBy: string;
+  members: string[];
+  createdAt: string;
+  updatedAt: string;
+  balance: string;
+}
 
 interface VaultListProps {
   vaults: FriendVault[];
@@ -12,7 +24,7 @@ const VaultList: React.FC<VaultListProps> = ({ vaults, onSelectVault }) => {
   // Función para formatear la fecha
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
+    return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric' 
@@ -42,36 +54,19 @@ const VaultList: React.FC<VaultListProps> = ({ vaults, onSelectVault }) => {
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2 text-gray-500">
               <Users className="h-4 w-4" />
-              <span className="text-sm">{vault.members.length} miembros</span>
+              <span className="text-sm">{vault.members.length} members</span>
             </div>
             <div className="text-sm text-gray-500">
-              Creado el {formatDate(vault.createdAt)}
+              Created {formatDate(vault.createdAt)}
             </div>
           </div>
           
-          <div className="flex justify-between items-end mt-2">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "rounded-full p-2",
-                vault.isCreator ? "bg-blue-100" : "bg-gray-100"
-              )}>
-                <Wallet className={cn(
-                  "h-4 w-4",
-                  vault.isCreator ? "text-blue-600" : "text-gray-600"
-                )} />
-              </div>
-              <div className="text-sm">
-                <div className="text-gray-500">
-                  {vault.isCreator ? 'Creador' : 'Miembro'}
-                </div>
-              </div>
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              {vault.createdBy === vault.members[0] ? 'You are the owner' : 'You are a member'}
             </div>
-            
-            <div className="text-right">
-              <div className="font-semibold">{formatBalance(vault.balance)} XLM</div>
-              <div className="text-xs text-gray-500">
-                ~${(parseFloat(formatBalance(vault.balance)) * 0.11).toFixed(2)} USD
-              </div>
+            <div className="font-medium">
+              {formatBalance(vault.balance)} XLM
             </div>
           </div>
         </div>

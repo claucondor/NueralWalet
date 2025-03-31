@@ -14,6 +14,7 @@ import AnimatedView from "@/components/ui/AnimatedView";
 import { useWeb3Auth } from "@/context/Web3AuthContext";
 import { requestTestnetXLM } from "@/utils/stellar"; // Actualizado a Stellar
 import TransactionHistory from "./TransactionHistory";
+import FriendVaultScreen from "./friend-vault/FriendVaultScreen";
 
 const WalletScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState("tokens");
@@ -180,11 +181,15 @@ const WalletScreen: React.FC = () => {
                   onSwap={() => handleActionButton("Swap")} 
                 />
               </div>
-            ) : (
+            ) : activeTab === "history" ? (
               <div className="self-stretch flex-1 w-full overflow-auto">
                 <TransactionHistory address={stellarAddress} />
               </div>
-            )}
+            ) : activeTab === "friendvault" ? (
+              <div className="self-stretch flex-1 w-full overflow-auto">
+                <FriendVaultScreen />
+              </div>
+            ) : null}
           </div>
 
           <ChatInput 
