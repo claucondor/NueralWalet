@@ -1,4 +1,4 @@
-# GuardWallet
+# NeuralWallet
 
 A library for managing Stellar tokens and wallets, with support for SEP-41 tokens on Soroban.
 

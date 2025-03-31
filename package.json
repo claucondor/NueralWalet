@@ -1,4 +1,5 @@
 {
+  "name": "neural-wallet",
   "dependencies": {
     "@langchain/core": "^0.3.43",
     "react-circular-progressbar": "^2.2.0"

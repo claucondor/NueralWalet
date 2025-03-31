@@ -532,7 +532,7 @@ export class AgentService {
         privateKey,
         recipient,
         amount.toString(),
-        { memo: 'Pago desde GuardWallet' }
+        { memo: 'Payment from NeuralWallet' }
       );
       
       // Generar mensaje según el resultado usando LLM
@@ -599,7 +599,7 @@ export class AgentService {
         privateKey,
         recipient,
         startingBalance,
-        { memo: 'Creación de cuenta desde GuardWallet' }
+        { memo: 'Account creation from NeuralWallet' }
       );
       
       if (result.success) {

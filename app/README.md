@@ -1,12 +1,12 @@
-# GoPay - Web3 for Everyone
+# NeuralWallet - Web3 for Everyone
 
-<img src="https://github.com/RuyRiver/wallet-ui-lovable/blob/main/public/logo/logo@HD.png?raw=true" alt="GoPay Logo" width="250"/>
+<img src="https://github.com/RuyRiver/wallet-ui-lovable/blob/main/public/logo/logo@HD.png?raw=true" alt="NeuralWallet Logo" width="250"/>
 
 ## Simplifying Blockchain for the Masses
 
 Imagine asking someone on the street to send you 100 USDT to your wallet. Would they know how? Most likely not. And if we tried to explain wallets, transaction signatures, gas fees, or seed phrases, how long would it take? Too long.
 
-**That's why we created GoPay** - a wallet designed for everyone, regardless of their blockchain knowledge. With GoPay, all you need to know is **how to sign in with your email and how to chat**. From your first moment, you can make blockchain transactions without complications.
+**That's why we created NeuralWallet** - a wallet designed for everyone, regardless of their blockchain knowledge. With NeuralWallet, all you need to know is **how to sign in with your email and how to chat**. From your first moment, you can make blockchain transactions without complications.
 
 ## How It Works
 
@@ -17,11 +17,11 @@ Imagine asking someone on the street to send you 100 USDT to your wallet. Would 
 
 ## Business Model
 
-GoPay charges a **1% commission** whenever you fund your account, make a transaction, or swap tokens. This ensures a smooth, secure service without complications.
+NeuralWallet charges a **1% commission** whenever you fund your account, make a transaction, or swap tokens. This ensures a smooth, secure service without complications.
 
 ## Technologies
 
-GoPay is built with a modern tech stack focused on security, performance, and user experience:
+NeuralWallet is built with a modern tech stack focused on security, performance, and user experience:
 
 - **Frontend**:
   - React with TypeScript
@@ -90,4 +90,4 @@ npm run dev
 
 This project is designed for everyone, but especially for people with no blockchain experience who want to enter this world in the simplest way possible.
 
-**With GoPay, you just need your email and chat skills to start using blockchain. It's that simple. 🚀**
+**With NeuralWallet, you just need your email and chat skills to start using blockchain. It's that simple. 🚀**

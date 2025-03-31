@@ -1,4 +1,4 @@
-// Token configuration file for GoPay wallet
+// Token configuration file for NeuralWallet wallet
 
 export interface Token {
   symbol: string;         // Token symbol (e.g., XLM)

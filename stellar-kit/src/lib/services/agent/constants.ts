@@ -12,8 +12,8 @@ export const DEFAULT_LANGUAGE = 'en';
 export const MINIMUM_XLM_RESERVE = 1;
 
 /** Default memo for transactions */
-export const DEFAULT_PAYMENT_MEMO = 'Payment from GuardWallet';
-export const DEFAULT_ACCOUNT_CREATION_MEMO = 'Account creation from GuardWallet';
+export const DEFAULT_PAYMENT_MEMO = 'Payment from NeuralWallet';
+export const DEFAULT_ACCOUNT_CREATION_MEMO = 'Account creation from NeuralWallet';
 
 /** Maximum number of transactions to get in history */
 export const MAX_TRANSACTION_HISTORY = 10;

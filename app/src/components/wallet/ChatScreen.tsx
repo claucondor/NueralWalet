@@ -83,7 +83,7 @@ const BotMessage: React.FC<{ content: string }> = ({ content }) => {
       <Avatar className="h-10 w-10 self-start">
         <img 
           src="/logo/logo@vector.svg" 
-          alt="Bot" 
+          alt="NeuralWallet" 
           className="h-10 w-10 rounded-full"
         />
       </Avatar>
@@ -413,7 +413,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
             <path d="M19 12H5M12 19l-7-7 7-7"></path>
           </svg>
         </button>
-        <h2 className="text-lg font-semibold mx-auto">GoPay Agent</h2>
+        <h2 className="text-lg font-semibold mx-auto">NeuralWallet Agent</h2>
         <div className="w-8">
           {serviceStatus === 'checking' && (
             <div className="h-3 w-3 rounded-full bg-yellow-500 mx-auto animate-pulse" title="Checking service status" />
@@ -434,7 +434,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           <div className="h-full flex flex-col items-center justify-center p-6">
             <img 
               src="/logo/logo@vector.svg" 
-              alt="GoPay" 
+              alt="NeuralWallet" 
               className="w-24 h-24 mb-6" 
             />
             <h3 className="text-xl font-bold mb-4 text-center">Hi! I'm your financial assistant</h3>
@@ -499,7 +499,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
                   <Avatar className="h-10 w-10">
                     <img 
                       src="/logo/logo@vector.svg" 
-                      alt="GoPay Bot" 
+                      alt="NeuralWallet Bot" 
                       className="h-10 w-10 rounded-full"
                     />
                   </Avatar>

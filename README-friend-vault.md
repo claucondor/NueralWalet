@@ -1,55 +1,55 @@
-# Friend Vault - Funcionalidad compartida para GuardWallet
+# Friend Vault - Shared Functionality for NeuralWallet
 
-## Descripción General
-Friend Vault es una característica que permite a los usuarios crear y gestionar billeteras compartidas (vaults) con amigos y familiares. Cada vault requiere la aprobación de todos los miembros para realizar retiros, proporcionando una capa adicional de seguridad para fondos compartidos.
+## Overview
+Friend Vault is a feature that allows users to create and manage shared wallets (vaults) with friends and family. Each vault requires approval from all members to make withdrawals, providing an additional layer of security for shared funds.
 
-## Componentes Implementados
+## Implemented Components
 
-### Pantallas Principales
-1. **FriendVaultScreen.tsx**: Componente principal que muestra la lista de vaults y maneja la navegación entre pantallas.
-2. **CreateVaultScreen.tsx**: Permite crear un nuevo vault especificando nombre, descripción y miembros.
-3. **VaultDetailsScreen.tsx**: Muestra los detalles de un vault específico, incluyendo balance, miembros y solicitudes de retiro.
-4. **DepositVaultScreen.tsx**: Interfaz para depositar fondos en un vault.
-5. **WithdrawVaultScreen.tsx**: Interfaz para solicitar retiros de un vault, que requerirán aprobación.
+### Main Screens
+1. **FriendVaultScreen.tsx**: Main component that displays the list of vaults and handles navigation between screens.
+2. **CreateVaultScreen.tsx**: Allows creation of a new vault by specifying name, description, and members.
+3. **VaultDetailsScreen.tsx**: Shows the details of a specific vault, including balance, members, and withdrawal requests.
+4. **DepositVaultScreen.tsx**: Interface for depositing funds into a vault.
+5. **WithdrawVaultScreen.tsx**: Interface for requesting withdrawals from a vault, which will require approval.
 
-### Integración
-- Se ha agregado una nueva pestaña "Vaults" en la pantalla principal de la wallet.
-- Se ha creado una ruta dedicada `/friend-vault` para acceder a la funcionalidad.
-- Se ha implementado el contexto `FriendVaultContext` para manejar el estado global.
+### Integration
+- A new "Vaults" tab has been added to the wallet's main screen.
+- A dedicated route `/friend-vault` has been created to access the functionality.
+- The `FriendVaultContext` has been implemented to handle the global state.
 
-## Funcionalidades
+## Features
 
-### Gestión de Vaults
-- Crear nuevos vaults con múltiples miembros
-- Ver lista de vaults existentes
-- Ver detalles de cada vault (balance, miembros, historia)
+### Vault Management
+- Create new vaults with multiple members
+- View list of existing vaults
+- View details of each vault (balance, members, history)
 
-### Operaciones Financieras
-- Depositar fondos en vaults
-- Solicitar retiros que requieren aprobación
-- Votar para aprobar o rechazar solicitudes de retiro
-- Ejecutar retiros aprobados
+### Financial Operations
+- Deposit funds into vaults
+- Request withdrawals that require approval
+- Vote to approve or reject withdrawal requests
+- Execute approved withdrawals
 
-### Sistema de Aprobación
-- Cualquier miembro puede solicitar un retiro
-- Todos los miembros deben aprobar cada solicitud
-- Los fondos solo se liberan cuando todos aprueban
-- Cualquier rechazo cancela la solicitud
+### Approval System
+- Any member can request a withdrawal
+- All members must approve each request
+- Funds are only released when everyone approves
+- Any rejection cancels the request
 
-## Seguridad
-- Todos los retiros requieren aprobación múltiple
-- Se mantiene un historial completo de transacciones
-- Las operaciones están protegidas por la red Stellar
-- Se requiere una reserva mínima de 1 XLM en cada vault
+## Security
+- All withdrawals require multiple approvals
+- A complete transaction history is maintained
+- Operations are secured by the Stellar network
+- A minimum reserve of 1 XLM is required in each vault
 
-## Tecnologías Utilizadas
-- React para la interfaz de usuario
-- Stellar SDK para operaciones blockchain
-- Supabase para almacenamiento persistente
-- Context API para gestión de estado
+## Technologies Used
+- React for the user interface
+- Stellar SDK for blockchain operations
+- Supabase for persistent storage
+- Context API for state management
 
-## Próximos Pasos
-- Implementar notificaciones para alertar a los miembros sobre nuevas solicitudes
-- Añadir soporte para más tokens además de XLM
-- Mejorar la gestión de miembros (añadir/eliminar)
-- Implementar límites de gasto personalizables 
+## Next Steps
+- Implement notifications to alert members about new requests
+- Add support for more tokens besides XLM
+- Improve member management (add/remove)
+- Implement customizable spending limits 

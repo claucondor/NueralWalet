@@ -23,13 +23,13 @@ export function StartScreen() {
         <div className="flex flex-col items-stretch opacity-0 translate-y-4 animate-content-enter">
           <Logo
             src="/logo/logo@vector.svg"
-            alt="GoPay Logo"
+            alt="NeuralWallet Logo"
             className="transition-all duration-1000 delay-200 animate-floating"
           />
 
           <header className="flex w-full flex-col text-center mt-8">
             <h1 className="text-black text-2xl font-bold leading-none transition-all duration-1000 delay-300">
-              Welcome to GoPay
+              Welcome to NeuralWallet
             </h1>
             <p className="text-black/80 text-sm font-normal leading-6 mt-1 transition-all duration-1000 delay-400">
               Start your decentralised finances experience!

@@ -1,13 +1,13 @@
 /**
- * Manejadores para operaciones relacionadas con usuarios
+ * Handlers for user-related operations
  */
 
 import { Request, Response } from 'express';
 import { checkUserByEmail } from '../../lib/utils/supabase';
 
 /**
- * Verificar si un email existe en la base de datos
- * @param req Request con el email como parámetro
+ * Check if an email exists in the database
+ * @param req Request with email as parameter
  * @param res Response
  */
 export const checkEmail = async (req: Request, res: Response) => {
@@ -17,28 +17,28 @@ export const checkEmail = async (req: Request, res: Response) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        error: 'Email no proporcionado',
-        message: 'Se requiere un email para verificar'
+        error: 'Email not provided',
+        message: 'An email is required for verification'
       });
     }
 
-    // Validar formato de email
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
-        error: 'Formato de email inválido',
-        message: 'El email proporcionado no tiene un formato válido'
+        error: 'Invalid email format',
+        message: 'The provided email is not in a valid format'
       });
     }
 
-    // Verificar si el email existe en Supabase
+    // Check if the email exists in Supabase
     const result = await checkUserByEmail(email);
     
     if (result.error) {
       return res.status(500).json({
         success: false,
-        error: 'Error al verificar el email',
+        error: 'Error verifying email',
         message: result.error
       });
     }
@@ -50,25 +50,25 @@ export const checkEmail = async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    console.error('Error en checkEmail:', error);
+    console.error('Error in checkEmail:', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor',
-      message: error.message || 'Algo salió mal al verificar el email'
+      error: 'Internal server error',
+      message: error.message || 'Something went wrong while verifying the email'
     });
   }
 };
 
 /**
- * Obtener el estado del servicio
+ * Get the service status
  * @param req Request
  * @param res Response
  */
 export const getStatus = (req: Request, res: Response) => {
   try {
-    // Información básica del estado del servicio
+    // Basic service status information
     const status = {
-      service: 'GuardWallet API',
+      service: 'NeuralWallet API',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
@@ -80,11 +80,11 @@ export const getStatus = (req: Request, res: Response) => {
       data: status
     });
   } catch (error: any) {
-    console.error('Error en getStatus:', error);
+    console.error('Error in getStatus:', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor',
-      message: error.message || 'Algo salió mal al obtener el estado del servicio'
+      error: 'Internal server error',
+      message: error.message || 'Something went wrong when getting the service status'
     });
   }
 };
