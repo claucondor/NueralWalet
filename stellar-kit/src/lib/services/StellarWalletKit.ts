@@ -833,35 +833,61 @@ export class StellarWalletKit {
             
             console.log(`🤖 [GENERATE SCORE] Inicializando modelo LLM...`);
             const llm = LLMService.getLLM();
+            
+            // Verificar número mínimo de transacciones
+            const minTransactions = 5;
+            const hasMinimumTransactions = transactionAnalysis.transactionCount >= minTransactions;
+            
+            // Calcular score base dependiendo de factores clave
+            let baseScore = 0;
+            
+            // Si no hay suficientes transacciones, establecer un score máximo bajo
+            const maxPossibleScore = hasMinimumTransactions ? 850 : 350;
+            
+            console.log(`📊 [GENERATE SCORE] Calculando score base. Transacciones mínimas requeridas: ${minTransactions}, Disponibles: ${transactionAnalysis.transactionCount}`);
+            console.log(`📊 [GENERATE SCORE] Score máximo posible: ${maxPossibleScore}/1000`);
+            
             const promptTemplate = ChatPromptTemplate.fromTemplate(`
-                Eres un analista de crédito experto evaluando la reputación crediticia en un sistema descentralizado.
+                You are a strict credit analyst evaluating creditworthiness in a decentralized system.
+                Your scoring system must be extremely conservative, especially for accounts with limited history.
                 
-                Datos de transacciones:
-                - Volumen total: {totalVolume} XLM
-                - Número de transacciones: {transactionCount}
-                - Frecuencia: {frequency} transacciones/día
-                - Flujo neto: {netFlow} XLM
-                - Transacción más grande: {largestTransaction} XLM
-                - Relación deuda/pagos: {debtRatio}
+                Transaction data:
+                - Total volume: {totalVolume} XLM
+                - Number of transactions: {transactionCount}
+                - Frequency: {frequency} transactions/day
+                - Net flow: {netFlow} XLM
+                - Largest transaction: {largestTransaction} XLM
+                - Debt/payment ratio: {debtRatio}
+                - Incoming transactions: {incomingCount}
+                - Outgoing transactions: {outgoingCount}
                 
-                Historial de transacciones recientes:
+                Recent transaction history:
                 {transactionsSummary}
                 
-                Genera un score de crédito (0-1000) considerando:
-                1. Consistencia en pagos
-                2. Volumen de actividad
-                3. Balance entre deuda y crédito
-                4. Patrones de comportamiento
-                5. Historial completo
+                SCORING GUIDELINES (MUST FOLLOW STRICTLY):
+                1. Minimum transactions needed for a score above 350: 5 transactions
+                2. Maximum possible score: ${maxPossibleScore} out of 1000
+                3. Be extremely conservative - this score will determine lending risk
+                4. For any account with fewer than 10 transactions, score should never exceed 500
+                5. Debt/payment ratio above 3 is a severe red flag and should significantly reduce score
+                6. High frequency of transactions (>1 per day) is a positive signal
+                7. Accounts with imbalanced ratios of incoming/outgoing should be scored lower
                 
-                Explica brevemente el razonamiento en menos de 100 palabras.
-                Incluye sugerencias para mejorar el score si es menor a 700.
+                Generate a credit score (0-1000) based on:
+                1. Consistency in payments
+                2. Volume of activity
+                3. Balance between debt and credit
+                4. Behavior patterns
+                5. Complete history
                 
-                IMPORTANTE: Responde en {language} con este formato JSON:
+                Briefly explain the reasoning in less than 100 words.
+                Include suggestions to improve the score.
+                
+                IMPORTANT: Always respond in English regardless of the request language, using exactly this JSON format:
                 {{
                     "score": 0-1000,
-                    "reason": "razón breve",
-                    "improvementTips": ["sugerencia1", "sugerencia2"]
+                    "reason": "brief explanation",
+                    "improvementTips": ["suggestion1", "suggestion2", "suggestion3"]
                 }}
             `);
 
@@ -872,10 +898,16 @@ export class StellarWalletKit {
             const result = await chain.invoke({
                 ...transactionAnalysis,
                 transactionsSummary,
-                language
+                language: 'en' // Forzar siempre inglés para consistencia
             });
             
             console.log(`✅ [GENERATE SCORE] Score generado exitosamente:`, result);
+            
+            // Verificar que el score no supere el máximo posible basado en nuestras reglas
+            if (result && typeof result === 'object' && 'score' in result && result.score > maxPossibleScore) {
+                console.log(`⚠️ [GENERATE SCORE] Score sobrepasa el máximo permitido (${result.score} > ${maxPossibleScore}). Ajustando a ${maxPossibleScore}`);
+                result.score = maxPossibleScore;
+            }
             
             return result;
         } catch (error) {
@@ -883,8 +915,8 @@ export class StellarWalletKit {
             // Devolver un valor por defecto en caso de error
             return {
                 score: 0,
-                reason: "Error al calcular el score crediticio",
-                improvementTips: ["Intentar más tarde con más historial de transacciones"]
+                reason: "Insufficient data to calculate an accurate credit score",
+                improvementTips: ["Maintain at least 5-10 transactions to establish a credit history", "Perform regular transactions with consistent patterns"]
             };
         }
     }

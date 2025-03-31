@@ -202,6 +202,34 @@ export const evaluateCreditScore = async (req: Request, res: Response) => {
       console.warn(`⚠️ [CREDIT SCORE] No se obtuvo análisis de transacciones`);
     }
     
+    // Verificar si hay suficientes transacciones para mostrar un score válido
+    if (creditResult.analysis && creditResult.analysis.transactionCount < 5) {
+      console.warn(`⚠️ [CREDIT SCORE] Insuficientes transacciones para generar un score crediticio confiable: ${creditResult.analysis.transactionCount}/5 mínimas`);
+      
+      // Establecer un mensaje claro sobre transacciones insuficientes
+      const insufficientTransactionsMessage = {
+        success: true,
+        data: {
+          analysis: creditResult.analysis,
+          creditScore: {
+            score: 0,
+            reason: "Insufficient transaction history",
+            improvementTips: [
+              "Maintain at least 5 transactions to establish a credit history",
+              "Perform regular transactions with consistent patterns",
+              "Balance incoming and outgoing transactions"
+            ]
+          },
+          englishRecommendation: "Your account has insufficient transaction history to generate a reliable credit score. " +
+            "We recommend completing at least 5 transactions to establish a basic credit history. " +
+            "Regular activity on your account will help build a more accurate assessment of your financial behavior."
+        }
+      };
+      
+      console.log(`📤 [CREDIT SCORE] Enviando respuesta de transacciones insuficientes al cliente`);
+      return res.json(insufficientTransactionsMessage);
+    }
+    
     // Verificar si tenemos score crediticio
     const score = creditResult.creditScore ? (creditResult.creditScore as any).score || 0 : 0;
     const improvementTips = creditResult.creditScore ? (creditResult.creditScore as any).improvementTips || [] : [];
@@ -249,26 +277,34 @@ async function generateEnglishRecommendation(score: number, tips: string, analys
     
     const llm = LLMService.getLLM();
     const promptTemplate = ChatPromptTemplate.fromTemplate(`
-      You're a financial advisor specializing in credit scoring for a decentralized finance platform.
+      You are a professional financial advisor specializing in credit scoring for a decentralized finance platform.
       
-      A user has received a credit score of ${score} out of 1000.
-      
-      Original recommendations (may be in Spanish or other language): ${tips}
-      
-      Transaction analysis data:
-      - Total volume: ${analysis.totalVolume} XLM
+      USER CREDIT PROFILE:
+      - Credit Score: ${score} out of 1000
+      - Total transaction volume: ${analysis.totalVolume} XLM
       - Number of transactions: ${analysis.transactionCount}
       - Transaction frequency: ${analysis.frequency} per day
       - Net flow: ${analysis.netFlow} XLM
       - Largest transaction: ${analysis.largestTransaction} XLM
-      - Debt ratio: ${analysis.debtRatio}
+      - Debt/payment ratio: ${analysis.debtRatio}
+      - Incoming transactions: ${analysis.incomingCount}
+      - Outgoing transactions: ${analysis.outgoingCount}
       
-      Based on this information, write a personalized, supportive message in English that:
-      1. Explains what the score means in context (whether it's good, average, or needs improvement)
-      2. Provides 2-3 specific, actionable recommendations to improve their credit score
-      3. Encourages positive financial behavior
+      Original recommendations: ${tips}
       
-      Keep your response under 120 words, professional but conversational, and focus on practical advice.
+      TASK:
+      Write a professional, practical financial advice message in English that:
+      1. Explains what the score means (whether it's poor, below average, average, good, or excellent)
+      2. Identifies specific risk factors in the user's transaction pattern
+      3. Provides 3-4 specific, actionable recommendations to improve their credit score
+      4. Uses a professional but accessible tone
+      
+      IMPORTANT GUIDELINES:
+      - Be honest about the score - for scores below 400, clearly state this is considered high-risk
+      - For scores below 600, emphasize the need for significant improvement
+      - Focus on specific actions the user can take based on their actual transaction patterns
+      - Keep your response between 100-150 words
+      - ALWAYS write in English regardless of the language of the original recommendations
     `);
     
     const chain = promptTemplate.pipe(llm);
