@@ -15,6 +15,7 @@ import { useWeb3Auth } from "@/context/Web3AuthContext";
 import { requestTestnetXLM } from "@/utils/stellar"; // Actualizado a Stellar
 import TransactionHistory from "./TransactionHistory";
 import FriendVaultScreen from "./friend-vault/FriendVaultScreen";
+import { FriendVaultProvider } from "@/context/FriendVaultContext";
 
 const WalletScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState("tokens");
@@ -187,7 +188,9 @@ const WalletScreen: React.FC = () => {
               </div>
             ) : activeTab === "friendvault" ? (
               <div className="self-stretch flex-1 w-full overflow-auto">
-                <FriendVaultScreen />
+                <FriendVaultProvider>
+                  <FriendVaultScreen />
+                </FriendVaultProvider>
               </div>
             ) : null}
           </div>
