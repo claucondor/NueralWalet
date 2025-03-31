@@ -1,90 +1,28 @@
-
-🏆 [CREDIT SCORE] Calculated score: 410/1000
-⏳ [CREDIT SCORE] Generating English recommendation...
-✅ [CREDIT SCORE] English recommendation generated successfully
-📤 [CREDIT SCORE] Sending complete response to client
-GET /api/account/GB2UG6OCARLM77ZIYI37LM2ERFW3SSF2MLEMBBNT5TLJRG54JQKKAA2L/credit-score?language=en 200 21074.636 ms - 2076
-🔍 [CREDIT SCORE] Starting credit evaluation for address: GB2UG6OCARLM77ZIYI37LM2ERFW3SSF2MLEMBBNT5TLJRG54JQKKAA2L
-🌐 [CREDIT SCORE] Requested language: en
-🌍 [CREDIT SCORE] Stellar network used: testnet
-⏳ [CREDIT SCORE] Getting transaction data for analysis...
-🔄 [CREDIT REPUTATION] Starting evaluation for GB2UG6OCARLM77ZIYI37LM2ERFW3SSF2MLEMBBNT5TLJRG54JQKKAA2L in language: en
-🌐 [CREDIT REPUTATION] Network used: testnet
-📜 [CREDIT REPUTATION] Getting transaction history...
-🔍 [ANALYZE PATTERNS] Iniciando análisis de patrones para 6 transacciones
-📅 [ANALYZE PATTERNS] Periodo de análisis: 3 días (2025-03-29T03:37:22.000Z - 2025-03-31T07:16:05.000Z)
-🔄 [ANALYZE PATTERNS] Procesando transacciones...
-  📤 Salida: 1000 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 10 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 5 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 2 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 1 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📥 Entrada: 10000 XLM de GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B43MGK3QJZNSR
-📊 [ANALYZE PATTERNS] Análisis completado:
-  💰 Volumen total: 11018.00 XLM
-  🔄 Transacciones: 6 (1 entradas, 5 salidas)
-  📈 Flujo neto: 8982.00 XLM
-  💹 Ratio deuda: 9.82
-  ⚡ Frecuencia: 2.00 tx/día
-  🔝 Mayor transacción: 10000.00 XLM
-✅ [CREDIT REPUTATION] Transactions obtained: 6
-📝 [CREDIT REPUTATION] Creating summary of recent transactions...
-📊 [CREDIT REPUTATION] Analyzing transaction patterns...
-🔍 [ANALYZE PATTERNS] Iniciando análisis de patrones para 6 transacciones
-📅 [ANALYZE PATTERNS] Periodo de análisis: 3 días (2025-03-29T03:37:22.000Z - 2025-03-31T07:16:05.000Z)
-🔄 [ANALYZE PATTERNS] Procesando transacciones...
-  📤 Salida: 1000 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 10 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 5 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 2 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📤 Salida: 1 XLM a GD42FT6LWGQYZP4DF4PPFCIPIXUDAKIMRUNEGY4HDTMVU6TSKUDPM3E4
-  📥 Entrada: 10000 XLM de GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B43MGK3QJZNSR
-📊 [ANALYZE PATTERNS] Análisis completado:
-  💰 Volumen total: 11018.00 XLM
-  🔄 Transacciones: 6 (1 entradas, 5 salidas)
-  📈 Flujo neto: 8982.00 XLM
-  💹 Ratio deuda: 9.82
-  ⚡ Frecuencia: 2.00 tx/día
-  🔝 Mayor transacción: 10000.00 XLM
-📈 [CREDIT REPUTATION] Analysis summary:
-                Total volume: 11018 XLM
-                Transactions: 6
-                Frequency: 2 tx/day
-                Net flow: 8982 XLM
-                Debt ratio: 9.82318271119843
-
-🧮 [CREDIT REPUTATION] Generating credit score with LLM...
-🔄 [GENERATE SCORE] Starting credit score generation
-🌐 [GENERATE SCORE] Requested language: en
-📚 [GENERATE SCORE] Importing LLM dependencies...
-🤖 [GENERATE SCORE] Initializing LLM model...
-📊 [GENERATE SCORE] Calculating base score. Minimum transactions required: 5, Available: 6
-📊 [GENERATE SCORE] Maximum possible score: 850/1000
-🔄 [GENERATE SCORE] Creating LLM processing chain with JSON parser...
-⏳ [GENERATE SCORE] Invoking LLM for score calculation...
-GET /api/account/GB2UG6OCARLM77ZIYI37LM2ERFW3SSF2MLEMBBNT5TLJRG54JQKKAA2L 304 90.562 ms - -
-✅ [GENERATE SCORE] Score generated successfully: {
-  score: 420,
-  reason: 'The account exhibits limited transaction history (6 transactions) despite a relatively high net flow (8982 XLM). The debt/payment ratio of 9.82 is a significant concern, indicating potential reliance on credit. All recent transactions are outgoing to a single address, raising questions about the purpose and potential risks. While transaction frequency is good, the limited history and imbalanced flow warrant a conservative score.',
-  improvementTips: [
-    'Increase incoming transactions to demonstrate diversified activity.',
-    'Reduce the debt/payment ratio by consistently fulfilling obligations.',
-    'Maintain the current transaction frequency and expand the number of counterparties.',     
-    'Build a longer transaction history over time.'
-  ]
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "analysis": {
+      "totalVolume": 11018,
+      "transactionCount": 6,
+      "frequency": 2,
+      "averageAmount": 1836.33333333333,
+      "largestTransaction": 10000,
+      "netFlow": 8982,
+      "debtRatio": 9.82318271119843,
+      "incomingCount": 1,
+      "outgoingCount": 5
+    },
+    "creditScore": {
+      "score": 110,
+      "reason": "This account exhibits extremely limited history (6 transactions). The high debt/payment ratio (9.82) is a major red flag, indicating potential reliance on external funding or risky behavior. While transaction frequency is acceptable, the overwhelmingly outgoing nature (5 out of 6 transactions are sent) and reliance on a single large incoming transaction create significant concern. The limited history prevents a higher score, even with the frequency. Baseline score is 250 + 60 for frequency.",
+      "improvementTips": [
+        "Increase incoming transactions and demonstrate consistent receipt of funds.",
+        "Reduce the debt/payment ratio by prioritizing incoming value over outgoing.",
+        "Maintain consistent transaction activity over a longer period (at least 20 transactions).",
+        "Diversify transaction partners; avoid concentrating transactions with a single address."
+      ]
+    },
+    "englishRecommendation": "Subject: Your DeFi Credit Profile – Actionable Insights\n\nYour current credit score of 110/1000 indicates a **high-risk** profile within our platform. This score suggests limited credit history and potential instability. A key risk factor is your high debt/payment ratio of 9.82 – meaning your outflows significantly exceed inflows. Additionally, the concentration of transactions (5 out of 6 being outgoing) and reliance on a single incoming transaction are concerning.\n\nTo improve your score, we recommend:\n\n1. **Prioritize Receiving XLM:** Focus on increasing incoming transactions to balance your net flow.\n2. **Reduce Outgoing Volume:** Carefully evaluate outgoing transactions and minimize unnecessary spending.\n3. **Expand Network:** Transact with more unique addresses to demonstrate broader DeFi participation.\n4. **Consistent Activity:** Continue daily transactions, aiming for at least 20 total transactions to establish a stronger history.\n\n\n\n"
+  }
 }
-🏆 [CREDIT REPUTATION] Credit score generated: {
-  score: 420,
-  reason: 'The account exhibits limited transaction history (6 transactions) despite a relatively high net flow (8982 XLM). The debt/payment ratio of 9.82 is a significant concern, indicating potential reliance on credit. All recent transactions are outgoing to a single address, raising questions about the purpose and potential risks. While transaction frequency is good, the limited history and imbalanced flow warrant a conservative score.',
-  improvementTips: [
-    'Increase incoming transactions to demonstrate diversified activity.',
-    'Reduce the debt/payment ratio by consistently fulfilling obligations.',
-    'Maintain the current transaction frequency and expand the number of counterparties.',     
-    'Build a longer transaction history over time.'
-  ]
-}
-🏆 [CREDIT SCORE] Calculated score: 420/1000
-⏳ [CREDIT SCORE] Generating English recommendation...
-✅ [CREDIT SCORE] English recommendation generated successfully
-📤 [CREDIT SCORE] Sending complete response to client
-GET /api/account/GB2UG6OCARLM77ZIYI37LM2ERFW3SSF2MLEMBBNT5TLJRG54JQKKAA2L/credit-score?language=en 200 12524.905 ms - 2192
