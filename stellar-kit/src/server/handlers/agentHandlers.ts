@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import { AgentService } from '../../lib/services/agent.service';
 import { supabase } from '../../lib/utils/supabase';
 import { LLMService } from '../../lib/services/llm.service';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 
 /**
  * Procesa un mensaje enviado al agente
@@ -141,18 +142,31 @@ export const processMessage = async (req: Request, res: Response) => {
       if (missingParams.length > 0) {
         console.log(`⚠️ [API] Faltan parámetros necesarios: ${missingParams.join(', ')}`);
         
-        // Generar respuesta pidiendo la información faltante
-        let responseMessage = '';
+        // Generar respuesta pidiendo la información faltante usando LLM
+        const llm = LLMService.getLLM();
+        const promptTemplate = ChatPromptTemplate.fromTemplate(`
+          Eres un asistente financiero amigable. El usuario quiere enviar dinero pero falta información importante.
+          
+          Mensaje original del usuario: {originalMessage}
+          
+          Información faltante: {missingParams}
+          
+          Genera una respuesta amigable y clara solicitando la información faltante.
+          La respuesta debe estar en el mismo idioma que el mensaje original del usuario.
+          Si el mensaje está en inglés, responde en inglés.
+          Si el mensaje está en español, responde en español.
+          Si el mensaje está en otro idioma, intenta responder en ese idioma.
+          
+          IMPORTANTE: La respuesta debe ser clara y específica sobre qué información se necesita.
+        `);
         
-        if (missingParams.length === 1) {
-          if (missingParams[0] === 'destinatario') {
-            responseMessage = '¿A quién deseas enviar el pago? Por favor, proporciona la dirección Stellar o el correo electrónico del destinatario.';
-          } else if (missingParams[0] === 'cantidad') {
-            responseMessage = '¿Qué cantidad deseas enviar? Por favor, indica el monto que quieres transferir.';
-          }
-        } else {
-          responseMessage = 'Para procesar tu solicitud de pago, necesito más información. Por favor, indica el destinatario y la cantidad que deseas enviar.';
-        }
+        const chain = promptTemplate.pipe(llm);
+        const result = await chain.invoke({
+          originalMessage: text,
+          missingParams: missingParams.join(', ')
+        });
+        
+        const responseMessage = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
         
         return res.json({
           success: true,
