@@ -104,6 +104,28 @@ Enhanced security through distributed control:
 - Supports group governance for shared funds
 - Manages lending collateral with threshold controls
 
+## Blend Protocol Integration
+
+GuardWallet integrates with Blend, a liquidity protocol primitive that enables the permissionless creation of isolated lending pools to mitigate default risks.
+
+### How Blend Works in GuardWallet
+
+The Blend protocol serves as a safety mechanism to protect lenders in case of borrower defaults:
+
+1. **Liquidity Pools**: Users can contribute to lending pools where others can borrow, generating interest for lenders
+2. **Backstop Module**: A pool of funds that acts as first-loss capital for each isolated lending pool, preventing lender losses
+3. **Default Mitigation**: If a borrower defaults, the backstop module covers the loss instead of the lender taking the hit
+4. **Interest Distribution**: Interest paid by borrowers is shared between lenders and backstop contributors
+
+### Benefits of Using Blend for Default Protection
+
+- **Isolated Risk**: Each lending pool's risk is contained, preventing contagion across different assets
+- **First-loss Capital**: The backstop module absorbs initial losses from defaults
+- **Interest Sharing**: Backstop providers earn a portion of interest payments, creating sustainable protection
+- **Dynamic Interest Rates**: Automatic adjustment of rates based on utilization and risk levels
+
+By integrating Blend, GuardWallet creates a more secure lending environment where lenders can participate with reduced risk of losing their principal in case of borrower defaults.
+
 ## Documentation
 
 For more detailed information, please refer to the component README files:
