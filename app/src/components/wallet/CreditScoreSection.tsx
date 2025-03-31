@@ -30,11 +30,19 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
       setError(null);
       
       try {
+        console.log("🔄 Fetching credit score...");
         const result = await getCreditScore('en');
+        console.log("📋 Credit score result:", result);
         
         if (isMounted) {
           setCreditData(result);
           setIsLoading(false);
+          
+          // Log detailed structure for debugging
+          if (result?.data) {
+            console.log("📊 Analysis data:", result.data.analysis);
+            console.log("🏆 Credit score data:", result.data.creditScore);
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -107,30 +115,53 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading information</h3>
             <p className="text-gray-500">{error}</p>
           </div>
-        ) : !creditData?.data?.analysis || !creditData?.data?.analysis.transactionCount || creditData?.data?.analysis.transactionCount < 5 ? (
+        ) : !creditData?.data?.creditScore?.score ? (
           <div className="py-10 text-center">
+            {/* Debug information */}
+            <div className="text-xs text-gray-400 mb-4">
+              Debug: {JSON.stringify({
+                hasData: !!creditData?.data,
+                hasAnalysis: !!creditData?.data?.analysis,
+                txCount: creditData?.data?.analysis?.transactionCount,
+                hasScore: !!creditData?.data?.creditScore?.score,
+                score: creditData?.data?.creditScore?.score
+              })}
+            </div>
             <div className="rounded-full bg-yellow-50 w-16 h-16 flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Insufficient History</h3>
-            <p className="text-gray-500 mb-4">At least 5 transactions are needed to generate a reliable credit score.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Credit Score Available</h3>
+            <p className="text-gray-500 mb-4">Your credit score could not be calculated. Please try again later.</p>
             {creditData?.data?.analysis && (
               <div className="bg-white rounded-lg p-4 max-w-md mx-auto">
                 <p className="text-sm text-gray-700 mb-2">Current transactions: <span className="font-semibold">{creditData.data.analysis.transactionCount}</span></p>
                 <p className="text-sm text-gray-700">To improve your score, make more transactions and maintain a consistent history.</p>
               </div>
             )}
-            {creditData?.data?.englishRecommendation && (
-              <div className="mt-6 bg-blue-50 p-4 rounded-lg max-w-md mx-auto">
-                <h4 className="font-medium text-blue-800 mb-2">Recommendation</h4>
-                <p className="text-sm text-blue-900 italic">{creditData.data.englishRecommendation}</p>
-              </div>
-            )}
           </div>
         ) : (
           <div className="animate-fadeIn space-y-6">
+            {/* Show warning for insufficient transactions */}
+            {creditData.data.analysis && creditData.data.analysis.transactionCount < 5 && (
+              <div className="bg-yellow-50 rounded-xl p-4 mb-4 shadow-sm border border-yellow-100">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">Limited Transaction History</h3>
+                    <div className="mt-1 text-xs text-yellow-700">
+                      <p>Your score is based on only {creditData.data.analysis.transactionCount} transactions. For a more accurate score, at least 5 transactions are recommended.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Score Card */}
             <div className="bg-white rounded-xl p-6 shadow-sm animate-slideUp" style={{animationDelay: "0.1s"}}>
               <div className="flex flex-col items-center">
@@ -211,6 +242,12 @@ const CreditScoreSection: React.FC<CreditScoreSectionProps> = ({ onBack }) => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-700">{creditData.data.englishRecommendation}</p>
                 </div>
+              </div>
+            )}
+            {creditData?.data?.englishRecommendation && (
+              <div className="mt-6 bg-blue-50 p-4 rounded-lg max-w-md mx-auto">
+                <h4 className="font-medium text-blue-800 mb-2">Recommendation</h4>
+                <p className="text-sm text-blue-900 italic">{creditData.data.englishRecommendation}</p>
               </div>
             )}
           </div>

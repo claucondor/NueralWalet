@@ -542,7 +542,17 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
         return null;
       }
       
-      return await accountService.getCreditScore(stellarAddress, language);
+      console.log(`�� [DEBUG] Requesting credit score for ${stellarAddress}`);
+      const result = await accountService.getCreditScore(stellarAddress, language);
+      console.log(`📊 [DEBUG] Credit score API response:`, result);
+      
+      // Add detailed logging to understand the structure
+      if (result && result.success && result.data) {
+        console.log(`📊 [DEBUG] Transaction count:`, result.data.analysis?.transactionCount);
+        console.log(`📊 [DEBUG] Credit score:`, result.data.creditScore?.score);
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error getting credit score:', error);
       return null;

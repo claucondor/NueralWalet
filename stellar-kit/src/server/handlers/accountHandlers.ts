@@ -188,31 +188,8 @@ export const evaluateCreditScore = async (req: Request, res: Response) => {
       });
     }
     
-    // Check if we have sufficient transactions to show a valid score
-    if (creditResult.analysis && creditResult.analysis.transactionCount < 5) {
-      // Set a clear message about insufficient transactions
-      const insufficientTransactionsMessage = {
-        success: true,
-        data: {
-          analysis: creditResult.analysis,
-          creditScore: {
-            score: 0,
-            reason: "Insufficient transaction history",
-            improvementTips: [
-              "Maintain at least 5 transactions to establish a credit history",
-              "Perform regular transactions with consistent patterns",
-              "Balance incoming and outgoing transactions"
-            ]
-          },
-          englishRecommendation: "Your account has insufficient transaction history to generate a reliable credit score. " +
-            "We recommend completing at least 5 transactions to establish a basic credit history. " +
-            "Regular activity on your account will help build a more accurate assessment of your financial behavior."
-        }
-      };
-      
-      console.log(`📤 [CREDIT SCORE] Sending insufficient transactions response to client`);
-      return res.json(insufficientTransactionsMessage);
-    }
+    // We won't block showing the credit score based on transaction count
+    // Instead, we'll always return the data and let the frontend decide how to display it
     
     // Check if we have credit score
     const score = creditResult.creditScore ? (creditResult.creditScore as any).score || 0 : 0;
