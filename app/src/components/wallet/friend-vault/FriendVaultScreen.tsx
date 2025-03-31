@@ -118,7 +118,7 @@ const FriendVaultScreen: React.FC = () => {
               <h2 className="text-xl font-semibold">Friend Vaults</h2>
               <Button variant="outline" size="sm" onClick={handleCreateVault}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nuevo Vault
+                New Vault
               </Button>
             </div>
 
@@ -127,18 +127,18 @@ const FriendVaultScreen: React.FC = () => {
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                  <p className="mt-2 text-gray-500">Cargando vaults...</p>
+                  <p className="mt-2 text-gray-500">Loading vaults...</p>
                 </div>
               ) : vaults.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                   <ShieldAlert className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No tienes vaults todavía</h3>
+                  <h3 className="text-lg font-medium mb-2">You don't have any vaults yet</h3>
                   <p className="text-gray-500 mb-6">
-                    Crea un vault para compartir fondos con amigos y familiares de forma segura
+                    Create a vault to securely share funds with friends and family
                   </p>
                   <Button onClick={handleCreateVault}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Crear tu primer Vault
+                    Create your first Vault
                   </Button>
                 </div>
               ) : (
@@ -177,4 +177,4 @@ const FriendVaultScreen: React.FC = () => {
   return renderScreen();
 };
 
-export default FriendVaultScreen; 
+export default FriendVaultScreen;
