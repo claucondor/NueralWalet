@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, ChevronRight, ShieldAlert, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -19,25 +19,30 @@ enum ScreenState {
 const FriendVaultScreen: React.FC = () => {
   const [screenState, setScreenState] = useState<ScreenState>(ScreenState.LIST);
   const [selectedVaultId, setSelectedVaultId] = useState<string | null>(null);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const navigate = useNavigate();
   
   const { vaults, loadVaults, loading } = useFriendVault();
   
-  useEffect(() => {
-    console.log('🔄 Cargando vaults...');
-    
-    // Usando async/await en una función separada dentro del useEffect
-    const loadVaultsData = async () => {
+  // Función para cargar vaults solo una vez al inicio
+  const loadInitialData = useCallback(async () => {
+    if (!initialLoadDone) {
+      console.log('🔄 Cargando vaults iniciales...');
       try {
         await loadVaults();
         console.log('✅ Vaults cargados correctamente');
       } catch (err) {
         console.error('❌ Error al cargar vaults en useEffect:', err);
+      } finally {
+        setInitialLoadDone(true);
       }
-    };
-    
-    loadVaultsData();
-  }, [loadVaults]);
+    }
+  }, [loadVaults, initialLoadDone]);
+  
+  // Usar useEffect para cargar datos solo una vez al inicio
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleVaultClick = (vaultId: string) => {
     setSelectedVaultId(vaultId);
@@ -50,7 +55,7 @@ const FriendVaultScreen: React.FC = () => {
 
   const handleCloseSubScreen = () => {
     setScreenState(ScreenState.LIST);
-    loadVaults(); // Recargar la lista de vaults
+    // No es necesario recargar vaults aquí, evitamos ciclos infinitos
   };
 
   const handleDeposit = (vaultId: string) => {

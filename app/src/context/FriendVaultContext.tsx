@@ -283,9 +283,13 @@ export const FriendVaultProvider: React.FC<FriendVaultProviderProps> = ({ childr
   // Cargar vaults iniciales
   useEffect(() => {
     if (userInfo?.email) {
-      loadVaults();
+      // Evitamos múltiples llamadas innecesarias
+      console.log('⏳ Verificando carga inicial de vaults desde el Provider');
+      loadVaults().then(() => {
+        console.log('✅ Carga inicial desde Provider completada');
+      });
     }
-  }, [userInfo?.email]);
+  }, [userInfo?.email]); // Solo se activa cuando cambia el email, no cuando loadVaults cambia
 
   const value = {
     vaults,
