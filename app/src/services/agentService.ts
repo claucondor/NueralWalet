@@ -82,9 +82,11 @@ const agentService = {
           `${import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000'}/api/agent/status`,
           { timeout: 5000 } // 5 segundos de timeout
         );
+        console.log('Respuesta del endpoint /api/agent/status:', response.data);
         return {
           success: true,
-          ...response.data
+          data: response.data.data,
+          status: response.data.data?.status || 'active'
         };
       } catch (error) {
         // Si falla, intentar con el endpoint general de estado
@@ -93,9 +95,11 @@ const agentService = {
           `${import.meta.env.VITE_STELLARKIT_API_URL || 'http://localhost:3000'}/api/status`,
           { timeout: 5000 } // 5 segundos de timeout
         );
+        console.log('Respuesta del endpoint /api/status:', response.data);
         return {
           success: true,
-          ...response.data
+          data: response.data.data,
+          status: response.data.data?.status || 'active'
         };
       }
     } catch (error: any) {

@@ -135,10 +135,18 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       try {
         // Verificar estado del servicio
         const status = await agentService.getStatus();
-        setServiceStatus(status.status === 'ok' ? 'online' : 'offline');
+        console.log('Estado del servicio:', status);
+        // Verificamos el formato de respuesta correcto
+        const isServiceActive = status.success && 
+                               ((status.data?.status === 'active') || 
+                                (status.status === 'active') || 
+                                (status.data?.message && status.data.message.includes('funcionando')));
+        
+        console.log('¿Servicio activo?:', isServiceActive);
+        setServiceStatus(isServiceActive ? 'online' : 'offline');
         
         // Si hay una dirección de wallet, verificar si existen límites de agente
-        if (walletAddress) {
+        if (walletAddress && isServiceActive) {
           // Check if agent limits exist for this user
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
           const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -194,11 +202,40 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     // Obtener tokens personalizados del localStorage
     const customTokens = JSON.parse(localStorage.getItem('customTokens') || '[]');
     
-    // Check if the service is available
+    // Verificar nuevamente si el servicio está disponible antes de enviar
+    try {
+      const statusCheck = await agentService.getStatus();
+      const isServiceActive = statusCheck.success && 
+                            ((statusCheck.data?.status === 'active') || 
+                             (statusCheck.status === 'active') || 
+                             (statusCheck.data?.message && statusCheck.data.message.includes('funcionando')));
+      
+      if (!isServiceActive) {
+        setServiceStatus('offline');
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          content: "Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        return;
+      }
+      
+      // Si pasamos la verificación, actualizar el estado
+      if (serviceStatus !== 'online') {
+        setServiceStatus('online');
+      }
+    } catch (error) {
+      console.error('Error al verificar estado del servicio:', error);
+      // Continuar con el mensaje si no podemos verificar el estado
+    }
+    
+    // Check if the service is available based on our last known state
     if (serviceStatus === 'offline') {
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: "Sorry, the Move Agent service is not available at this time. Please try again later.",
+        content: "Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.",
         sender: 'bot',
         timestamp: new Date()
       };
@@ -246,7 +283,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         id: (Date.now() + 100).toString(),
         content: response.success && response.data?.suggestedResponse 
           ? response.data.suggestedResponse 
-          : response.data?.response?.content || "I couldn't process your request.",
+          : response.data?.response?.content || "No pude procesar tu solicitud.",
         sender: 'bot',
         timestamp: new Date()
       };
@@ -258,7 +295,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       // Agregar mensaje de error como respuesta del bot
       const errorMessage: Message = {
         id: (Date.now() + 100).toString(),
-        content: "Sorry, the Move Agent service is not available at this time. Please try again later.",
+        content: "Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.",
         sender: 'bot',
         timestamp: new Date()
       };
@@ -333,7 +370,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           <div className="h-full flex flex-col items-center justify-center p-6">
             <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-4">
               <p className="text-center">
-                Sorry, the Move Agent service is not available at this time. Please try again later.
+                Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.
               </p>
             </div>
           </div>
