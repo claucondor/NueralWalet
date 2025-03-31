@@ -492,6 +492,15 @@ export const Web3AuthProvider = ({ children }: Web3AuthProviderProps) => {
   const getTokenBalance = async (contractId: string, address?: string) => {
     try {
       const addressToCheck = address || stellarAddress;
+      
+      // Primero intentar cargar la información del token
+      const tokenInfo = await loadToken(contractId);
+      
+      if (!tokenInfo) {
+        console.warn(`No se pudo cargar el token ${contractId}. Intentando obtener el balance de todas formas.`);
+      }
+      
+      // Ahora obtener el balance
       const balance = await tokenService.getTokenBalance(contractId, addressToCheck);
       return balance;
     } catch (error) {

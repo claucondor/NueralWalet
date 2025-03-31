@@ -61,6 +61,10 @@ export default function TokensList() {
       for (const token of customTokens) {
         try {
           console.log(`Obteniendo balance para token: ${token.contractId}`);
+          
+          // Introducir un retraso de 500ms entre cada solicitud para evitar sobrecarga
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Usar el método desde el contexto que ahora utiliza la API
           const balanceResult = await getTokenBalance(token.contractId, stellarAccount.publicKey);
           

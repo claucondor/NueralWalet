@@ -6,8 +6,10 @@ import express, { Request, Response } from 'express';
 import {
   generateKeypair,
   getAccountInfo,
-  fundAccount
-} from '../handlers/directHandlers';
+  fundAccount,
+  createAccount,
+  evaluateCreditScore
+} from '../handlers/accountHandlers';
 
 // Crear el router
 const router = express.Router();
@@ -16,5 +18,7 @@ const router = express.Router();
 router.get('/generate', generateKeypair as express.RequestHandler);
 router.get('/:publicKey', getAccountInfo as express.RequestHandler);
 router.post('/fund', fundAccount as express.RequestHandler);
+router.post('/create', createAccount as express.RequestHandler);
+router.get('/:publicKey/credit-score', evaluateCreditScore as express.RequestHandler);
 
 export default router; 
