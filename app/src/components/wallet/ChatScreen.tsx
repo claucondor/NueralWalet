@@ -72,8 +72,8 @@ const extractTransactionHash = (content: string): string | undefined => {
 
 const BotMessage: React.FC<{ content: string }> = ({ content }) => {
   // Determinar si es una notificación de transacción
-  const isTransactionNotification = content.includes("¡Transferencia exitosa!") || 
-                                   content.includes("Hash de la transacción");
+  const isTransactionNotification = content.includes("Successful transfer!") || 
+                                   content.includes("Transaction hash");
   
   // Extraer hash de transacción si existe
   const transactionHash = extractTransactionHash(content);
@@ -148,7 +148,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           setMessages(storedMessages.reverse());
         }
       } catch (error) {
-        console.error('Error cargando mensajes del historial:', error);
+        console.error('Error loading messages from history:', error);
       }
     };
 
@@ -161,14 +161,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       try {
         // Verificar estado del servicio
         const status = await agentService.getStatus();
-        console.log('Estado del servicio:', status);
+        console.log('Service status:', status);
         // Verificamos el formato de respuesta correcto
         const isServiceActive = status.success && 
                                ((status.data?.status === 'active') || 
                                 (status.status === 'active') || 
-                                (status.data?.message && status.data.message.includes('funcionando')));
+                                (status.data?.message && status.data.message.includes('working')));
         
-        console.log('¿Servicio activo?:', isServiceActive);
+        console.log('¿Service active?:', isServiceActive);
         setServiceStatus(isServiceActive ? 'online' : 'offline');
         
         // Si hay una dirección de wallet, verificar si existen límites de agente
@@ -193,11 +193,11 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
             // El usuario no tiene límites configurados, mostrar pantalla de bienvenida
             setHasAgentLimits(false);
             setShowWelcomeScreen(true);
-            console.log('Usuario no tiene límites configurados, mostrando bienvenida');
+            console.log('Usuario no tiene límites configurados, showing welcome screen');
           }
         }
       } catch (error) {
-        console.error('Error al inicializar el chat:', error);
+        console.error('Error initializing chat:', error);
         setServiceStatus('offline');
       }
     };
@@ -215,7 +215,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         setShowWelcomeScreen(false);
         console.log('Límites creados exitosamente al hacer clic en continuar');
       } catch (error) {
-        console.error('Error al crear límites de agente:', error);
+        console.error('Error creating agent limits:', error);
       } finally {
         setIsLoading(false);
       }
@@ -234,13 +234,13 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       const isServiceActive = statusCheck.success && 
                             ((statusCheck.data?.status === 'active') || 
                              (statusCheck.status === 'active') || 
-                             (statusCheck.data?.message && statusCheck.data.message.includes('funcionando')));
+                             (statusCheck.data?.message && statusCheck.data.message.includes('working')));
       
       if (!isServiceActive) {
         setServiceStatus('offline');
         const errorMessage: Message = {
           id: Date.now().toString(),
-          content: "Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.",
+          content: "Sorry, the service is not available at the moment. Please try again later.",
           sender: 'bot',
           timestamp: new Date()
         };
@@ -253,7 +253,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         setServiceStatus('online');
       }
     } catch (error) {
-      console.error('Error al verificar estado del servicio:', error);
+      console.error('Error verifying service status:', error);
       // Continuar con el mensaje si no podemos verificar el estado
     }
     
@@ -261,7 +261,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     if (serviceStatus === 'offline') {
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: "Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.",
+        content: "Sorry, the service is not available at the moment. Please try again later.",
         sender: 'bot',
         timestamp: new Date()
       };
@@ -285,7 +285,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     const processingMsgId = Date.now() + 50;
     const processingMessage: Message = {
       id: processingMsgId.toString(),
-      content: "Procesando tu solicitud...",
+      content: "Processing your request...",
       sender: 'bot',
       timestamp: new Date()
     };
@@ -310,7 +310,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       // Mostrar un indicador de que la solicitud está en proceso
       const updatedProcessingMessage: Message = {
         ...processingMessage,
-        content: "Procesando tu solicitud... Esto puede tomar hasta 60 segundos."
+        content: "Processing your request... This may take up to 60 seconds."
       };
       setMessages(prev => prev.map(msg => 
         msg.id === processingMsgId.toString() ? updatedProcessingMessage : msg
@@ -331,7 +331,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         // Si hay un error específico del API
         const botErrorMessage: Message = {
           id: (Date.now() + 100).toString(),
-          content: response.message || "No pude procesar tu solicitud.",
+          content: response.message || "Could not process your request.",
           sender: 'bot',
           timestamp: new Date()
         };
@@ -344,7 +344,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
         id: (Date.now() + 100).toString(),
         content: response.data?.suggestedResponse 
           ? response.data.suggestedResponse 
-          : response.data?.response?.content || "No pude procesar tu solicitud.",
+          : response.data?.response?.content || "Could not process your request.",
         sender: 'bot',
         timestamp: new Date()
       };
@@ -357,23 +357,23 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       setMessages(prev => prev.filter(msg => msg.id !== processingMsgId.toString()));
       
       // Determinar el tipo de error para mostrar un mensaje más específico
-      let errorContent = "Lo siento, ocurrió un error al procesar tu solicitud.";
+      let errorContent = "Sorry, an error occurred while processing your request.";
       
       if (error.code === "ECONNABORTED") {
-        errorContent = "La solicitud tardó demasiado tiempo en procesarse. Por favor, intenta con una consulta más simple o inténtalo de nuevo más tarde.";
+        errorContent = "The request took too long to process. Please try with a simpler query or try again later.";
       } else if (error.message?.includes("timeout")) {
-        errorContent = "Se agotó el tiempo de espera para procesar tu solicitud. Esto suele ocurrir con consultas complejas. Por favor, intenta con una consulta más simple.";
+        errorContent = "The request timed out. This usually happens with complex queries. Please try with a simpler query.";
       } else if (error.response) {
-        // Error con respuesta del servidor
+        // Error with server response
         if (error.response.status === 429) {
-          errorContent = "Demasiadas solicitudes en poco tiempo. Por favor, espera un momento antes de intentar nuevamente.";
+          errorContent = "Too many requests in a short time. Please wait a moment before trying again.";
         } else if (error.response.status >= 500) {
-          errorContent = "El servicio está experimentando problemas. Por favor, inténtalo de nuevo más tarde.";
+          errorContent = "The service is experiencing problems. Please try again later.";
         } else if (error.response.data?.error) {
           errorContent = error.response.data.error;
         }
       } else if (!navigator.onLine) {
-        errorContent = "Parece que no tienes conexión a internet. Por favor, verifica tu conexión e inténtalo de nuevo.";
+        errorContent = "It seems you don't have internet connection. Please check your connection and try again.";
       }
       
       // Agregar mensaje de error como respuesta del bot
@@ -395,7 +395,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
   };
 
   const handleClearChat = () => {
-    if (window.confirm("¿Estás seguro de que deseas limpiar el historial de chat? Esta acción no se puede deshacer.")) {
+    if (window.confirm("Are you sure you want to clear the chat history? This action cannot be undone.")) {
       setMessages([]);
       setChatStarted(false);
       // Limpiar el historial en el servicio también
@@ -474,7 +474,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           <div className="h-full flex flex-col items-center justify-center p-6">
             <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-4">
               <p className="text-center">
-                Lo siento, el servicio no está disponible en este momento. Por favor, inténtalo de nuevo más tarde.
+                Sorry, the service is not available at the moment. Please try again later.
               </p>
             </div>
           </div>
