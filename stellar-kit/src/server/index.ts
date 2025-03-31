@@ -17,6 +17,7 @@ import tokenRoutes from './routes/token';
 import transactionRoutes from './routes/transaction';
 import userRoutes from './routes/user';
 import agentRoutes from './routes/agent';
+import friendVaultRoutes from './routes/friend-vault';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/token', tokenRoutes);
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/agent', agentRoutes);
+app.use('/api/friend-vault', friendVaultRoutes);
 
 // Ruta principal para servir la UI
 app.get('/', (req, res) => {

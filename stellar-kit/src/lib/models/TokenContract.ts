@@ -363,20 +363,31 @@ export class TokenContract {
    * @returns Hash de la transacción
    */
   async transfer(secretKey: string, to: string, amount: string): Promise<{ hash: string }> {
-    const command = this.getTransferCommand(secretKey, to, amount);
-    
+    // Verificar formato de la clave secreta antes de continuar
     try {
-      const result = await this.networkProvider.executeContractCommand(command, true);
-      
-      // Extraer el hash de la transacción del resultado
-      const hashMatch = result.match(/Transaction hash: ([a-zA-Z0-9]+)/);
-      if (hashMatch && hashMatch[1]) {
-        return { hash: hashMatch[1] };
+      // Verificar que la clave secreta tiene el formato correcto para Stellar (S...)
+      if (!secretKey.startsWith('S')) {
+        throw new Error(`invalid version byte. expected 144, got ${secretKey.charCodeAt(0)}`);
       }
       
-      return { hash: result }; // Si no podemos extraer el hash, devolvemos el resultado completo
+      const command = this.getTransferCommand(secretKey, to, amount);
+      
+      try {
+        const result = await this.networkProvider.executeContractCommand(command, true);
+        
+        // Extraer el hash de la transacción del resultado
+        const hashMatch = result.match(/Transaction hash: ([a-zA-Z0-9]+)/);
+        if (hashMatch && hashMatch[1]) {
+          return { hash: hashMatch[1] };
+        }
+        
+        return { hash: result }; // Si no podemos extraer el hash, devolvemos el resultado completo
+      } catch (error) {
+        console.error('Error al transferir tokens:', error);
+        throw error;
+      }
     } catch (error) {
-      console.error('Error al transferir tokens:', error);
+      console.error('Error con el formato de la clave secreta:', error);
       throw error;
     }
   }
