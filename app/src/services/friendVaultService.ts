@@ -41,39 +41,45 @@ export interface WithdrawalRequest {
   transactionHash?: string;
 }
 
-export interface CreateVaultPayload {
+// Cambiar de interfaces a tipos para mejor compatibilidad
+export type CreateVaultPayload = {
   name: string;
   description?: string;
   creatorEmail: string;
   memberEmails: string[];
-}
+  [key: string]: unknown;
+};
 
-export interface DepositPayload {
+export type DepositPayload = {
   vaultId: string;
   amount: string;
   tokenAddress?: string;
   senderPrivateKey: string;
   senderEmail: string;
-}
+  [key: string]: unknown;
+};
 
-export interface WithdrawalRequestPayload {
+export type WithdrawalRequestPayload = {
   vaultId: string;
   amount: string;
   tokenAddress?: string;
   recipient: string;
   requestedBy: string;
-}
+  [key: string]: unknown;
+};
 
-export interface VotePayload {
+export type VotePayload = {
   requestId: string;
   voterEmail: string;
   vote: 'approve' | 'reject';
-}
+  [key: string]: unknown;
+};
 
-export interface ExecuteWithdrawalPayload {
+export type ExecuteWithdrawalPayload = {
   requestId: string;
   executorEmail: string;
-}
+  [key: string]: unknown;
+};
 
 // Servicio para Friend Vault
 export const friendVaultService = {

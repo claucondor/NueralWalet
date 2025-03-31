@@ -67,7 +67,7 @@ export interface CreditScoreResult {
 /**
  * Función auxiliar para realizar peticiones a la API
  */
-async function apiRequest<T>(endpoint: string, method: string = 'GET', data?: Record<string, unknown>): Promise<{ data: T }> {
+export async function apiRequest<T>(endpoint: string, method: string = 'GET', data?: Record<string, unknown>): Promise<{ data: T }> {
   try {
     const url = `${API_BASE_URL}/api${endpoint}`;
     const options: RequestInit = {
