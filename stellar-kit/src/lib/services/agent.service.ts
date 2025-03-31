@@ -841,4 +841,43 @@ export class AgentService {
       message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
     };
   }
+
+  private static async analyzeTransactionPatterns(transactions: any[], publicKey: string) {
+    const analysis = {
+        totalVolume: 0,
+        transactionCount: transactions.length,
+        frequency: 0,
+        averageAmount: 0,
+        largestTransaction: 0,
+        netFlow: 0,
+        debtRatio: 0,
+        incomingCount: 0,
+        outgoingCount: 0
+    };
+
+    transactions.forEach(tx => {
+        const amount = parseFloat(tx.amount || '0');
+        const isIncoming = tx.type === 'payment' && tx.to === publicKey;
+        
+        analysis.totalVolume += amount;
+        analysis.netFlow += isIncoming ? amount : -amount;
+        
+        if (isIncoming) {
+            analysis.incomingCount++;
+        } else {
+            analysis.outgoingCount++;
+        }
+
+        if (amount > analysis.largestTransaction) {
+            analysis.largestTransaction = amount;
+        }
+    });
+
+    analysis.averageAmount = analysis.totalVolume / analysis.transactionCount;
+    analysis.frequency = analysis.transactionCount / 30; // Assuming 30 day period
+    analysis.debtRatio = analysis.outgoingCount > 0 ? 
+        (analysis.incomingCount / analysis.outgoingCount) : 0;
+
+    return analysis;
+}
 }
