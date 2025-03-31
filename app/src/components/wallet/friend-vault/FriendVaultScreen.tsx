@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, ChevronRight, ShieldAlert, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useFriendVault } from '@/context/FriendVaultContext';
 import CreateVaultScreen from './CreateVaultScreen';
 import VaultDetailsScreen from './VaultDetailsScreen';
@@ -19,9 +19,9 @@ enum ScreenState {
 const FriendVaultScreen: React.FC = () => {
   const [screenState, setScreenState] = useState<ScreenState>(ScreenState.LIST);
   const [selectedVaultId, setSelectedVaultId] = useState<string | null>(null);
-  const router = useRouter();
+  const navigate = useNavigate();
   
-  const { vaults, loadVaults, isLoading } = useFriendVault();
+  const { vaults, loadVaults, loading } = useFriendVault();
   
   useEffect(() => {
     loadVaults();
@@ -69,8 +69,8 @@ const FriendVaultScreen: React.FC = () => {
           <VaultDetailsScreen 
             vaultId={selectedVaultId} 
             onClose={handleCloseSubScreen}
-            onDeposit={handleDeposit}
-            onWithdraw={handleWithdraw}
+            onDeposit={() => handleDeposit(selectedVaultId)}
+            onWithdraw={() => handleWithdraw(selectedVaultId)}
           />
         );
       
@@ -107,7 +107,7 @@ const FriendVaultScreen: React.FC = () => {
 
             {/* Vault List */}
             <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
+              {loading ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                   <p className="mt-2 text-gray-500">Cargando vaults...</p>
@@ -142,11 +142,7 @@ const FriendVaultScreen: React.FC = () => {
                         <div className="flex items-center">
                           <div className="text-right mr-3">
                             <div className="font-medium">{formatBalance(vault.balance)} XLM</div>
-                            {vault.pendingWithdrawals.length > 0 && (
-                              <div className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                                {vault.pendingWithdrawals.length} {vault.pendingWithdrawals.length === 1 ? 'solicitud' : 'solicitudes'}
-                              </div>
-                            )}
+                            {/* Agrega aquí la lógica para mostrar solicitudes pendientes si es necesario */}
                           </div>
                           <ChevronRight className="h-5 w-5 text-gray-400" />
                         </div>
