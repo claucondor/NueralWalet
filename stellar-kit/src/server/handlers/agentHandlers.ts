@@ -145,19 +145,19 @@ export const processMessage = async (req: Request, res: Response) => {
         // Generar respuesta pidiendo la información faltante usando LLM
         const llm = LLMService.getLLM();
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
-          Eres un asistente financiero amigable. El usuario quiere enviar dinero pero falta información importante.
+          Eres un asistente financiero de una aplicación de wallet.
           
           Mensaje original del usuario: {originalMessage}
           
           Información faltante: {missingParams}
           
-          Genera una respuesta amigable y clara solicitando la información faltante.
-          La respuesta debe estar en el mismo idioma que el mensaje original del usuario.
-          Si el mensaje está en inglés, responde en inglés.
-          Si el mensaje está en español, responde en español.
-          Si el mensaje está en otro idioma, intenta responder en ese idioma.
+          Genera una respuesta solicitando la información faltante de manera clara.
+          Responde en el mismo idioma que el usuario utilizó en su mensaje.
           
-          IMPORTANTE: La respuesta debe ser clara y específica sobre qué información se necesita.
+          IMPORTANTE: Tu respuesta debe ser EXACTAMENTE el mensaje para el usuario, sin añadir frases introductorias, 
+          sin comillas, sin explicaciones adicionales. Escribe como si tú fueras directamente la aplicación.
+          
+          NOTA: Para enviar dinero sólo se puede utilizar una dirección Stellar o un correo electrónico registrado.
         `);
         
         const chain = promptTemplate.pipe(llm);
@@ -247,10 +247,13 @@ async function generateErrorMessage(errorDetails: string): Promise<string> {
     console.log('🔄 [API] Iniciando generación de mensaje de error con LLM');
     const llm = LLMService.getLLM();
     const result = await llm.invoke(
-      `Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
+      `Eres un asistente financiero de una aplicación de wallet.
       
-      Genera un mensaje de error claro y útil en español o en el idioma en que el usuario escribió su mensaje si lo puedes detectar.
+      Genera un mensaje de error claro y útil en el idioma apropiado.
       Explica que ocurrió un error y sugiere intentar más tarde.
+      
+      Tu respuesta debe ser EXACTAMENTE el mensaje para el usuario, sin añadir frases introductorias, 
+      sin comillas, sin explicaciones adicionales. Escribe como si tú fueras directamente la aplicación.
       
       Detalles técnicos (solo para referencia): ${errorDetails}`
     );

@@ -14,10 +14,11 @@ export class AgentService {
    * Analiza un mensaje de usuario para detectar su intención
    * @param message Mensaje del usuario
    * @param customTokens Tokens personalizados disponibles
+   * @param conversationContext Contexto de conversación (mensajes anteriores)
    * @returns Intención detectada con parámetros
    */
-  static async analyzeUserIntent(message: string, customTokens?: CustomToken[]): Promise<UserIntent> {
-    return await IntentAnalyzerService.analyzeUserIntent(message, customTokens);
+  static async analyzeUserIntent(message: string, customTokens?: CustomToken[], conversationContext?: string): Promise<UserIntent> {
+    return await IntentAnalyzerService.analyzeUserIntent(message, customTokens, conversationContext);
   }
   
   /**

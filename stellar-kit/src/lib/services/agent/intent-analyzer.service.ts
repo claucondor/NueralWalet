@@ -13,9 +13,10 @@ export class IntentAnalyzerService {
    * Analiza un mensaje de usuario para detectar su intención
    * @param message Mensaje del usuario
    * @param customTokens Tokens personalizados disponibles
+   * @param conversationContext Contexto de conversación (mensajes anteriores)
    * @returns Intención detectada con parámetros
    */
-  static async analyzeUserIntent(message: string, customTokens?: CustomToken[]): Promise<UserIntent> {
+  static async analyzeUserIntent(message: string, customTokens?: CustomToken[], conversationContext?: string): Promise<UserIntent> {
     try {
       // Obtener el modelo LLM
       const llm = LLMService.getLLM();
@@ -32,7 +33,8 @@ export class IntentAnalyzerService {
       // Ejecutar la cadena con el mensaje del usuario
       const result = await chain.invoke({
         message: message,
-        customTokens: customTokens ? JSON.stringify(customTokens) : '[]'
+        customTokens: customTokens ? JSON.stringify(customTokens) : '[]',
+        conversationContext: conversationContext || ''
       });
       
       // Procesar el resultado para verificar si hay un email como destinatario
@@ -99,6 +101,8 @@ export class IntentAnalyzerService {
       
       Tokens personalizados disponibles: {customTokens}
       
+      {conversationContext}
+      
       Posibles intenciones:
       - balance_check: El usuario quiere consultar su saldo
       - send_payment: El usuario quiere enviar un pago
@@ -115,7 +119,12 @@ export class IntentAnalyzerService {
       Si el usuario menciona un token que no está en la lista de tokens personalizados disponibles, debes establecer la intención como 'unknown' y generar una respuesta que explique que ese token no está soportado por nuestra wallet. Sé específico mencionando el nombre del token no soportado.
       
       NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
-      Asegúrate de que los parámetros devueltos coincidan exactamente con la interfaz UserIntent.
+      
+      IMPORTANTE SOBRE EL IDIOMA: Debes detectar correctamente el idioma del mensaje del usuario. 
+      Si el mensaje está en inglés, el campo "language" debe ser "en".
+      Si el mensaje está en español, el campo "language" debe ser "es".
+      La respuesta sugerida DEBE estar en el MISMO IDIOMA que el mensaje original del usuario.
+      La respuesta sugerida debe ser un mensaje directo, sin frases introductorias ni explicaciones adicionales.
       
       Mensaje del usuario: {message}
       

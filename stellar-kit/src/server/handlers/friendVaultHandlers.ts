@@ -10,10 +10,10 @@ export interface FriendVault {
   description: string;
   public_key: string;
   secretKey: string; // Almacenado encriptado
-  createdBy: string;
+  created_by: string;
   members: string[]; // Emails de los miembros
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
   balance: string;
   tokenBalances?: TokenBalance[];
 }
@@ -115,10 +115,10 @@ export async function createFriendVault(req: Request, res: Response) {
       description: description || '',
       public_key: newAccount.publicKey,
       secretKey: newAccount.secretKey, // En producción, esto debe cifrarse
-      createdBy: creatorEmail,
+      created_by: creatorEmail,
       members: memberValidation.validMembers,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       balance: '0' // Saldo inicial
     };
 
@@ -185,7 +185,7 @@ export async function getFriendVaultsByUser(req: Request, res: Response) {
     // Buscar vaults donde el usuario es miembro
     const { data, error } = await supabase
       .from('friend_vaults')
-      .select('id, name, description, public_key, createdBy, members, createdAt, updatedAt, balance')
+      .select('id, name, description, public_key, created_by, members, created_at, updated_at, balance')
       .contains('members', [email]);
 
     if (error) {
@@ -204,14 +204,14 @@ export async function getFriendVaultsByUser(req: Request, res: Response) {
         return {
           ...vault,
           balance: accountInfo ? accountInfo.balance : '0',
-          isCreator: vault.createdBy === email
+          isCreator: vault.created_by === email
         };
       } catch (error) {
         console.error(`Error al obtener balance del vault ${vault.id}:`, error);
         return {
           ...vault,
           balance: '0',
-          isCreator: vault.createdBy === email
+          isCreator: vault.created_by === email
         };
       }
     }));

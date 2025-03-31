@@ -54,6 +54,9 @@ export class MessageService {
       Si el idioma es 'pt', responde en portugués.
       Si el idioma es 'de', responde en alemán.
       Para cualquier otro código de idioma, intenta responder en ese idioma.
+      
+      Tu respuesta debe ser EXACTAMENTE el mensaje para el usuario, sin añadir frases introductorias, sin comillas, sin explicaciones adicionales.
+      Escribe como si tú fueras directamente la aplicación hablando con el usuario.
     `;
   }
 
