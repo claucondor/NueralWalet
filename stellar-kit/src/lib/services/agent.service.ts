@@ -60,7 +60,7 @@ export class AgentService {
         Eres un asistente especializado en analizar mensajes de usuarios para una wallet de Stellar.
         Analiza el siguiente mensaje y extrae la intención del usuario, el idioma en que está escrito y cualquier parámetro relevante.
         
-        Tokens personalizados disponibles: {customTokens}
+        Tokens personalizados disponibles: \{customTokens\}
         
         Posibles intenciones:
         - balance_check: El usuario quiere consultar su saldo
@@ -80,26 +80,26 @@ export class AgentService {
         NUNCA devuelvas un tokenType sin especificar si es XLM o SOROBAN con su contrato completo.
         Asegúrate de que los parámetros devueltos coincidan exactamente con la interfaz UserIntent.
         
-        Mensaje del usuario: {message}
+        Mensaje del usuario: \{message\}
         
         Si el usuario menciona un token personalizado (por símbolo o nombre), asócialo con su address correspondiente en los tokens personalizados.
         
         Responde ÚNICAMENTE con un objeto JSON con la siguiente estructura:
-        {
+        \{
           "intentType": "tipo_de_intencion",
           "confidence": 0.95,
           "language": "idioma_detectado_en_el_mensaje", // Por ejemplo: 'es' para español, 'en' para inglés, 'fr' para francés, etc.
-          "params": {
+          "params": \{
             "walletAddress": "direccion_si_se_menciona",
             "amount": "cantidad_si_se_menciona",
             "isNativeToken": "booleano_indicando_si_es_token_nativo",
             "tokenAddress": "direccion_del_token_si_se_menciona",
             "recipient": "destinatario_si_se_menciona",
             "recipientEmail": "email_si_se_menciona"
-          },
+          \},
           "originalMessage": "mensaje_original",
           "suggestedResponse": "respuesta_sugerida_al_usuario"
-        }
+        \}
       `);
 
       // Crear la cadena de procesamiento
@@ -217,12 +217,12 @@ export class AgentService {
           const promptTemplate = ChatPromptTemplate.fromTemplate(`
             Eres un asistente financiero amigable. El usuario envió una solicitud que no pudo ser procesada.
             
-            Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+            Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
             Explica que no se pudo procesar la intención y sugiere intentar con una solicitud diferente.
           `);
           
           const chain = promptTemplate.pipe(llm);
-          const result = await chain.invoke({});
+          const result = await chain.invoke({ language });
           
           return {
             success: false,
@@ -237,14 +237,14 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. Ocurrió un error al procesar la solicitud del usuario.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
         Explica que ocurrió un error y sugiere intentar más tarde.
         
         Detalles técnicos (solo para referencia): {error}
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({ error: error.message });
+      const result = await chain.invoke({ error: error.message, language });
       
       return {
         success: false,
@@ -267,7 +267,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó consultar su saldo pero no fue posible encontrar su cuenta.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
         `);
         
@@ -284,12 +284,12 @@ export class AgentService {
       const llm = LLMService.getLLM();
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. El usuario ha solicitado su saldo en su wallet de Stellar.
-        La cuenta tiene un saldo de ${accountInfo.balance} XLM.
+        La cuenta tiene un saldo de {balance} XLM.
         
         Genera una respuesta amigable y profesional informando al usuario sobre su saldo actual.
         Incluye el saldo exacto pero también usa un tono conversacional.
         
-        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
         Si el idioma es 'es', responde en español.
         Si el idioma es 'en', responde en inglés.
         Si el idioma es 'fr', responde en francés.
@@ -299,7 +299,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({});
+      const result = await chain.invoke({ balance: accountInfo.balance, language });
       
       return {
         success: true,
@@ -314,7 +314,7 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. Ocurrió un error al consultar el saldo del usuario.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
         Explica que ocurrió un error y sugiere intentar más tarde.
         
         Detalles técnicos (solo para referencia): {error}
@@ -353,7 +353,7 @@ export class AgentService {
           const promptTemplate = ChatPromptTemplate.fromTemplate(`
             Eres un asistente financiero amigable. El usuario intentó enviar un pago pero faltan parámetros requeridos.
             
-            Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+            Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
             Explica que es necesario especificar destinatario, cantidad y dirección del token para completar la operación.
           `);
           
@@ -377,10 +377,10 @@ export class AgentService {
         if (result.success) {
           const llm = LLMService.getLLM();
           const promptTemplate = ChatPromptTemplate.fromTemplate(`
-            Eres un asistente financiero amigable. El usuario ha enviado con éxito ${amount} tokens.
+            Eres un asistente financiero amigable. El usuario ha enviado con éxito {amount} tokens.
             
-            Genera un mensaje de confirmación en el siguiente idioma: ${language}.
-            Incluye el hash de la transacción: ${result.hash}.
+            Genera un mensaje de confirmación en el siguiente idioma: {language}.
+            Incluye el hash de la transacción: {result.hash}.
           `);
           
           const chain = promptTemplate.pipe(llm);
@@ -397,10 +397,10 @@ export class AgentService {
           const promptTemplate = ChatPromptTemplate.fromTemplate(`
             Eres un asistente financiero amigable. El usuario ha intentado enviar tokens Soroban pero la operación falló.
             
-            Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+            Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
             Explica que no se pudieron enviar los tokens y sugiere intentar más tarde.
             
-            Detalles técnicos (solo para referencia): ${result.error || 'Error desconocido al enviar tokens'}
+            Detalles técnicos (solo para referencia): {result.error || 'Error desconocido al enviar tokens'}
           `);
           
           const chain = promptTemplate.pipe(llm);
@@ -417,7 +417,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. Ocurrió un error al procesar el pago con token Soroban.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que ocurrió un error al procesar el pago y sugiere intentar más tarde.
           
           Detalles técnicos (solo para referencia): {error}
@@ -450,7 +450,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no especificó un destinatario.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que es necesario especificar un destinatario para completar la operación.
         `);
         
@@ -469,7 +469,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no especificó una cantidad.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que es necesario especificar una cantidad para completar la operación.
         `);
         
@@ -491,7 +491,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó enviar un pago pero su cuenta no fue encontrada.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
         `);
         
@@ -514,12 +514,12 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó enviar un pago pero no tiene saldo suficiente.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
-          Informa que el saldo actual es de ${balance} XLM y necesita mantener al menos 1 XLM como reserva.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
+          Informa que el saldo actual es de {balance} XLM y necesita mantener al menos 1 XLM como reserva.
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language, balance });
         
         return {
           success: false,
@@ -545,7 +545,7 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. Ocurrió un error al procesar el pago.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
         Explica que ocurrió un error al procesar el pago y sugiere intentar más tarde.
         
         Detalles técnicos (solo para referencia): {error}
@@ -581,7 +581,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó crear una cuenta pero no especificó una dirección.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que es necesario especificar una dirección para crear una nueva cuenta en la red Stellar.
         `);
         
@@ -607,13 +607,13 @@ export class AgentService {
         const llm = LLMService.getLLM();
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario ha creado una nueva cuenta en la red Stellar.
-          La cuenta se ha creado exitosamente con un balance inicial de ${startingBalance} XLM.
-          La dirección de la nueva cuenta es ${recipient}.
+          La cuenta se ha creado exitosamente con un balance inicial de {startingBalance} XLM.
+          La dirección de la nueva cuenta es {recipient}.
           
           Genera una respuesta amigable y profesional informando al usuario sobre la creación exitosa de la cuenta.
           Incluye la dirección y el balance inicial, pero usa un tono conversacional.
           
-          IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+          IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
           Si el idioma es 'es', responde en español.
           Si el idioma es 'en', responde en inglés.
           Si el idioma es 'fr', responde en francés.
@@ -636,10 +636,10 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó crear una cuenta pero la operación falló.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que no se pudo crear la cuenta y sugiere verificar la dirección e intentar nuevamente.
           
-          Detalles técnicos (solo para referencia): ${result.error || 'Error desconocido'}
+          Detalles técnicos (solo para referencia): {result.error || 'Error desconocido'}
         `);
         
         const chain = promptTemplate.pipe(llm);
@@ -658,7 +658,7 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. Ocurrió un error al intentar crear una cuenta en la red Stellar.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
         Explica que ocurrió un error y sugiere intentar más tarde.
         
         Detalles técnicos (solo para referencia): {error}
@@ -693,7 +693,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó obtener información sobre tokens pero no fue posible encontrar su cuenta.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
         `);
         
@@ -710,13 +710,13 @@ export class AgentService {
       const llm = LLMService.getLLM();
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. El usuario ha solicitado información sobre tokens en su wallet de Stellar.
-        La cuenta tiene un saldo de ${accountInfo.balance} XLM (Lumen), que es el token nativo de la red Stellar.
+        La cuenta tiene un saldo de {balance} XLM (Lumen), que es el token nativo de la red Stellar.
         
         Genera una respuesta amigable y profesional informando al usuario sobre su token XLM.
         Incluye información básica sobre XLM como que es el token nativo de Stellar y se usa para pagar comisiones de transacción.
         Usa un tono conversacional y educativo.
         
-        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
         Si el idioma es 'es', responde en español.
         Si el idioma es 'en', responde en inglés.
         Si el idioma es 'fr', responde en francés.
@@ -741,7 +741,7 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. Ocurrió un error al obtener información sobre los tokens del usuario.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
         Explica que ocurrió un error y sugiere intentar más tarde.
         
         Detalles técnicos (solo para referencia): {error}
@@ -779,7 +779,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario intentó consultar su historial de transacciones pero no fue posible encontrar su cuenta.
           
-          Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que la cuenta no fue encontrada y puede que no esté activada en la red Stellar.
         `);
         
@@ -803,7 +803,7 @@ export class AgentService {
         const promptTemplate = ChatPromptTemplate.fromTemplate(`
           Eres un asistente financiero amigable. El usuario ha solicitado su historial de transacciones pero no tiene ninguna transacción.
           
-          Genera un mensaje informativo claro y útil en el siguiente idioma: ${language}.
+          Genera un mensaje informativo claro y útil en el siguiente idioma: {language}.
           Explica que no hay transacciones en su historial y que cuando realice operaciones en la red Stellar, aparecerán en su historial.
         `);
         
@@ -848,11 +848,11 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. El usuario ha solicitado su historial de transacciones en Stellar.
         
-        Mensaje original del usuario: ${originalMessage || "Ver mi historial de transacciones"}
+        Mensaje original del usuario: {originalMessage || "Ver mi historial de transacciones"}
         
         Aquí está el historial de las últimas transacciones de la cuenta:
         
-        ${transactionsSummary}
+        {transactionsSummary}
         
         Genera una respuesta amigable y profesional resumiendo el historial de transacciones del usuario.
         Menciona cuántas transacciones hay, los tipos más comunes, y cualquier patrón interesante que notes.
@@ -862,7 +862,7 @@ export class AgentService {
         Importante: Analiza el mensaje original del usuario para entender si está buscando algo específico en su historial
         (como transacciones recientes, pagos a cierta persona, etc.) y personaliza tu respuesta en función de eso.
         
-        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
         Si el idioma es 'es', responde en español.
         Si el idioma es 'en', responde en inglés.
         Si el idioma es 'fr', responde en francés.
@@ -887,7 +887,7 @@ export class AgentService {
       const promptTemplate = ChatPromptTemplate.fromTemplate(`
         Eres un asistente financiero amigable. Ocurrió un error al consultar el historial de transacciones del usuario.
         
-        Genera un mensaje de error claro y útil en el siguiente idioma: ${language}.
+        Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
         Explica que ocurrió un error y sugiere intentar más tarde.
         
         Detalles técnicos (solo para referencia): {error}
@@ -919,14 +919,14 @@ export class AgentService {
         Eres un asistente financiero amigable. El usuario ha realizado un pago en Stellar.
         
         Detalles del pago:
-        - Cantidad: ${amount} XLM
-        - Destinatario: ${recipient}
-        - Hash de la transacción: ${paymentResult.hash}
+        - Cantidad: {amount} XLM
+        - Destinatario: {recipient}
+        - Hash de la transacción: {paymentResult.hash}
         
         Genera una respuesta amigable y profesional confirmando que el pago se ha realizado con éxito.
         Incluye los detalles del pago pero usa un tono conversacional.
         
-        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
         Si el idioma es 'es', responde en español.
         Si el idioma es 'en', responde en inglés.
         Si el idioma es 'fr', responde en francés.
@@ -948,16 +948,16 @@ export class AgentService {
         Eres un asistente financiero amigable. El usuario ha intentado realizar un pago en Stellar pero ha fallado.
         
         Detalles del intento de pago:
-        - Cantidad: ${amount} XLM
-        - Destinatario: ${recipient}
-        - Error: ${paymentResult.error}
+        - Cantidad: {amount} XLM
+        - Destinatario: {recipient}
+        - Error: {paymentResult.error}
         
         Genera una respuesta amigable y profesional explicando que el pago no se ha podido realizar.
         Incluye una explicación del error en términos que un usuario no técnico pueda entender.
         Sugiere posibles soluciones o alternativas.
         Usa un tono conversacional y servicial.
         
-        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: ${language}.
+        IMPORTANTE: Tu respuesta DEBE estar en el siguiente idioma: {language}.
         Si el idioma es 'es', responde en español.
         Si el idioma es 'en', responde en inglés.
         Si el idioma es 'fr', responde en francés.
@@ -986,8 +986,8 @@ export class AgentService {
       Eres un asistente financiero amigable. El usuario ha intentado realizar una operación en Stellar pero ha ocurrido un error.
       
       Detalles del error:
-      - Tipo de operación: ${intent}
-      - Error técnico: ${error.message || 'Error desconocido'}
+      - Tipo de operación: {intent}
+      - Error técnico: {error.message || 'Error desconocido'}
       
       Genera una respuesta amigable y profesional explicando que la operación no se ha podido realizar.
       Traduce el error técnico a un lenguaje que un usuario no técnico pueda entender.
