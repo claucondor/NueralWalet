@@ -1,93 +1,166 @@
-# NeuralWallet - Web3 for Everyone
+# NeuralWallet
 
-<img src="https://github.com/RuyRiver/wallet-ui-lovable/blob/main/public/logo/logo@HD.png?raw=true" alt="NeuralWallet Logo" width="250"/>
+NeuralWallet is a decentralized finance application built on the Stellar blockchain that revolutionizes the way people manage their finances, access credit, and interact with crypto assets.
 
-## Simplifying Blockchain for the Masses
+## Core Features
 
-Imagine asking someone on the street to send you 100 USDT to your wallet. Would they know how? Most likely not. And if we tried to explain wallets, transaction signatures, gas fees, or seed phrases, how long would it take? Too long.
+### Decentralized Credit Score System
+NeuralWallet implements a revolutionary decentralized credit scoring system that allows users to:
+- Build a credit history on the blockchain
+- Access loans based on their on-chain reputation
+- Participate in peer-to-peer lending with reduced risk
 
-**That's why we created NeuralWallet** - a wallet designed for everyone, regardless of their blockchain knowledge. With NeuralWallet, all you need to know is **how to sign in with your email and how to chat**. From your first moment, you can make blockchain transactions without complications.
+### Friend Vault
+Friend Vaults enable users to:
+- Create collaborative savings or investment pools with friends
+- Collectively manage funds with customizable governance
+- Share the benefits of pooled liquidity
+- Establish trust circles for micro-lending within communities
 
-## How It Works
+### Risk Mitigation through Collective Lending
+Unlike traditional lending platforms, NeuralWallet distributes loan risk across multiple lenders:
+- No single person bears the full risk of default
+- Loans are funded by multiple participants
+- Integration with Stellar's built-in liquidity pools (similar to BLEND protocol)
+- Automatic collateral management and liquidation mechanisms
 
-- **Easy Registration**: Just your email and password. No seed phrases or complex configurations.
-- **Automatic Wallet**: The application generates a wallet for you and securely stores your private key.
-- **Intelligent Assistant**: Want to send funds, swap tokens, or check your balance? Just tell the assistant what you need, and it will handle everything.
-- **Hassle-free Funding**: You can fund your account with Wise, Skrill, credit card, debit card, and more.
+### Smart Agent Assistant
+NeuralWallet features an AI-powered financial assistant that helps users:
+- Manage their finances
+- Make informed investment decisions
+- Execute transactions through natural language
+- Learn about blockchain and finance concepts
 
-## Business Model
+## Technical Architecture
 
-NeuralWallet charges a **1% commission** whenever you fund your account, make a transaction, or swap tokens. This ensures a smooth, secure service without complications.
+NeuralWallet consists of two main components:
 
-## Technologies
+1. **Front-end Application** (`/app`)
+   - React-based UI with TypeScript
+   - TailwindCSS for styling
+   - Web3Auth integration for secure authentication
+   - Agent-based AI financial assistant
 
-NeuralWallet is built with a modern tech stack focused on security, performance, and user experience:
+2. **Stellar Backend** (`/stellar-kit`)
+   - API services for Stellar blockchain interaction
+   - Smart contract management for credit score system
+   - Transaction processing and verification
+   - Pool management for collective lending
 
-- **Frontend**:
-  - React with TypeScript
-  - Vite for fast building
-  - Tailwind CSS for styling
-  - shadcn-ui for beautiful UI components
+## Local Development Setup
 
-- **Authentication**:
-  - [Web3Auth](https://web3auth.io/) for seamless Web3 onboarding and secure key management
+### Prerequisites
+- Node.js (v16+)
+- Bun (latest version)
+- Git
 
-- **Backend**:
-  - [Supabase](https://supabase.com/) for database and authentication support
-  - [Railway](https://railway.app/) for API deployment and hosting
+### Setting up the Front-end
+```bash
+# Clone the repository
+git clone .
+# or download the repository and extract it
 
-- **Blockchain**:
-  - [Move Agent Toolkit](https://github.com/aptos-labs/move-agent-toolkit) for simplified blockchain interactions
-  - Aptos blockchain for secure and efficient transactions
-
-- **AI & NLP**:
-  - [OpenRouter](https://openrouter.ai/) powering our intelligent assistant
-  - Natural language processing for conversational experience
-
-## Project Structure
-
-The project consists of two main components:
-
-1. **Main Web Application** - This repository contains the user interface and frontend logic
-2. **Move Agent Service** - A separate service that handles blockchain interactions through natural language processing
-
-## Getting Started
-
-### Environment Setup
-
-This project uses environment variables for configuration. Follow these steps to set up your environment:
-
-1. Create a `.env` file in the root directory of the project.
-2. Use the `.env.example` file as a reference for the required variables.
-3. Fill in your specific values for each variable:
-   - **Supabase**: Set your Supabase URL and anonymous key
-   - **Web3Auth**: Add your client ID and select the network (SAPPHIRE_DEVNET or SAPPHIRE_MAINNET)
-   - **Aptos**: Configure blockchain network settings
-   - **Verifier**: Set the verifier name for Web3Auth
-
-Example:
-```
-# Supabase configuration
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Web3Auth configuration
-VITE_WEB3AUTH_CLIENT_ID=your_web3auth_client_id
-VITE_WEB3AUTH_NETWORK=SAPPHIRE_DEVNET
-```
-
-### Development
-
-```sh
-# Install dependencies
+# Install front-end dependencies
+cd app
 npm install
+# or with Bun
+bun install
+
+# Create your environment file
+cp .env.example .env
+# Fill in the required environment variables
 
 # Start the development server
 npm run dev
+# or with Bun
+bun run dev
 ```
 
-## Our Vision
+### Setting up the Stellar Kit
+```bash
+# From the root directory
+cd stellar-kit
 
-This project is designed for everyone, but especially for people with no blockchain experience who want to enter this world in the simplest way possible.
+# Install dependencies
+npm install
+# or with Bun
+bun install
 
-**With NeuralWallet, you just need your email and chat skills to start using blockchain. It's that simple. 🚀**
+# Start the local server
+npm run dev
+# or with Bun
+bun run dev
+```
+
+## Environment Variables
+
+### Frontend (.env file in /app directory)
+```
+VITE_WEB3AUTH_CLIENT_ID=your_web3auth_client_id
+VITE_STELLARKIT_API_URL=http://localhost:3000
+VITE_NETWORK=testnet
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Backend (.env file in /stellar-kit directory)
+```
+HORIZON_URL=https://horizon-testnet.stellar.org
+NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+SIGNING_KEY=your_signing_key
+```
+
+## Decentralized Credit System Explained
+
+NeuralWallet's credit system is built on the concept of social trust and on-chain reputation:
+
+1. **Credit Score Generation**
+   - Based on transaction history
+   - Account age and activity
+   - Repayment behavior
+   - Social connections and trust circles
+
+2. **Lending Pools**
+   - Similar to Stellar's BLEND protocol
+   - Multiple lenders contribute to each loan
+   - Risk is distributed proportionally
+   - Interest rates are determined algorithmically based on credit scores
+
+3. **Security Mechanisms**
+   - Reserve pools to cover defaults
+   - Gradual lending limits that increase with reputation
+   - Multi-signature requirements for large transactions
+   - Automated risk assessment
+
+4. **Privacy Considerations**
+   - Credit scores are publicly verifiable but anonymized
+   - Users control what information is shared
+   - Zero-knowledge proofs for verification without data exposure
+
+## Friend Vault System
+
+Friend Vaults are a unique feature that allows groups of friends or community members to:
+
+1. **Pool Resources**
+   - Create shared wallets with customizable governance
+   - Define contribution requirements and withdrawal rules
+   - Establish collective spending policies
+
+2. **Build Social Trust**
+   - Successful participation in Friend Vaults improves credit scores
+   - Creates a network of trusted financial relationships
+   - Enables access to better lending terms through group reputation
+
+3. **Use Cases**
+   - Savings clubs and rotating credit associations
+   - Group investments in assets
+   - Community emergency funds
+   - Collaborative business funding
+
+## Contributing
+
+We welcome contributions to NeuralWallet! Please see our contributing guidelines and code of conduct in the repository.
+
+## License
+
+NeuralWallet is licensed under [MIT License](LICENSE).

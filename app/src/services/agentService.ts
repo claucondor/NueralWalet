@@ -39,6 +39,13 @@ const agentService = {
     localStorage.setItem('chatMessageHistory', JSON.stringify(agentService.messageHistory));
   },
 
+  // Limpiar el historial de mensajes
+  clearMessageHistory: () => {
+    agentService.messageHistory = [];
+    localStorage.removeItem('chatMessageHistory');
+    console.log('Historial de mensajes limpiado');
+  },
+
   // Cargar historial desde localStorage al iniciar
   loadHistory: () => {
     try {

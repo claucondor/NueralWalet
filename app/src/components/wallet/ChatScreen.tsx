@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ThumbsUp, ThumbsDown, Copy } from "lucide-react";
+import { ChevronLeft, ThumbsUp, ThumbsDown, Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
@@ -394,6 +394,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
     handleSendMessage(suggestion);
   };
 
+  const handleClearChat = () => {
+    if (window.confirm("¿Estás seguro de que deseas limpiar el historial de chat? Esta acción no se puede deshacer.")) {
+      setMessages([]);
+      setChatStarted(false);
+      // Limpiar el historial en el servicio también
+      agentService.clearMessageHistory();
+    }
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
@@ -414,21 +423,32 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           </svg>
         </button>
         <h2 className="text-lg font-semibold mx-auto">NeuralWallet Agent</h2>
-        <div className="w-8">
-          {serviceStatus === 'checking' && (
-            <div className="h-3 w-3 rounded-full bg-yellow-500 mx-auto animate-pulse" title="Checking service status" />
+        <div className="flex items-center">
+          {chatStarted && (
+            <button 
+              onClick={handleClearChat}
+              className="text-gray-500 hover:bg-gray-100 p-2 rounded-full transition-colors mr-2"
+              title="Clear chat history"
+            >
+              <Trash2 size={20} />
+            </button>
           )}
-          {serviceStatus === 'online' && (
-            <div className="h-3 w-3 rounded-full bg-green-500 mx-auto" title="Service online" />
-          )}
-          {serviceStatus === 'offline' && (
-            <div className="h-3 w-3 rounded-full bg-red-500 mx-auto" title="Service offline" />
-          )}
+          <div className="w-8">
+            {serviceStatus === 'checking' && (
+              <div className="h-3 w-3 rounded-full bg-yellow-500 mx-auto animate-pulse" title="Checking service status" />
+            )}
+            {serviceStatus === 'online' && (
+              <div className="h-3 w-3 rounded-full bg-green-500 mx-auto" title="Service online" />
+            )}
+            {serviceStatus === 'offline' && (
+              <div className="h-3 w-3 rounded-full bg-red-500 mx-auto" title="Service offline" />
+            )}
+          </div>
         </div>
       </div>
 
       {/* Contenido del chat */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {showWelcomeScreen ? (
           // Pantalla de bienvenida
           <div className="h-full flex flex-col items-center justify-center p-6">
@@ -460,29 +480,27 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           </div>
         ) : !chatStarted ? (
           // Sugerencias iniciales
-          <div className="flex flex-col h-full">
-            <ScrollArea className="flex-1 p-6">
-              <h3 className="text-lg font-semibold mb-6">How can I help you today?</h3>
-              <ChatSuggestion 
-                title="View balance" 
-                description="Check your account balance"
-                onClick={() => handleSuggestionClick("Show me my account balance")}
-              />
-              <ChatSuggestion 
-                title="Send money" 
-                description="Transfer funds to another account"
-                onClick={() => handleSuggestionClick("I want to send money to a friend")}
-              />
-              <ChatSuggestion 
-                title="Information" 
-                description="Learn about cryptocurrencies"
-                onClick={() => handleSuggestionClick("What is Stellar?")}
-              />
-            </ScrollArea>
+          <div className="flex-1 p-6 overflow-auto">
+            <h3 className="text-lg font-semibold mb-6">How can I help you today?</h3>
+            <ChatSuggestion 
+              title="View balance" 
+              description="Check your account balance"
+              onClick={() => handleSuggestionClick("Show me my account balance")}
+            />
+            <ChatSuggestion 
+              title="Send money" 
+              description="Transfer funds to another account"
+              onClick={() => handleSuggestionClick("I want to send money to a friend")}
+            />
+            <ChatSuggestion 
+              title="Information" 
+              description="Learn about cryptocurrencies"
+              onClick={() => handleSuggestionClick("What is Stellar?")}
+            />
           </div>
         ) : (
-          // Mensajes de chat
-          <ScrollArea className="flex-1 h-full overflow-y-auto pb-0">
+          // Mensajes de chat - Reemplazamos ScrollArea por un div con overflow-auto para evitar doble scroll
+          <div className="flex-1 overflow-y-auto">
             <div className="flex flex-col">
               {messages.map((message) => (
                 <div key={message.id}>
@@ -511,7 +529,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </div>
 
