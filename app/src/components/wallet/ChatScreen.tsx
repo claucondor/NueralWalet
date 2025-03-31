@@ -244,21 +244,21 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       // Agregar respuesta del bot
       const botMessage: Message = {
         id: (Date.now() + 100).toString(),
-        content: response.success && response.data?.response.content 
-          ? response.data.response.content 
-          : response.message || "I couldn't process your request.",
+        content: response.success && response.data?.suggestedResponse 
+          ? response.data.suggestedResponse 
+          : response.data?.response?.content || "I couldn't process your request.",
         sender: 'bot',
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error en el flujo de chat:', error);
+      console.error('Error processing message:', error);
       
-      // Agregar mensaje de error
+      // Agregar mensaje de error como respuesta del bot
       const errorMessage: Message = {
         id: (Date.now() + 100).toString(),
-        content: "Sorry, I encountered an error while processing your request.",
+        content: "Sorry, the Move Agent service is not available at this time. Please try again later.",
         sender: 'bot',
         timestamp: new Date()
       };
