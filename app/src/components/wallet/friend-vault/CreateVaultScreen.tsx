@@ -121,7 +121,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
         <Button variant="ghost" size="icon" onClick={onClose} disabled={isCreating}>
           <ChevronLeft className="h-6 w-6" />
         </Button>
-        <h2 className="text-xl font-semibold">Crear Friend Vault</h2>
+        <h2 className="text-xl font-semibold">Create Friend Vault</h2>
         <div className="w-9"></div>
       </div>
 
@@ -130,17 +130,17 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
         <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Los Friend Vaults permiten compartir fondos con amigos y familiares. 
-            Todos los miembros deben aprobar las solicitudes de retiro.
+            Friend Vaults allow you to securely share funds with friends and family.
+            All members must approve withdrawal requests.
           </AlertDescription>
         </Alert>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="vault-name">Nombre del Vault</Label>
+            <Label htmlFor="vault-name">Vault Name</Label>
             <Input
               id="vault-name"
-              placeholder="Ej. Viaje Familiar 2024"
+              placeholder="e.g. Family Trip 2024"
               value={vaultName}
               onChange={handleVaultNameChange}
               disabled={isCreating}
@@ -149,10 +149,10 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="vault-description">Descripción (opcional)</Label>
+            <Label htmlFor="vault-description">Description (optional)</Label>
             <Textarea
               id="vault-description"
-              placeholder="Ej. Fondos para nuestro viaje a la playa"
+              placeholder="e.g. Funds for our beach trip"
               value={vaultDescription}
               onChange={handleVaultDescriptionChange}
               disabled={isCreating}
@@ -165,7 +165,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
 
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-medium">Miembros del Vault</h3>
+            <h3 className="font-medium">Vault Members</h3>
             <Button 
               variant="outline" 
               size="sm" 
@@ -173,7 +173,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
               disabled={isCreating}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Agregar
+              Add
             </Button>
           </div>
 
@@ -181,7 +181,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
             {members.map((member, index) => (
               <div key={index} className="p-3 border rounded-md space-y-3 bg-gray-50">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium">Miembro {index + 1}</h4>
+                  <h4 className="text-sm font-medium">Member {index + 1}</h4>
                   {members.length > 1 && (
                     <Button
                       variant="ghost" 
@@ -196,7 +196,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor={`member-address-${index}`}>Dirección de Stellar</Label>
+                  <Label htmlFor={`member-address-${index}`}>Stellar Address</Label>
                   <Input
                     id={`member-address-${index}`}
                     placeholder="G..."
@@ -207,10 +207,10 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor={`member-name-${index}`}>Nombre (opcional)</Label>
+                  <Label htmlFor={`member-name-${index}`}>Name (optional)</Label>
                   <Input
                     id={`member-name-${index}`}
-                    placeholder="Ej. Carlos"
+                    placeholder="e.g. John"
                     value={member.name}
                     onChange={(e) => handleMemberNameChange(index, e.target.value)}
                     disabled={isCreating}
@@ -228,12 +228,12 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
         )}
 
         <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-gray-700 mb-1">Funcionamiento del Friend Vault</h4>
+          <h4 className="font-medium text-gray-700 mb-1">How Friend Vault Works</h4>
           <ul className="list-disc pl-4 space-y-1">
-            <li>Todos los miembros pueden depositar fondos en el vault</li>
-            <li>Cualquier miembro puede solicitar un retiro</li>
-            <li>Todos los miembros deben aprobar cada solicitud de retiro</li>
-            <li>Los fondos solo se liberan cuando todos aprueben</li>
+            <li>All members can deposit funds into the vault</li>
+            <li>Any member can request a withdrawal</li>
+            <li>All members must approve each withdrawal request</li>
+            <li>Funds are only released when everyone approves</li>
           </ul>
         </div>
       </div>
@@ -248,10 +248,10 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
           {isCreating ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Creando Vault...
+              Creating Vault...
             </>
           ) : (
-            'Crear Friend Vault'
+            'Create Friend Vault'
           )}
         </Button>
       </div>
