@@ -41,7 +41,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
           <Button variant="ghost" size="icon" onClick={onClose}>
             <ChevronLeft className="h-6 w-6" />
           </Button>
-          <h2 className="text-xl font-semibold">Detalles del Vault</h2>
+          <h2 className="text-xl font-semibold">Vault Details</h2>
           <div className="w-9"></div>
         </div>
         <div className="flex-1 flex justify-center items-center">
@@ -126,7 +126,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
 
       {/* Balance y acciones rápidas */}
       <div className="flex flex-col items-center p-4 border-b">
-        <div className="text-gray-500 mb-1">Balance total</div>
+        <div className="text-gray-500 mb-1">Total Balance</div>
         <div className="text-2xl font-bold mb-1">{formatBalance(selectedVault.balance)} XLM</div>
         <div className="text-sm text-gray-500 mb-4">
           ~${(parseFloat(formatBalance(selectedVault.balance)) * 0.11).toFixed(2)} USD
@@ -155,9 +155,9 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
       {/* Tabs */}
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="grid grid-cols-2 mx-4 mt-2">
-          <TabsTrigger value="details">Detalles</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="requests">
-            Solicitudes
+            Requests
             {withdrawalRequests.filter(req => req.status === 'pending').length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {withdrawalRequests.filter(req => req.status === 'pending').length}
@@ -168,27 +168,27 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
         
         <TabsContent value="details" className="flex-1 p-4 overflow-y-auto">
           <Card className="p-4 mb-4">
-            <h3 className="font-semibold mb-2">Información</h3>
+            <h3 className="font-semibold mb-2">Information</h3>
             {selectedVault.description && (
               <p className="text-gray-600 text-sm mb-3">{selectedVault.description}</p>
             )}
             <div className="text-sm mb-1">
-              <span className="text-gray-500">Creado por: </span>
-              <span className="font-medium">{selectedVault.createdBy}</span>
+              <span className="text-gray-500">Created by: </span>
+              <span className="font-medium">{selectedVault.created_by}</span>
             </div>
             <div className="text-sm mb-1">
-              <span className="text-gray-500">Fecha de creación: </span>
-              <span className="font-medium">{formatDate(selectedVault.createdAt)}</span>
+              <span className="text-gray-500">Creation date: </span>
+              <span className="font-medium">{formatDate(selectedVault.created_at)}</span>
             </div>
             <div className="text-sm">
-              <span className="text-gray-500">Dirección: </span>
-              <span className="font-medium break-all">{selectedVault.publicKey}</span>
+              <span className="text-gray-500">Address: </span>
+              <span className="font-medium break-all">{selectedVault.public_key}</span>
             </div>
           </Card>
 
           <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Miembros</h3>
+              <h3 className="font-semibold">Members</h3>
               <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md text-xs">
                 <Users className="h-3 w-3" />
                 <span>{selectedVault.members.length}</span>
@@ -202,8 +202,8 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                     <UserCircle className="h-6 w-6 text-gray-400" />
                     <div>
                       <div className="text-sm font-medium">{member}</div>
-                      {member === selectedVault.createdBy && (
-                        <Badge variant="secondary" className="text-xs">Creador</Badge>
+                      {member === selectedVault.created_by && (
+                        <Badge variant="secondary" className="text-xs">Creator</Badge>
                       )}
                     </div>
                   </div>
@@ -217,9 +217,9 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
           {withdrawalRequests.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
               <Clock className="h-12 w-12 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No hay solicitudes de retiro</h3>
+              <h3 className="text-lg font-medium mb-2">No withdrawal requests</h3>
               <p className="text-gray-500">
-                Cuando un miembro solicite un retiro, aparecerá aquí para que puedas aprobarla o rechazarla.
+                When a member requests a withdrawal, it will appear here for you to approve or reject.
               </p>
             </div>
           ) : (
@@ -230,9 +230,9 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                   <Card key={request.id} className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h4 className="font-medium">Retiro de {formatBalance(request.amount)} XLM</h4>
+                        <h4 className="font-medium">Withdrawal of {formatBalance(request.amount)} XLM</h4>
                         <div className="text-xs text-gray-500">
-                          Solicitado por {request.requestedBy} el {formatDate(request.requestedAt)}
+                          Requested by {request.requestedBy} on {formatDate(request.requestedAt)}
                         </div>
                       </div>
                       <Badge
@@ -249,7 +249,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                     </div>
                     
                     <div className="text-sm mb-3">
-                      <div><span className="text-gray-500">Destinatario: </span>{request.recipient}</div>
+                      <div><span className="text-gray-500">Recipient: </span>{request.recipient}</div>
                       <div><span className="text-gray-500">Token: </span>{request.tokenAddress}</div>
                     </div>
                     
@@ -257,7 +257,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                     
                     <div className="mb-3">
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Aprobaciones:</span>
+                        <span>Approvals:</span>
                         <span>{request.approvals.length} de {selectedVault.members.length}</span>
                       </div>
                       <div className="flex flex-wrap gap-1 mb-2">
@@ -271,7 +271,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                       
                       {request.rejections.length > 0 && (
                         <>
-                          <div className="text-sm mb-1">Rechazos:</div>
+                          <div className="text-sm mb-1">Rejections:</div>
                           <div className="flex flex-wrap gap-1">
                             {request.rejections.map(email => (
                               <Badge key={email} variant="outline" className="text-xs bg-red-50">
@@ -293,7 +293,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                           disabled={votingRequestId === request.id}
                         >
                           <X className="h-4 w-4 mr-1 text-red-500" />
-                          Rechazar
+                          Reject
                         </Button>
                         <Button 
                           className="flex-1"
@@ -301,7 +301,7 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                           disabled={votingRequestId === request.id}
                         >
                           <Check className="h-4 w-4 mr-1" />
-                          Aprobar
+                          Approve
                         </Button>
                       </div>
                     )}
@@ -315,12 +315,12 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
                         {executingRequestId === request.id ? (
                           <>
                             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                            Ejecutando...
+                            Executing...
                           </>
                         ) : (
                           <>
                             <ArrowUpFromLine className="h-4 w-4 mr-2" />
-                            Ejecutar Retiro
+                            Execute Withdrawal
                           </>
                         )}
                       </Button>
@@ -342,4 +342,4 @@ const VaultDetailsScreen: React.FC<VaultDetailsScreenProps> = ({
   );
 };
 
-export default VaultDetailsScreen; 
+export default VaultDetailsScreen;

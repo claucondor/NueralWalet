@@ -69,21 +69,21 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
   const handleCreateVault = async () => {
     // Validar nombre del vault
     if (!vaultName.trim()) {
-      setErrorMessage('Por favor, introduce un nombre para el vault');
+      setErrorMessage('Please enter a name for the vault');
       return;
     }
 
     // Validar miembros
     const validMembers = members.filter(m => m.address.trim() !== '');
     if (validMembers.length === 0) {
-      setErrorMessage('Debes agregar al menos un miembro al vault');
+      setErrorMessage('You must add at least one member to the vault');
       return;
     }
 
     // Validar direcciones de Stellar
     for (const member of validMembers) {
       if (!member.address.startsWith('G') || member.address.length !== 56) {
-        setErrorMessage('Por favor, introduce direcciones de Stellar válidas (comienzan con G y tienen 56 caracteres)');
+        setErrorMessage('Please enter valid Stellar addresses (start with G and have 56 characters)');
         return;
       }
     }
@@ -91,7 +91,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
     // Validar que no haya direcciones duplicadas
     const addresses = validMembers.map(m => m.address);
     if (new Set(addresses).size !== addresses.length) {
-      setErrorMessage('No puedes agregar la misma dirección más de una vez');
+      setErrorMessage('You cannot add the same address more than once');
       return;
     }
     
@@ -108,7 +108,7 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
       }
     } catch (error: any) {
       console.error('Error al crear vault:', error);
-      setErrorMessage(error.message || 'Ocurrió un error al crear el vault');
+      setErrorMessage(error.message || 'An error occurred while creating the vault');
     } finally {
       setIsCreating(false);
     }
@@ -259,4 +259,4 @@ const CreateVaultScreen: React.FC<CreateVaultScreenProps> = ({ onClose }) => {
   );
 };
 
-export default CreateVaultScreen; 
+export default CreateVaultScreen;
