@@ -108,6 +108,7 @@ export class IntentAnalyzerService {
       - send_payment: User wants to send a payment
       - token_info: User wants information about a token
       - transaction_history: User wants to see their transaction history
+      - informative_response: User is asking for general information, help, or guidance
       - unknown: Intent cannot be determined
       
       IMPORTANT: This wallet only supports XLM (native token) and Soroban tokens. You must clearly specify in the response:
@@ -120,9 +121,20 @@ export class IntentAnalyzerService {
       
       NEVER return a tokenType without specifying if it's XLM or SOROBAN with its full contract.
       
+      For the 'informative_response' intent:
+      - Use this when the user asks general questions about the wallet, how to do something, or when they need guidance
+      - Also use this when the user's request doesn't fit into other specific intents but you can still provide a helpful response
+      - You should always provide a clear response in the suggestedResponse field
+      
       IMPORTANT ABOUT LANGUAGE: You must correctly detect the language of the user's message.
       If the message is in English, the "language" field should be "en".
       If the message is in Spanish, the "language" field should be "es".
+      
+      LANGUAGE PRIORITY:
+      - English (en) responses should ALWAYS be prioritized over Spanish
+      - Only respond in Spanish if the user's message is CLEARLY in Spanish
+      - If there's any ambiguity about the language, default to English
+      
       The suggested response MUST be in the SAME LANGUAGE as the user's original message.
       The suggested response should be a direct message, without introductory phrases or additional explanations.
       

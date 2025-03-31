@@ -143,6 +143,16 @@ export class MessageService {
       
       Generate a clear and helpful error message in the following language: {language}.
       Explain that the intent could not be processed and suggest trying a different request.
+    `,
+    
+    genericHelp: `
+      You are a friendly financial assistant. The user is asking for information or help.
+      
+      Generate a helpful and informative response in the following language: {language}.
+      Explain that you're an assistant for Stellar wallet operations and can help with checking balances, 
+      sending payments, and providing information about tokens.
+      
+      Suggest some example operations the user can try, like checking their balance or sending XLM.
     `
   };
 } 

@@ -64,6 +64,25 @@ export class AgentService {
         // case 'token_info':
         // case 'transaction_history':
         // etc.
+        
+        case 'informative_response':
+          // Si hay una respuesta sugerida en los parámetros, utilizarla
+          if (params.suggestedResponse) {
+            return {
+              success: true,
+              message: params.suggestedResponse
+            };
+          }
+          // Si no hay respuesta sugerida, generar una genérica
+          const helpMessage = await MessageService.generateErrorMessage(
+            MessageService.templates.genericHelp,
+            { language }
+          );
+          
+          return {
+            success: true,
+            message: helpMessage
+          };
           
         default:
           // Generar mensaje para intención desconocida

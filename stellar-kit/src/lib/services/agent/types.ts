@@ -22,7 +22,7 @@ export interface UserIntent {
 /**
  * Tipos de intenciones soportadas
  */
-export type IntentType = 'balance_check' | 'send_payment' | 'token_info' | 'transaction_history' | 'unknown';
+export type IntentType = 'balance_check' | 'send_payment' | 'token_info' | 'transaction_history' | 'informative_response' | 'unknown';
 
 /**
  * Parámetros extraídos de la intención del usuario
