@@ -51,7 +51,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onInputClick, isLo
   };
 
   return (
-    <div className="sticky-safe-bottom z-20 flex w-full items-center gap-3 px-3 py-4 border-t border-[rgba(244,244,244,1)] bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-safe">
+    <div className="sticky-safe-bottom z-20 flex w-full items-center gap-3 px-3 py-2 border-t border-[rgba(244,244,244,1)] bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       <StyledInputWrapper className="flex-1 flex items-center gap-2">
         <div className="flex items-center gap-2 w-full">
           <img

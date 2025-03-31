@@ -163,42 +163,44 @@ const WalletScreen: React.FC = () => {
       {/* Main view with animation */}
       {currentView === "main" && (
         <div className={`relative z-10 flex flex-col items-center w-full h-full transition-all duration-1000 transform ${mainViewVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <Header 
-            username={userInfo?.name || "User"} 
-            balance={`$${totalUsdBalance}`}
-            onSettingsClick={() => handleActionButton("Settings")}
-          />
+          <div className="max-w-[430px] w-full mx-auto flex flex-col h-full">
+            <Header 
+              username={userInfo?.name || "User"} 
+              balance={`$${totalUsdBalance}`}
+              onSettingsClick={() => handleActionButton("Settings")}
+            />
 
-          <div className="bg-white border flex flex-1 w-full flex-col items-center p-3 rounded-t-[1.5rem] border-[rgba(237,237,237,1)] border-solid overflow-y-auto mb-[50px]">
-            <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+            <div className="bg-white border flex flex-1 w-full flex-col items-center p-3 rounded-t-[1.5rem] border-[rgba(237,237,237,1)] border-solid overflow-y-auto mb-[50px]">
+              <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {activeTab === "tokens" ? (
-              <div className="w-full flex-1 flex flex-col">
-                <TokensList />
-                <ActionButtons 
-                  onSend={() => handleActionButton("Send")} 
-                  onReceive={() => handleActionButton("Receive")} 
-                  onDeposit={() => handleActionButton("Deposit")} 
-                  onSwap={() => handleActionButton("Swap")} 
-                />
-              </div>
-            ) : activeTab === "history" ? (
-              <div className="self-stretch flex-1 w-full overflow-auto">
-                <TransactionHistory address={stellarAddress} />
-              </div>
-            ) : activeTab === "friendvault" ? (
-              <div className="self-stretch flex-1 w-full overflow-auto">
-                <FriendVaultProvider>
-                  <FriendVaultScreen />
-                </FriendVaultProvider>
-              </div>
-            ) : null}
+              {activeTab === "tokens" ? (
+                <div className="w-full flex-1 flex flex-col">
+                  <TokensList />
+                  <ActionButtons 
+                    onSend={() => handleActionButton("Send")} 
+                    onReceive={() => handleActionButton("Receive")} 
+                    onDeposit={() => handleActionButton("Deposit")} 
+                    onSwap={() => handleActionButton("Swap")} 
+                  />
+                </div>
+              ) : activeTab === "history" ? (
+                <div className="self-stretch flex-1 w-full overflow-auto">
+                  <TransactionHistory address={stellarAddress} />
+                </div>
+              ) : activeTab === "friendvault" ? (
+                <div className="self-stretch flex-1 w-full overflow-auto">
+                  <FriendVaultProvider>
+                    <FriendVaultScreen />
+                  </FriendVaultProvider>
+                </div>
+              ) : null}
+            </div>
+
+            <ChatInput 
+              onSendMessage={handleSendMessage} 
+              onInputClick={() => handleActionButton("Chat")}
+            />
           </div>
-
-          <ChatInput 
-            onSendMessage={handleSendMessage} 
-            onInputClick={() => handleActionButton("Chat")}
-          />
         </div>
       )}
 

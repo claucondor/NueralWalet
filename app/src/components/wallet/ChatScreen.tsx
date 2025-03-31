@@ -428,7 +428,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
       </div>
 
       {/* Contenido del chat */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {showWelcomeScreen ? (
           // Pantalla de bienvenida
           <div className="h-full flex flex-col items-center justify-center p-6">
@@ -482,7 +482,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
           </div>
         ) : (
           // Mensajes de chat
-          <ScrollArea className="h-full p-0 overflow-y-auto">
+          <ScrollArea className="flex-1 h-full overflow-y-auto pb-0">
             <div className="flex flex-col">
               {messages.map((message) => (
                 <div key={message.id}>
@@ -517,10 +517,12 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onClose, walletAddress }) => {
 
       {/* Input de chat */}
       {(!showWelcomeScreen && serviceStatus !== 'offline') && (
-        <ChatInput 
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-        />
+        <div className="mt-auto border-t border-gray-200">
+          <ChatInput 
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+          />
+        </div>
       )}
     </div>
   );
