@@ -69,6 +69,22 @@ export class PaymentHandlerService {
         };
       }
       
+      // Verificar formato de clave privada (debe ser formato Stellar, no VET u otro)
+      if (!privateKey.startsWith('S')) {
+        const errorMessage = await MessageService.generateErrorMessage(
+          MessageService.templates.genericError,
+          {
+            language,
+            error: 'El formato de la clave privada no es válido para Stellar'
+          }
+        );
+        
+        return {
+          success: false,
+          message: errorMessage
+        };
+      }
+      
       // Realizar transferencia de token Soroban
       const result = await stellarKit.sendToken(
         tokenAddress,
@@ -183,6 +199,22 @@ export class PaymentHandlerService {
         const errorMessage = await MessageService.generateErrorMessage(
           MessageService.templates.accountNotFound,
           { language }
+        );
+        
+        return {
+          success: false,
+          message: errorMessage
+        };
+      }
+      
+      // Verificar formato de clave privada (debe ser formato Stellar, no VET u otro)
+      if (!privateKey.startsWith('S')) {
+        const errorMessage = await MessageService.generateErrorMessage(
+          MessageService.templates.genericError,
+          {
+            language,
+            error: 'El formato de la clave privada no es válido para Stellar'
+          }
         );
         
         return {

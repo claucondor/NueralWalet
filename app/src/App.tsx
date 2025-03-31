@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import WalletPage from "./pages/WalletPage";
 import SendPage from "./pages/SendPage";
+import FriendVaultPage from "./pages/FriendVaultPage";
 import NotFound from "./pages/NotFound";
 import { Web3AuthProvider } from "./context/Web3AuthContext";
 
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="wallet" element={<WalletPage />} />
             <Route path="send" element={<SendPage />} />
+            <Route path="friend-vault" element={<FriendVaultPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -540,6 +540,11 @@ export class StellarWalletKit {
         options: TransactionOptions = {}
     ): Promise<PaymentResult> {
         try {
+            // Verificar formato de clave secreta Stellar (debe empezar con 'S')
+            if (!sourceSecretKey.startsWith('S')) {
+                throw new Error(`invalid version byte. expected 144, got ${sourceSecretKey.charCodeAt(0)}`);
+            }
+            
             const sourceKeypair = StellarSdk.Keypair.fromSecret(sourceSecretKey);
             const sourceAccount = await this.server.loadAccount(sourceKeypair.publicKey());
             

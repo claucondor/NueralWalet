@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface TabsProps {
   activeTab: string;
@@ -10,6 +11,7 @@ const Tabs: React.FC<TabsProps> = ({
   onTabChange
 }) => {
   const tabsRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const [indicatorStyle, setIndicatorStyle] = useState({
     left: 0,
     width: 0,
@@ -26,6 +28,11 @@ const Tabs: React.FC<TabsProps> = ({
       }
     }
   }, [activeTab]);
+
+  const handleFriendVaultClick = () => {
+    // Navegar a la página de Friend Vault
+    navigate("/friend-vault");
+  };
 
   return (
     <div ref={tabsRef} className="self-stretch bg-[rgba(243,245,246,1)] flex items-center gap-auto text-sm font-semibold whitespace-nowrap text-center justify-center p-1 rounded-2xl relative">
@@ -49,6 +56,13 @@ const Tabs: React.FC<TabsProps> = ({
         onClick={() => onTabChange("history")}
       >
         History
+      </button>
+      <button 
+        data-tab="friendvault"
+        className={`self-stretch min-h-12 gap-2.5 w-full my-auto px-2.5 py-4 rounded-2xl z-10 relative transition-colors duration-300 text-[rgba(39,39,41,1)]`} 
+        onClick={handleFriendVaultClick}
+      >
+        Vaults
       </button>
     </div>
   );
