@@ -272,7 +272,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -321,7 +321,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({ error: error.message });
+      const result = await chain.invoke({ error: error.message, language });
       
       return {
         success: false,
@@ -358,7 +358,7 @@ export class AgentService {
           `);
           
           const chain = promptTemplate.pipe(llm);
-          const result = await chain.invoke({});
+          const result = await chain.invoke({ language });
           
           return {
             success: false,
@@ -384,7 +384,11 @@ export class AgentService {
           `);
           
           const chain = promptTemplate.pipe(llm);
-          const resultMsg = await chain.invoke({});
+          const resultMsg = await chain.invoke({
+            amount,
+            language,
+            'result.hash': result.hash
+          });
           
           return {
             success: true,
@@ -400,15 +404,18 @@ export class AgentService {
             Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
             Explica que no se pudieron enviar los tokens y sugiere intentar más tarde.
             
-            Detalles técnicos (solo para referencia): {result.error || 'Error desconocido al enviar tokens'}
+            Detalles técnicos (solo para referencia): {error_details}
           `);
           
           const chain = promptTemplate.pipe(llm);
-          const errorMsg = await chain.invoke({});
+          const response = await chain.invoke({ 
+            error_details: result.error || 'Error desconocido',
+            language 
+          });
           
           return {
             success: false,
-            message: typeof errorMsg.content === 'string' ? errorMsg.content : JSON.stringify(errorMsg.content)
+            message: typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
           };
         }
       } catch (error: any) {
@@ -424,11 +431,11 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({ error: error.message || 'Error desconocido' });
+        const response = await chain.invoke({ error: error.message || 'Error desconocido', language });
         
         return {
           success: false,
-          message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+          message: typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
         };
       }
     }
@@ -455,7 +462,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -474,7 +481,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -496,7 +503,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -552,7 +559,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({ error: error.message || 'Error desconocido' });
+      const result = await chain.invoke({ error: error.message, language });
       
       return {
         success: false,
@@ -586,7 +593,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -623,7 +630,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const response = await chain.invoke({});
+        const response = await chain.invoke({ startingBalance, recipient, language });
         
         return {
           success: true,
@@ -639,11 +646,14 @@ export class AgentService {
           Genera un mensaje de error claro y útil en el siguiente idioma: {language}.
           Explica que no se pudo crear la cuenta y sugiere verificar la dirección e intentar nuevamente.
           
-          Detalles técnicos (solo para referencia): {result.error || 'Error desconocido'}
+          Detalles técnicos (solo para referencia): {error_details}
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const response = await chain.invoke({});
+        const response = await chain.invoke({ 
+          error_details: result.error || 'Error desconocido', 
+          language 
+        });
         
         return {
           success: false,
@@ -665,7 +675,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({ error: error.message });
+      const result = await chain.invoke({ error: error.message || 'Error desconocido', language });
       
       return {
         success: false,
@@ -698,7 +708,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -726,7 +736,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({});
+      const result = await chain.invoke({ balance: accountInfo.balance, language });
       
       return {
         success: true,
@@ -748,7 +758,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({ error: error.message });
+      const result = await chain.invoke({ error: error.message, language });
       
       return {
         success: false,
@@ -784,7 +794,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: false,
@@ -808,7 +818,7 @@ export class AgentService {
         `);
         
         const chain = promptTemplate.pipe(llm);
-        const result = await chain.invoke({});
+        const result = await chain.invoke({ language });
         
         return {
           success: true,
@@ -872,7 +882,11 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({});
+      const result = await chain.invoke({ 
+        language, 
+        'originalMessage || "Ver mi historial de transacciones"': originalMessage || "Ver mi historial de transacciones",
+        transactionsSummary 
+      });
       
       return {
         success: true,
@@ -894,7 +908,7 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({ error: error.message });
+      const result = await chain.invoke({ error: error.message, language });
       
       return {
         success: false,
@@ -936,7 +950,12 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({});
+      const result = await chain.invoke({
+        amount,
+        recipient,
+        language,
+        'paymentResult.hash': paymentResult.hash
+      });
       
       return {
         success: true,
@@ -950,7 +969,7 @@ export class AgentService {
         Detalles del intento de pago:
         - Cantidad: {amount} XLM
         - Destinatario: {recipient}
-        - Error: {paymentResult.error}
+        - Error: {error_details}
         
         Genera una respuesta amigable y profesional explicando que el pago no se ha podido realizar.
         Incluye una explicación del error en términos que un usuario no técnico pueda entender.
@@ -967,11 +986,16 @@ export class AgentService {
       `);
       
       const chain = promptTemplate.pipe(llm);
-      const result = await chain.invoke({});
+      const response = await chain.invoke({ 
+        amount,
+        recipient,
+        error_details: paymentResult.error || 'Error desconocido',
+        language 
+      });
       
       return {
         success: false,
-        message: typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+        message: typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
       };
     }
   }
@@ -987,7 +1011,7 @@ export class AgentService {
       
       Detalles del error:
       - Tipo de operación: {intent}
-      - Error técnico: {error.message || 'Error desconocido'}
+      - Error técnico: {error_details}
       
       Genera una respuesta amigable y profesional explicando que la operación no se ha podido realizar.
       Traduce el error técnico a un lenguaje que un usuario no técnico pueda entender.
@@ -996,7 +1020,11 @@ export class AgentService {
     `);
     
     const chain = promptTemplate.pipe(llm);
-    const result = await chain.invoke({});
+    const result = await chain.invoke({
+      intent,
+      error_details: error.message || 'Error desconocido',
+      language: 'es'
+    });
     
     return {
       success: false,
